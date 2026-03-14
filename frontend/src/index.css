@@ -1,0 +1,46 @@
+@import "tailwindcss";
+@layer components {
+  .auth-input-styled {
+    @apply w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 focus:bg-white;
+  }
+}
+
+/* Circle markers for each day */
+/* Make all day cells circular */
+.rdp-day {
+  border-radius: 9999px;
+}
+
+/* FULL BOOKED – RED */
+.rdp-day.rdp-full {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+/* PARTIAL – YELLOW */
+.rdp-day.rdp-partial {
+  background-color: #facc15 !important;
+  color: black !important;
+}
+
+/* PENDING – TEAL */
+.rdp-day.rdp-pending {
+  background-color: #14b8a6 !important;
+  color: white !important;
+}
+
+/* Keep hover/focus nice */
+.rdp-day:hover:not([disabled]) {
+  filter: brightness(0.95);
+}
+
+/* Selected day override */
+.rdp-day_selected {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+.rdp-day {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
