@@ -34,7 +34,7 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
             session: bookingData.session?.toLowerCase() || 'day',
             title: bookingData.eventTitle,
             description: bookingData.eventDescription,
-            spot_name: bookingData.spotName,
+            spotName: bookingData.spotName,
             startTime: bookingData.startTime,
             endTime: bookingData.endTime,
             recommenderEmail: bookingData.recommenderEmail,
@@ -50,6 +50,7 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
             .catch(err => {
                 alert("Error: " + (err.response?.data?.message || "Booking failed"));
             });
+            console.log("Payload sent to server:", payload.spot_name);
     };
 
     return (
