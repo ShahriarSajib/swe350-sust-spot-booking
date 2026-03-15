@@ -1,4 +1,41 @@
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
 
+    full_name VARCHAR(255) NOT NULL,
+    user_type ENUM('internal','external') NOT NULL,
+
+    department VARCHAR(100),
+    organization VARCHAR(255),
+    designation VARCHAR(100),
+
+    email VARCHAR(255) NOT NULL UNIQUE,
+    contact_number VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+
+    id_file VARCHAR(255),
+    profile_picture VARCHAR(255),
+    signature VARCHAR(255),
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE spots (
+    spot_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    location VARCHAR(150),
+
+    display_image TEXT,
+    approval_copy_recipient TEXT
+);
+CREATE TABLE spot_rules (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    spot_id INT,
+    rules TEXT,
+
+    FOREIGN KEY (spot_id) REFERENCES spots(spot_id) ON DELETE CASCADE
+);
 
 CREATE TABLE bookings (
     booking_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -27,7 +64,6 @@ CREATE TABLE bookings (
 
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-    -- Foreign Keys
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (spot_id) REFERENCES spots(spot_id)
 );
