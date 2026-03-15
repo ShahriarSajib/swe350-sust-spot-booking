@@ -1,6 +1,57 @@
 import React from 'react';
+import axios from 'axios';
 
 export default function BookingForm({ bookingData, setBookingData, personalDetails, bookingType }) {
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setBookingData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+    const handleConfirm = () => {
+        console.log("Current Booking Data:", bookingData);
+        // user confirmation dialog
+        const isSure = window.confirm("Are you sure you want to confirm this booking request?");
+        
+        
+        if (!isSure) {
+            return; 
+        }
+
+        // if okay, prepare payload
+        const userId = localStorage.getItem("userId");
+        const spotId = localStorage.getItem("selectedSpotId");
+        const userType = localStorage.getItem("userType");
+
+        const payload = {
+            userId: userId,
+            spotId: spotId,
+            bookingType: userType,
+            organizer: bookingData.department,
+            startDate: bookingType === "single" ? bookingData.date : bookingData.startDate,
+            endDate: bookingType === "multi" ? bookingData.endDate : null,
+            session: bookingData.session?.toLowerCase() || 'day',
+            title: bookingData.eventTitle,
+            description: bookingData.eventDescription,
+            spot_name: bookingData.spotName,
+            startTime: bookingData.startTime,
+            endTime: bookingData.endTime,
+            recommenderEmail: bookingData.recommenderEmail,
+            recommenderDesignation: bookingData.designation
+        };
+
+        
+        axios.post("http://localhost:5000/api/bookings/confirm", payload)
+            .then(res => {
+                alert("Success: " + res.data.message);
+                
+            })
+            .catch(err => {
+                alert("Error: " + (err.response?.data?.message || "Booking failed"));
+            });
+    };
+
     return (
         <div className="mt-6 border-t pt-6">
             <h2 className="text-xl font-bold mb-6 text-slate-800">Booking Details</h2>
@@ -100,23 +151,24 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
                             <label className="block text-xs font-bold text-slate-700 mb-1">Department / Organization Name</label>
                             <input
                                 type="text"
+                                name="department"
                                 placeholder="e.g. Dept of PME or SUST Sports Club"
                                 className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none focus:ring-2 focus:ring-blue-100 transition-all"
-                                onChange={(e) => setBookingData(prev => ({ ...prev, department: e.target.value }))}
+                                onChange={handleChange}
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="md:col-span-1">
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Recommender Name</label>
-                                <input type="text" placeholder="Name" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" />
+                                <input type="text" name="recommenderName" placeholder="Name" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" onChange={handleChange}/>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Designation</label>
-                                <input type="text" placeholder="e.g. Professor" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" />
+                                <input type="text" name="designation" placeholder="e.g. Professor" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" onChange={handleChange} />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
-                                <input type="email" placeholder="recommender@sust.edu" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" />
+                                <input type="email" name="recommenderEmail" placeholder="recommender@sust.edu" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" onChange={handleChange} />
                             </div>
                         </div>
                     </div>
@@ -132,28 +184,30 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
                             <label className="block text-xs font-bold text-slate-700 mb-1">Event Title</label>
                             <input
                                 type="text"
+                                name="eventTitle"
                                 placeholder="Enter event name"
                                 className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none focus:ring-2 focus:ring-blue-100 transition-all"
-                                onChange={(e) => setBookingData(prev => ({ ...prev, eventTitle: e.target.value }))}
+                                onChange={handleChange}
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Approx. Start Time</label>
-                                <input type="text" placeholder="e.g. 10:00 AM" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" />
+                                <input type="text" name="startTime" placeholder="e.g. 10:00 AM" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" onChange={handleChange} />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Approx. End Time</label>
-                                <input type="text" placeholder="e.g. 12:00 PM" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" />
+                                <input type="text" name="endTime" placeholder="e.g. 12:00 PM" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" onChange={handleChange} />
                             </div>
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-700 mb-1">Event Description</label>
                             <textarea
                                 rows="3"
+                                name="eventDescription"
                                 placeholder="Briefly describe the purpose of your booking..."
                                 className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none resize-none focus:ring-2 focus:ring-blue-100"
-                                onChange={(e) => setBookingData(prev => ({ ...prev, eventDescription: e.target.value }))}
+                                onChange={handleChange}
                             />
                         </div>
                     </div>
@@ -161,6 +215,7 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
 
                 <button
                     type="button"
+                    onClick={handleConfirm}
                     className="w-full bg-[#0052cc] text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 hover:shadow-xl active:scale-[0.98] transition-all shadow-md mt-4"
                 >
                     Confirm Booking Request

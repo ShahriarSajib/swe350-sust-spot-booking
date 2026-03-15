@@ -281,7 +281,10 @@ function App() {
       {authRole && (
         <Header 
           role={authRole} 
-          onLogout={() => setAuthRole(null)} 
+          onLogout={() =>{ 
+            localStorage.clear();
+            setAuthRole(null);
+          } }
           onOpenNotif={openNotif} 
         />
       )}

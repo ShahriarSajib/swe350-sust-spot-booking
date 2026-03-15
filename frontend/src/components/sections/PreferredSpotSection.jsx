@@ -49,6 +49,7 @@ const PreferredSpotSection = () => {
   ];
 
   const handleNavigation = (id) => {
+    localStorage.setItem('selectedSpotId', id);
     navigate(`/spot/${id}`);
   };
 
