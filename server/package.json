@@ -16,7 +16,8 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "multer": "^2.0.2",
-    "mysql2": "^3.18.0"
+    "mysql2": "^3.18.0",
+    "swe350-sust-spot-booking": "file:.."
   },
   "devDependencies": {
     "nodemon": "^3.1.13"

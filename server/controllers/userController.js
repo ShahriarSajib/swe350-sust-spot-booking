@@ -67,7 +67,10 @@ exports.loginUser = (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        user_type: user.user_type
+        user_type: user.user_type,
+        full_name: user.full_name,
+        contact_number: user.contact_number,
+        user_type: user.user_type,
       }
     });
   });

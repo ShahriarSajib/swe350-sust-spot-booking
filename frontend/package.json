@@ -23,6 +23,7 @@
     "react-day-picker": "^9.13.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.11.0",
+    "swe350-sust-spot-booking": "file:..",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
