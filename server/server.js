@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const userRoutes = require('./routes/userRoutes');
 const availabilityRoutes = require('./routes/availabilityCalenderRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
+const eventRoutes = require('./routes/eventRoutes');
 
 const path = require('path');
 const cors = require('cors');
@@ -26,6 +27,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/spots', require('./routes/spotRoutes'));
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/events', eventRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

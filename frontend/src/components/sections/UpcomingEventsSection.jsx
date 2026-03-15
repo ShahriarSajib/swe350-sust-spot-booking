@@ -1,35 +1,64 @@
-import React, { useState, useMemo } from 'react';
-import { upcomingEvents } from '../../data/events.js';
+import React, { useState, useMemo, useEffect } from 'react';
+import axios from 'axios';
 
 const UpcomingEventsSection = () => {
+    const [events, setEvents] = useState([]);
     const [selectedSpot, setSelectedSpot] = useState("All");
     const [filterDate, setFilterDate] = useState("");
+    const [loading, setLoading] = useState(true);
 
-    // --- PAGINATION CONFIG ---
-    // Increased initial count to 8 to fill two rows of a 4-column grid
     const INITIAL_VISIBLE_COUNT = 8;
     const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
 
     const spots = ["All", "Central Auditorium", "Mini Auditorium", "Central Field", "Handball Ground", "Basketball Ground"];
 
+    // 1. Fetch Data from Backend
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const res = await axios.get("http://localhost:5000/api/events/upcoming");
+                setEvents(res.data);
+            } catch (err) {
+                console.error("Error fetching events:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEvents();
+    }, []);
+
+    // 2. Helper function to format ISO date to YYYY-MM-DD
+    const formatDate = (isoString) => {
+        if (!isoString) return null;
+        return isoString.split('T')[0];
+    };
+
+    // 3. Filtering Logic
     const filteredEvents = useMemo(() => {
         setVisibleCount(INITIAL_VISIBLE_COUNT);
-        return upcomingEvents
+        return events
             .filter(event => {
-                const matchSpot = selectedSpot === "All" || event.spot === selectedSpot;
+                const matchSpot = selectedSpot === "All" || event.spot_name === selectedSpot;
+                
                 let matchDate = true;
                 if (filterDate) {
-                    const selected = new Date(filterDate);
-                    const start = new Date(event.startDate);
-                    const end = new Date(event.endDate);
+                    const selected = new Date(filterDate).setHours(0,0,0,0);
+                    const start = new Date(formatDate(event.start_date)).setHours(0,0,0,0);
+                    // If end_date is null, use start_date for comparison
+                    const end = event.end_date 
+                        ? new Date(formatDate(event.end_date)).setHours(0,0,0,0) 
+                        : start;
+                    
                     matchDate = selected >= start && selected <= end;
                 }
                 return matchSpot && matchDate;
             })
-            .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-    }, [selectedSpot, filterDate]);
+            .sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+    }, [selectedSpot, filterDate, events]);
 
     const eventsToShow = filteredEvents.slice(0, visibleCount);
+
+    if (loading) return <div className="text-center py-20">Loading Events...</div>;
 
     return (
         <section className="w-full bg-slate-50 py-16 px-4 md:px-10 min-h-screen">
@@ -80,15 +109,14 @@ const UpcomingEventsSection = () => {
                     </div>
                 </div>
 
-                {/* 3. SMALLER EVENT BLOCKS (4 Columns on Desktop) */}
+                {/* 3. EVENT BLOCKS */}
                 <div className="w-full">
                     {eventsToShow.length > 0 ? (
                         <>
-                            {/* Changed to grid-cols-2 md:grid-cols-3 lg:grid-cols-4 for smaller cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {eventsToShow.map(event => (
                                     <div 
-                                        key={event.id}
+                                        key={event.booking_id}
                                         className="bg-slate-800 rounded-2xl p-4 shadow-xl transition-all duration-300 group relative overflow-hidden border border-slate-700"
                                     >
                                         <div className="absolute -top-10 -right-10 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
@@ -99,32 +127,32 @@ const UpcomingEventsSection = () => {
                                                 <span className="text-xs font-bold text-slate-300 truncate max-w-[80px]">{event.organizer}</span>
                                             </div>
                                             <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${
-                                                event.session.includes('Night') ? "bg-blue-600 text-white" : "bg-sky-400 text-slate-900"
+                                                event.session?.toLowerCase().includes('night') ? "bg-blue-600 text-white" : "bg-sky-400 text-slate-900"
                                             }`}>
                                                 {event.session}
                                             </span>
                                         </div>
 
                                         <h3 className="text-sm font-black text-white mb-1 leading-tight group-hover:text-sky-400 transition-colors line-clamp-2 min-h-[2.5rem]">
-                                            {event.name}
+                                            {event.title}
                                         </h3>
                                         
                                         <div className="flex items-center gap-1.5 mb-4">
                                             <div className="h-[1.5px] w-3 bg-blue-500"></div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase truncate">{event.spot}</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase truncate">{event.spot_name}</span>
                                         </div>
 
                                         <div className="bg-slate-900/50 rounded-xl p-2.5 flex items-center justify-between border border-white/5">
                                             <div className="flex flex-col">
                                                 <span className="text-[8px] font-black text-slate-500 uppercase">Schedule</span>
                                                 <span className="text-[9px] font-bold text-slate-200">
-                                                    {event.startDate === event.endDate 
-                                                        ? event.startDate 
-                                                        : `${event.startDate}..`
+                                                    {!event.end_date || formatDate(event.start_date) === formatDate(event.end_date)
+                                                        ? formatDate(event.start_date) 
+                                                        : `${formatDate(event.start_date)}..`
                                                     }
                                                 </span>
                                                 <span className="text-[9px] font-bold text-slate-200">
-                                                    {event.startTime} - {event.endTime}
+                                                    {event.start_time} - {event.end_time}
                                                 </span>
                                             </div>
                                             <div className="bg-blue-600/10 p-1.5 rounded-lg">
