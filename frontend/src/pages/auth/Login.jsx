@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import AnimatedSpotShowcase from "../AnimatedSpotShowcase";
+import AnimatedSpotShowcase from "../../components/authentication/AnimatedSpotShowcase";
 import { Link } from "react-router-dom";
 import axios from "axios";
 
@@ -21,7 +21,7 @@ const Login = ({ onLogin }) => {
 
       alert("Login Successful!");
       console.log(res.data);
-      
+
       localStorage.setItem("userId", res.data.user.id);
       localStorage.setItem("userName", res.data.user.full_name || "");
       localStorage.setItem("userContact", res.data.user.contact_number || "");
@@ -140,38 +140,55 @@ const Login = ({ onLogin }) => {
 
           {/* Footer Section - Only show when not in Forgot Mode to keep it clean */}
           {!isForgotMode && (
-            <div className="mt-10 space-y-8">
+            <div className="mt-10 space-y-4"> {/* Adjusted spacing */}
               {loginType === 'user' && (
-                <p className="text-sm text-slate-500 text-center font-medium">
-                  Don’t have an account?{" "}
-                  <Link
-                    to="/register"
-                    className="text-blue-600 font-bold hover:underline underline-offset-4"
-                  >
-                    Create an account
-                  </Link>
-                </p>
+                <>
+                  {/* Registration Link */}
+                  <p className="text-sm text-slate-500 text-center font-medium">
+                    Don’t have an account?{" "}
+                    <Link
+                      to="/register"
+                      className="text-blue-600 font-bold hover:underline underline-offset-4"
+                    >
+                      Create an account
+                    </Link>
+                  </p>
+
+                  {/* External User Booking Link - New Section */}
+                  <p className="text-sm text-slate-500 text-center font-medium">
+                    Are you an external user?{" "}
+                    <Link
+                      to="/external-booking" // You can change this path later
+                      className="text-blue-600 font-bold hover:underline underline-offset-4"
+                    >
+                      Make your booking here
+                    </Link>
+                  </p>
+                </>
               )}
 
-              <div className="flex items-center justify-center gap-3">
-                <div
-                  onClick={() => setLoginType('user')}
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === 'user'
-                      ? "border-blue-600 text-blue-600 bg-blue-50"
-                      : "border-slate-200 text-slate-400 hover:border-slate-300"
-                    }`}
-                >
-                  login as User
-                </div>
-                <div className="h-1 w-1 bg-slate-200 rounded-full"></div>
-                <div
-                  onClick={() => setLoginType('admin')}
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === 'admin'
-                      ? "border-blue-600 text-blue-600 bg-blue-50"
-                      : "border-slate-200 text-slate-400 hover:border-slate-300"
-                    }`}
-                >
-                  login as Admin
+              {/* Divider and Login Type Switcher */}
+              <div className="pt-4 flex flex-col items-center gap-6">
+                <div className="flex items-center justify-center gap-3">
+                  <div
+                    onClick={() => setLoginType('user')}
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === 'user'
+                        ? "border-blue-600 text-blue-600 bg-blue-50"
+                        : "border-slate-200 text-slate-400 hover:border-slate-300"
+                      }`}
+                  >
+                    login as User
+                  </div>
+                  <div className="h-1 w-1 bg-slate-200 rounded-full"></div>
+                  <div
+                    onClick={() => setLoginType('admin')}
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === 'admin'
+                        ? "border-blue-600 text-blue-600 bg-blue-50"
+                        : "border-slate-200 text-slate-400 hover:border-slate-300"
+                      }`}
+                  >
+                    login as Admin
+                  </div>
                 </div>
               </div>
             </div>

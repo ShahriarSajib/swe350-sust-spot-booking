@@ -235,6 +235,7 @@ import FeaturedEventsSection from "./components/sections/FeaturedEventsSection";
 // Pages
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import ExternalRegister from "./pages/auth/ExternalRegister";
 import Profile from './pages/ProfilePage';
 import SpotDetail from './pages/SpotDetails';
 import FeaturedEventsBlog from "./pages/FeaturedEventsBlog";    
@@ -295,6 +296,7 @@ function App() {
           <>
             <Route path="/login" element={<Login onLogin={(role) => setAuthRole(role)} />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/external-booking" element={<ExternalRegister />} />
             <Route path="*" element={<Navigate to="/login" />} />
           </>
         ) : authRole === 'admin' ? (

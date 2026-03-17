@@ -1,46 +1,52 @@
 const db = require('../db');
 const bcrypt = require('bcryptjs');
 
-
 exports.registerUser = async (req, res) => {
-  try {
-    const { full_name, userType, department, organization, designation, email, contactNumber, password } = req.body;
-    let idFile = req.file ? req.file.filename : null;
+  //  console.log("Request Body:", req.body);
+  //  console.log("Request File:", req.file);
 
-    // Check if user exists
+  try {
+    const { fullName, userType, department, email, contactNumber, password } = req.body;
+    
+  
     db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
       if (results.length > 0) return res.status(400).json({ message: 'User already exists' });
 
-      // Hash password
+      
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      // Insert user
-      const sql = `INSERT INTO users (full_name, user_type, department, organization, designation, email, contact_number, password, id_file)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      
+      if (userType === 'internal') {
+        
+        const sqlInternal = `INSERT INTO users (full_name, user_type, department, email, contact_number, password) 
+                             VALUES (?, ?, ?, ?, ?, ?)`;
+        
+        db.query(sqlInternal, [fullName, userType, department, email, contactNumber, hashedPassword], (err, result) => {
+          if (err) return res.status(500).json({ message: "Internal User Insert Error: " + err.message });
+          return res.status(201).json({ message: 'Internal user registered successfully' });
+        });
 
-      db.query(sql, [
-        full_name,
-        userType,
-        userType === 'internal' ? department : null,
-        userType === 'external' ? organization : null,
-        userType === 'external' ? designation : null,
-        email,
-        contactNumber,
-        hashedPassword,
-        idFile
-      ], (err, result) => {
-        if (err) return res.status(500).json({ message: err.message });
-        res.status(201).json({ message: 'User registered successfully', userId: result.insertId });
-      });
+      } else if (userType === 'external') {
+        const idFile = req.file ? req.file.filename : null;
+        
+        const sqlExternal = `INSERT INTO users (full_name, user_type, department, profile_picture, email, contact_number, password) 
+                             VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        
+        db.query(sqlExternal, [fullName, userType, department, idFile, email, contactNumber, hashedPassword], (err, result) => {
+          if (err) return res.status(500).json({ message: "External User Insert Error: " + err.message });
+          return res.status(201).json({ message: 'External user registered successfully' });
+        });
+      }
+
     });
 
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Server Error: " + err.message });
   }
 };
-
 // ================= LOGIN =================
 exports.loginUser = (req, res) => {
   const { email, password } = req.body;
@@ -87,8 +93,6 @@ exports.getUserProfile = (req, res) => {
       full_name,
       user_type,
       department,
-      organization,
-      designation,
       email,
       contact_number,
       id_file,
