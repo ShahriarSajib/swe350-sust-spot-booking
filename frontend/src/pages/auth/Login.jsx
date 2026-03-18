@@ -14,21 +14,33 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:5000/api/users/login", {
-        email,
-        password
-      });
+      if (loginType === 'admin') {
+        // ── Admin Login ──────────────────────────────────────────────
+        const res = await axios.post("http://localhost:5000/api/admin/login", {
+          email,
+          password
+        });
 
-      alert("Login Successful!");
-      console.log(res.data);
-      
-      localStorage.setItem("userId", res.data.user.id);
-      localStorage.setItem("userName", res.data.user.full_name || "");
-      localStorage.setItem("userContact", res.data.user.contact_number || "");
-      localStorage.setItem("userType", res.data.user.user_type || "user");
+        localStorage.setItem("adminToken", res.data.token);
+        localStorage.setItem("adminId", res.data.admin.approver_id);
+        localStorage.setItem("adminName", res.data.admin.approver_name || "");
+        localStorage.setItem("adminDesignation", res.data.admin.approver_designation || "");
 
-      onLogin(loginType);
+        onLogin('admin');
+      } else {
+        // ── User Login ───────────────────────────────────────────────
+        const res = await axios.post("http://localhost:5000/api/users/login", {
+          email,
+          password
+        });
 
+        localStorage.setItem("userId", res.data.user.id);
+        localStorage.setItem("userName", res.data.user.full_name || "");
+        localStorage.setItem("userContact", res.data.user.contact_number || "");
+        localStorage.setItem("userType", res.data.user.user_type || "user");
+
+        onLogin('user');
+      }
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
     }

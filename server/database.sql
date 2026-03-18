@@ -156,3 +156,8 @@ CREATE TABLE notification (
     REFERENCES bookings(booking_id) 
     ON DELETE CASCADE
 );
+
+--modifications
+ALTER TABLE approver
+ADD COLUMN password VARCHAR(255) NOT NULL,
+ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useRef, useMemo } from "react"
+import { useState, useRef, useMemo, useEffect } from "react"
+import axios from "axios"
 import {
     LayoutDashboard, MapPin, ClipboardCheck, History, FileText, Settings,
     Calendar, Clock, Camera, CheckCircle2, User,      // Add this
@@ -351,14 +352,49 @@ import signature from "../assets/approver_sig.png";
 // };
 
 
+// ── shared admin API helper ────────────────────────────────────────────────
+const adminApi = () => {
+    const token = localStorage.getItem("adminToken");
+    return axios.create({
+        baseURL: "http://localhost:5000/api/admin",
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};
+
 const DashboardOverview = ({ setActiveSection }) => {
     // --- States for Admin Info ---
     const [isEditing, setIsEditing] = useState(false);
     const [adminData, setAdminData] = useState({
-        name: "Mokhlesur Rahman",
-        email: "mokhlesh123@sust.edu",
-        signatureUrl: signature // signature variable-টি ইমপোর্ট করা থাকলে সেটি এখানে দিন
+        name: localStorage.getItem("adminName") || "Admin",
+        email: "",
+        designation: localStorage.getItem("adminDesignation") || "",
+        signatureUrl: signature
     });
+    const [dashStats, setDashStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+
+    // Load real profile + stats once on mount
+    useEffect(() => {
+        const api = adminApi();
+        api.get("/profile").then(res => {
+            const a = res.data;
+            setAdminData(prev => ({
+                ...prev,
+                name: a.approver_name || prev.name,
+                email: a.approver_email || prev.email,
+                designation: a.approver_designation || prev.designation,
+            }));
+        }).catch(() => {}); // silently ignore if backend is offline
+
+        api.get("/dashboard").then(res => {
+            const s = res.data.stats || {};
+            setDashStats({
+                total:    Number(s.total)    || 0,
+                pending:  Number(s.pending)  || 0,
+                approved: Number(s.approved) || 0,
+                rejected: Number(s.rejected) || 0,
+            });
+        }).catch(() => {});
+    }, []);
 
     // --- States for Reservation Logic ---
     const [isReserveOpen, setIsReserveOpen] = useState(false);
@@ -460,7 +496,7 @@ const DashboardOverview = ({ setActiveSection }) => {
                         ) : (
                             <>
                                 <h2 className="text-xl font-bold text-slate-800">{adminData.name}</h2>
-                                <p className="text-sm text-gray-500 font-medium">Head of Physical Education</p>
+                                <p className="text-sm text-gray-500 font-medium">{adminData.designation || "Admin"}</p>
                             </>
                         )}
 
@@ -688,13 +724,13 @@ const DashboardOverview = ({ setActiveSection }) => {
                 <div className="bg-[#eef6ff] border border-blue-100 rounded-3xl p-6">
                     <div className="flex items-center gap-2 mb-4 text-[#0052cc]">
                         <Calendar size={20} />
-                        <h3 className="font-bold text-lg">Requests (Last 30 Days)</h3>
+                        <h3 className="font-bold text-lg">Requests (All Time)</h3>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <StatBox1 label="Total" count="12" color="text-slate-800" />
-                        <StatBox1 label="Approved" count="8" color="text-emerald-700" />
-                        <StatBox1 label="Pending" count="2" color="text-orange-700" />
-                        <StatBox1 label="Rejected" count="2" color="text-red-700" />
+                        <StatBox1 label="Total"    count={dashStats.total}    color="text-slate-800" />
+                        <StatBox1 label="Approved" count={dashStats.approved} color="text-emerald-700" />
+                        <StatBox1 label="Pending"  count={dashStats.pending}  color="text-orange-700" />
+                        <StatBox1 label="Rejected" count={dashStats.rejected} color="text-red-700" />
                     </div>
                 </div>
 
@@ -1165,12 +1201,73 @@ const BookingApprovals = () => {
     const [isRejectOpen, setIsRejectOpen] = useState(false);
     const [filterSpot, setFilterSpot] = useState("All Spots");
     const [filterDate, setFilterDate] = useState("");
-    const [sortOrder, setSortOrder] = useState("newest"); // Newest = 23:59 down to 00:00
-
+    const [sortOrder, setSortOrder] = useState("newest");
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-    // 2. MOCK DATA (With Timestamps)
-    const pendingData = [
+    // 2. REAL DATA from backend
+    const [pendingData, setPendingData] = useState([]);
+    const [loadingApprovals, setLoadingApprovals] = useState(true);
+
+    const fetchPending = () => {
+        const api = adminApi();
+        setLoadingApprovals(true);
+        api.get("/dashboard")
+            .then(res => {
+                const rows = res.data.pending || [];
+                // Normalize backend fields → UI shape
+                const normalized = rows.map(b => ({
+                    id: `REQ-${String(b.booking_id).padStart(3, '0')}`,
+                    booking_id: b.booking_id,
+                    spotName: b.name || b.spot_name || "Unknown Spot",
+                    title: b.event_title || b.title || "(No Title)",
+                    organizer: b.full_name || b.organizer || "Unknown",
+                    date: b.start_date ? b.start_date.split('T')[0] : "",
+                    endDate: b.end_date ? b.end_date.split('T')[0] : null,
+                    session: b.session || "",
+                    startTime: b.start_time || "",
+                    endTime: b.end_time || "",
+                    timestamp: b.timestamp || b.start_date || new Date().toISOString(),
+                    description: b.description || "",
+                    applicant: { name: b.full_name || "", dept: b.dept || "", designation: b.designation || "", contact: b.contact_number || "" },
+                    recommender: { name: b.recommender_name || "", post: b.recommender_post || "" },
+                    approver: { name: localStorage.getItem("adminName") || "", post: localStorage.getItem("adminDesignation") || "" },
+                }));
+                setPendingData(normalized);
+            })
+            .catch(() => {})
+            .finally(() => setLoadingApprovals(false));
+    };
+
+    useEffect(() => { fetchPending(); }, []);
+
+    // Approve handler
+    const handleApprove = async (req) => {
+        try {
+            await adminApi().post(`/bookings/${req.booking_id}/approve`);
+            setPendingData(prev => prev.filter(r => r.booking_id !== req.booking_id));
+            setSelectedReq(null);
+            setIsPreviewOpen(false);
+        } catch {
+            alert("Failed to approve booking. Please try again.");
+        }
+    };
+
+    // Reject handler
+    const handleReject = async () => {
+        if (!selectedReq || !reason) return;
+        try {
+            await adminApi().post(`/bookings/${selectedReq.booking_id}/reject`);
+            setPendingData(prev => prev.filter(r => r.booking_id !== selectedReq.booking_id));
+            setIsRejectOpen(false);
+            setSelectedReq(null);
+            setReason("");
+        } catch {
+            alert("Failed to reject booking. Please try again.");
+        }
+    };
+
+    // 2b. placeholder data array (kept for reference, now unused)
+    const _unusedMock = [
         {
             id: "REQ-011",
             spotName: "Handball Ground",
@@ -1248,6 +1345,8 @@ const BookingApprovals = () => {
             approver: { name: "Prof. Dr. M. Ahmed", post: "Director of Physical Education", signature: "/sig-app.png" }
         }
     ];
+    // End of unused mock array
+
     const resetFilters = () => {
         setFilterSpot("All Spots");
         setFilterDate("");
@@ -1352,7 +1451,17 @@ const BookingApprovals = () => {
             </div>
 
             {/* MAIN LIST */}
-            <div className="grid gap-3"> {/* Reduced gap between items */}
+            {loadingApprovals && (
+                <div className="text-center py-12 text-gray-400 font-bold">Loading pending bookings...</div>
+            )}
+            {!loadingApprovals && filteredAndSortedData.length === 0 && (
+                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                    <CheckCircle2 className="mx-auto text-green-400 mb-3" size={40} />
+                    <p className="text-gray-500 font-bold text-lg">No pending bookings!</p>
+                    <p className="text-xs text-gray-400 mt-1">All requests have been processed.</p>
+                </div>
+            )}
+            <div className="grid gap-3">
                 {filteredAndSortedData.map((req) => (
                     <div
                         key={req.id}
@@ -1400,6 +1509,12 @@ const BookingApprovals = () => {
                             >
                                 <X size={14} /> Reject
                             </button>
+                            <button
+                                onClick={() => handleApprove(req)}
+                                className="flex-1 lg:flex-none bg-[#0052cc] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 flex items-center gap-2 transition-all active:scale-95"
+                            >
+                                <Check size={14} /> Approve
+                            </button>
                         </div>
                     </div>
                 ))}
@@ -1446,8 +1561,7 @@ const BookingApprovals = () => {
 
                             <div className="flex gap-3 pt-2">
                                 <button onClick={() => setSelectedReq(null)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3.5 rounded-2xl font-bold transition-all">Close</button>
-                                {/* Trigger Preview instead of simple Alert */}
-                                <button onClick={() => setIsPreviewOpen(true)} className="flex-1 bg-[#0052cc] text-white py-3.5 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-all">Approve Booking</button>
+                                <button onClick={() => setIsPreviewOpen(true)} className="flex-1 bg-[#0052cc] text-white py-3.5 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-all">Preview &amp; Approve</button>
                             </div>
                         </div>
                     ) : (
@@ -1565,14 +1679,10 @@ const BookingApprovals = () => {
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        alert("Forwarded to Registrar & Estate Office");
-                                        setSelectedReq(null);
-                                        setIsPreviewOpen(false);
-                                    }}
+                                    onClick={() => handleApprove(selectedReq)}
                                     className="bg-[#0052cc] text-white px-8 py-2 rounded-xl text-xs font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center gap-2"
                                 >
-                                    <Check size={14} /> Forward
+                                    <Check size={14} /> Confirm &amp; Approve
                                 </button>
                             </div>
                         </div>
@@ -1594,7 +1704,7 @@ const BookingApprovals = () => {
                         />
                         <div className="flex gap-4">
                             <button onClick={() => { setIsRejectOpen(false); setSelectedReq(null); setReason(""); }} className="flex-1 py-3 font-bold text-gray-500">Cancel</button>
-                            <button disabled={!reason} onClick={() => { alert("Rejected"); setIsRejectOpen(false); setSelectedReq(null); setReason(""); }} className="flex-1 bg-red-600 text-white py-3 rounded-2xl font-bold shadow-lg disabled:opacity-50 transition-all">Confirm Reject</button>
+                            <button disabled={!reason} onClick={handleReject} className="flex-1 bg-red-600 text-white py-3 rounded-2xl font-bold shadow-lg disabled:opacity-50 transition-all">Confirm Reject</button>
                         </div>
                     </div>
                 </div>
@@ -1619,14 +1729,7 @@ const DetailItem = ({ label, value }) => (
 );
 
 
-// ডামি ডেটা
-const allHistoryData = [
-    { id: "REQ-001", title: "Annual Debate Competition", spotName: "Central Field", organizer: "Debating Society", date: "2026-06-15", type: "Single Day", status: "Approved" },
-    { id: "REQ-002", title: "Sust Inter-Dept Football", spotName: "Handball Ground", organizer: "Physical Dept", startDate: "2026-06-20", endDate: "2026-06-22", type: "Date Range", status: "Rejected" },
-    { id: "REQ-003", title: "Freshers Reception 2026", spotName: "Basketball Ground", organizer: "CSE Society", date: "2026-05-10", type: "Single Day", status: "Cancelled" },
-    { id: "REQ-004", title: "IEEE Workshop", spotName: "Central Field", organizer: "IEEE Student Branch", date: "2026-06-05", type: "Single Day", status: "Approved" },
-    { id: "REQ-005", title: "Cultural Night", spotName: "Handball Ground", organizer: "Sust Himesh", date: "2026-06-12", type: "Single Day", status: "Approved" },
-];
+// allHistoryData is now loaded from API inside BookingHistory
 
 // import React, { useState } from "react";
 // import {   X } from "lucide-react";
@@ -1639,9 +1742,35 @@ const BookingHistory = () => {
     const [filterSpot, setFilterSpot] = useState("All Spots");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-
-    // NEW: State for PDF Preview
     const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+
+    // ── Real data from backend ───────────────────────────────────────
+    const [allHistoryData, setAllHistoryData] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(true);
+
+    useEffect(() => {
+        adminApi().get("/bookings")
+            .then(res => {
+                const rows = res.data || [];
+                const normalized = rows.map(b => {
+                    const rawStatus = (b.booking_status || "pending").toLowerCase();
+                    const statusMap = { approved: "Approved", rejected: "Rejected", cancelled: "Cancelled", pending: "Pending" };
+                    return {
+                        id: `REQ-${String(b.booking_id).padStart(3, '0')}`,
+                        title: b.event_title || b.title || "(No Title)",
+                        spotName: b.name || b.spot_name || "Unknown Spot",
+                        organizer: b.full_name || b.organizer || "Unknown",
+                        date: b.start_date ? b.start_date.split('T')[0] : "",
+                        startDate: b.start_date ? b.start_date.split('T')[0] : "",
+                        endDate: b.end_date ? b.end_date.split('T')[0] : null,
+                        status: statusMap[rawStatus] || "Pending",
+                    };
+                });
+                setAllHistoryData(normalized);
+            })
+            .catch(() => {})
+            .finally(() => setLoadingHistory(false));
+    }, []);
 
     // Updated Filtering Logic
     const filteredData = allHistoryData.filter((item) => {
@@ -1852,7 +1981,9 @@ const BookingHistory = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                        {filteredData.length > 0 ? (
+                        {loadingHistory ? (
+                            <tr><td colSpan="5" className="px-6 py-10 text-center text-gray-400 text-xs font-medium">Loading bookings...</td></tr>
+                        ) : filteredData.length > 0 ? (
                             filteredData.map((item) => (
                                 <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
                                     <td className="px-6 py-2">
