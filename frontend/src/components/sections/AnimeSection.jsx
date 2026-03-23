@@ -28,7 +28,7 @@ const AnimeSection = () => {
         : 0;
 
     const isLimitExceeded = isMultiple && dayDifference > 5;
-    const isDateInvalid = isMultiple && dayDifference <= 0 && searchEndDate !== "";
+    // const isDateInvalid = isMultiple && dayDifference <= 0 && searchEndDate !== "";
 
     // Navigation Handler
     const handleNavigation = () => {
