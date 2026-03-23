@@ -18,7 +18,7 @@ const Spot = {
         db.query(sql, callback);
     },
     getSpotDetails: (id, callback) => {
-    // এখন আর LEFT JOIN বা GROUP_CONCAT দরকার নেই
+   
     const sql = `
         SELECT spot_id, name, description, location, display_image, approval_copy_recipient, rules , image1, image2, image3
         FROM spots 

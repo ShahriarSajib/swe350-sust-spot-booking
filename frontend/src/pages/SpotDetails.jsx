@@ -16,7 +16,6 @@ import GalleryModal from "../components/SpotDetailsComponent/GalleryModal";
 
 
 export default function SpotDetails() {
-    /* ---------------- MOCK SPOT DATA ---------------- */
     const { id } = useParams();
 
     const [personalDetails, setPersonalDetails] = useState({
@@ -54,7 +53,7 @@ export default function SpotDetails() {
 
         fetchSpot();
     }, [id]);
-     console.log("Current Spot State:", spot);
+    console.log("Current Spot State:", spot);
     /* ---------------- BOOKING ARRAYS ---------------- */
     const [onlyDay, setOnlyDay] = useState([]);
     const [onlyNight, setOnlyNight] = useState([]);
@@ -63,31 +62,52 @@ export default function SpotDetails() {
     const [partial, setPartial] = useState([]);
     useEffect(() => {
         const fetchAvailability = async () => {
-
-            const spotId = localStorage.getItem('selectedSpotId');
-
-            if (!spotId) return;
+            // const spotId = localStorage.getItem('selectedSpotId');
+            // if (!spotId) return;
+            if(!id) {
+                console.error("No spot ID found in URL params");
+                return;} // we have the spot ID from URL params
 
             try {
-
-                const response = await fetch(`http://localhost:5000/api/availability/${spotId}`);
+                const response = await fetch(`http://localhost:5000/api/availability/${id}`);
                 const data = await response.json();
 
+                // Merging logic for onlyDay and onlyNight to identify fullBooked dates
+                let rawOnlyDay = data.onlyDay || [];
+                let rawOnlyNight = data.onlyNight || [];
+                let rawFullBooked = data.fullBooked || [];
+                // let rawPartial = data.partial || [];
 
-                setOnlyDay(data.onlyDay || []);
-                setOnlyNight(data.onlyNight || []);
-                setFullBooked(data.fullBooked || []);
+               
+                const commonDates = rawOnlyDay.filter(date => rawOnlyNight.includes(date));
+
+                if (commonDates.length > 0) {
+                    rawFullBooked = [...new Set([...rawFullBooked, ...commonDates])];
+
+                    rawOnlyDay = rawOnlyDay.filter(date => !commonDates.includes(date));
+                    rawOnlyNight = rawOnlyNight.filter(date => !commonDates.includes(date));
+                }
+
+            
+                const finalPartial = [...new Set([...rawOnlyDay, ...rawOnlyNight])];
+
+                // state updates
+                setOnlyDay(rawOnlyDay);
+                setOnlyNight(rawOnlyNight);
+                setFullBooked(rawFullBooked);
+                setPartial(finalPartial); 
                 setPending(data.pending || []);
-                setPartial(data.partial || []);
 
-                console.log("Availability data loaded:", data);
+                console.log("data:", data);
+
+                console.log("Merged to Red (Full):", commonDates);
             } catch (error) {
                 console.error("Error fetching availability:", error);
             }
         };
 
         fetchAvailability();
-    }, []);
+    }, [id]); // Add 'id' as a dependency to refetch when spot ID changes
 
     /* ---------------- STATE ---------------- */
     const [bookingType, setBookingType] = useState("single");
@@ -188,7 +208,7 @@ export default function SpotDetails() {
                 setSession(sessionId);
                 setBookingData((prev) => ({
                     ...prev,
-                    spotName: spot.name,
+                    spotName: spot?.name,
                     date: !isMultiple ? date : "",
                     startDate: isMultiple ? date : "",
                     endDate: isMultiple ? endDate : "",
@@ -197,6 +217,41 @@ export default function SpotDetails() {
             }
         }
     }, [location.state, spot?.name]);
+
+
+    // Session Conflict Logic
+    const isSessionConflict = () => {
+        
+        if (!session || (!selectedDate && !dateRange.from)) return false;
+
+        const checkDate = (dateStr, selectedSession) => {
+            
+            if (fullBooked.includes(dateStr)) return true;
+
+            
+            if (selectedSession === "night" && onlyNight.includes(dateStr)) return true;
+
+            if (selectedSession === "day" && onlyDay.includes(dateStr)) return true;
+
+            
+            if (selectedSession === "day+night" && (onlyDay.includes(dateStr) || onlyNight.includes(dateStr))) return true;
+
+            return false;
+        };
+
+        if (bookingType === "single" && selectedDate) {
+            return checkDate(formatLocalDate(selectedDate), session);
+        } else if (bookingType === "multiple" && dateRange.from && dateRange.to) {
+           
+            let curr = new Date(dateRange.from);
+            while (curr <= dateRange.to) {
+                if (checkDate(formatLocalDate(curr), session)) return true;
+                curr.setDate(curr.getDate() + 1);
+            }
+        }
+        return false;
+    };
+    console.log("Session Conflict:", isSessionConflict());
 
 
     if (!spot) {
@@ -212,7 +267,7 @@ export default function SpotDetails() {
             {/* ================= LEFT SECTION ================= */}
             <SpotInformation spot={spot} setShowGallery={setShowGallery} />
 
-            {/* মডালটি সরাসরি এখানে রেন্ডার করুন */}
+            {/* rendering the modal */}
             {showGallery && (
                 <GalleryModal
                     spot={spot}
@@ -220,7 +275,7 @@ export default function SpotDetails() {
                 />
             )}
 
-            {/* GALLERY MODAL */}
+
 
             {/* ================= RIGHT SECTION ================= */}
             {/* Right Side - Booking Section */}
@@ -246,11 +301,14 @@ export default function SpotDetails() {
                         fullBooked={fullBooked}
                         partial={partial}
                         pending={pending}
+                        onlyDay={onlyDay}
+                        onlyNight={onlyNight}
                         getStatus={getStatus}
                         isDateInList={isDateInList}
                         showForm={showForm}
                         personalDetails={personalDetails}
                         bookingData={bookingData}
+                        isConflict={isSessionConflict()}
 
                     />
                 </div>

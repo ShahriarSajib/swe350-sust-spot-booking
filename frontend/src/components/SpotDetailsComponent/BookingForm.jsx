@@ -13,24 +13,26 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
         console.log("Current Booking Data:", bookingData);
         // user confirmation dialog
         const isSure = window.confirm("Are you sure you want to confirm this booking request?");
-        
-        
+
+
         if (!isSure) {
-            return; 
+            return;
         }
 
         // if okay, prepare payload
         const userId = localStorage.getItem("userId");
         const spotId = localStorage.getItem("selectedSpotId");
-        const userType = localStorage.getItem("userType");
+       
 
         const payload = {
             userId: userId,
             spotId: spotId,
-            bookingType: userType,
             organizer: bookingData.department,
             startDate: bookingType === "single" ? bookingData.date : bookingData.startDate,
-            endDate: bookingType === "multi" ? bookingData.endDate : null,
+
+
+
+            endDate: bookingType === "single" ? bookingData.date : bookingData.endDate,
             session: bookingData.session?.toLowerCase() || 'day',
             title: bookingData.eventTitle,
             description: bookingData.eventDescription,
@@ -41,16 +43,16 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
             recommenderDesignation: bookingData.designation
         };
 
-        
+
         axios.post("http://localhost:5000/api/bookings/confirm", payload)
             .then(res => {
                 alert("Success: " + res.data.message);
-                
+
             })
             .catch(err => {
                 alert("Error: " + (err.response?.data?.message || "Booking failed"));
             });
-            console.log("Payload sent to server:", payload.spot_name);
+        console.log("Payload sent to server:", payload.spot_name);
     };
 
     return (
@@ -161,7 +163,7 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="md:col-span-1">
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Recommender Name</label>
-                                <input type="text" name="recommenderName" placeholder="Name" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" onChange={handleChange}/>
+                                <input type="text" name="recommenderName" placeholder="Name" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" onChange={handleChange} />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Designation</label>
