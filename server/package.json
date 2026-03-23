@@ -21,6 +21,6 @@
     "swe350-sust-spot-booking": "file:.."
   },
   "devDependencies": {
-    "nodemon": "^3.1.13"
+    "nodemon": "^3.1.14"
   }
 }

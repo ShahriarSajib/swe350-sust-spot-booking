@@ -383,17 +383,17 @@ const DashboardOverview = ({ setActiveSection }) => {
                 email: a.approver_email || prev.email,
                 designation: a.approver_designation || prev.designation,
             }));
-        }).catch(() => {}); // silently ignore if backend is offline
+        }).catch(() => { }); // silently ignore if backend is offline
 
         api.get("/dashboard").then(res => {
             const s = res.data.stats || {};
             setDashStats({
-                total:    Number(s.total)    || 0,
-                pending:  Number(s.pending)  || 0,
+                total: Number(s.total) || 0,
+                pending: Number(s.pending) || 0,
                 approved: Number(s.approved) || 0,
                 rejected: Number(s.rejected) || 0,
             });
-        }).catch(() => {});
+        }).catch(() => { });
     }, []);
 
     // --- States for Reservation Logic ---
@@ -727,9 +727,9 @@ const DashboardOverview = ({ setActiveSection }) => {
                         <h3 className="font-bold text-lg">Requests (All Time)</h3>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <StatBox1 label="Total"    count={dashStats.total}    color="text-slate-800" />
+                        <StatBox1 label="Total" count={dashStats.total} color="text-slate-800" />
                         <StatBox1 label="Approved" count={dashStats.approved} color="text-emerald-700" />
-                        <StatBox1 label="Pending"  count={dashStats.pending}  color="text-orange-700" />
+                        <StatBox1 label="Pending" count={dashStats.pending} color="text-orange-700" />
                         <StatBox1 label="Rejected" count={dashStats.rejected} color="text-red-700" />
                     </div>
                 </div>
@@ -862,7 +862,7 @@ import handballImg from "../assets/handball_ground.png";
 import basketballImg from "../assets/basketball_ground.png";
 
 const SpotManagement = () => {
-    // 1. Multi-spot state with internal recipient arrays
+    // ── STATE ──────────────────────────────────────────────────
     const [spots, setSpots] = useState({
         "Central Field": {
             name: "Central Field",
@@ -907,8 +907,53 @@ const SpotManagement = () => {
     });
 
     const [activeSpot, setActiveSpot] = useState("Central Field");
+    const [saving, setSaving] = useState(false);
+    const [saveMsg, setSaveMsg] = useState("");
     const mainInputRef = useRef(null);
     const galleryInputRef = useRef(null);
+
+    // Load spot data + recipients from DB on mount
+    useEffect(() => {
+        const api = adminApi();
+        api.get("/spots").then(res => {
+            const dbSpots = res.data || [];
+            const spotMap = {};
+            dbSpots.forEach(s => {
+                const key = s.name;
+                spotMap[key] = {
+                    spot_id: s.spot_id,
+                    name: s.name,
+                    location: s.location || "",
+                    capacity: String(s.capacity || ""),
+                    maxBooking: String(s.max_booking || ""),
+                    description: s.description || "",
+                    rules: s.spot_rules || "",
+                    mainImage: s.image1 ? `http://localhost:5000/uploads/${s.image1}` : fieldImg,
+                    gallery: [s.image2, s.image3].filter(Boolean).map(img => `http://localhost:5000/uploads/${img}`),
+                    recipients: []
+                };
+            });
+            // Merge with existing state so local images don't break
+            setSpots(prev => {
+                const merged = { ...prev };
+                Object.keys(spotMap).forEach(key => {
+                    merged[key] = { ...prev[key], ...spotMap[key] };
+                });
+                return merged;
+            });
+
+            // Load recipients for each spot
+            dbSpots.forEach(s => {
+                api.get(`/spots/${s.spot_id}/recipients`).then(rRes => {
+                    const recs = (rRes.data || []).map(r => ({ name: r.recipient_designation, email: r.recipient_email }));
+                    setSpots(prev => ({
+                        ...prev,
+                        [s.name]: { ...prev[s.name], recipients: recs.length ? recs : prev[s.name]?.recipients || [] }
+                    }));
+                }).catch(() => { });
+            });
+        }).catch(() => { });
+    }, []);
 
     // Helper to get current active data
     const currentData = spots[activeSpot];
@@ -1159,15 +1204,36 @@ const SpotManagement = () => {
                 <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-4 py-2 rounded-xl">
                         <Info size={14} />
-                        <span className="text-[11px] font-bold  tracking-tight">Modifying settings for {activeSpot} only</span>
+                        <span className="text-[11px] font-bold tracking-tight">Modifying settings for {activeSpot} only</span>
                     </div>
+                    {saveMsg && <span className={`text-xs font-bold px-3 py-1.5 rounded-lg ${saveMsg.includes('✓') ? 'text-green-700 bg-green-50' : 'text-red-700 bg-red-50'}`}>{saveMsg}</span>}
                     <div className="flex gap-3">
-                        <button className="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-all text-sm">Discard</button>
                         <button
-                            onClick={() => alert(`Saved data for ${activeSpot} including ${currentData.recipients.length} recipients`)}
-                            className="bg-[#0052cc] text-white px-8 py-2.5 rounded-xl font-bold hover:shadow-lg active:scale-95 transition-all text-sm"
+                            onClick={() => setSaveMsg("")}
+                            className="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-all text-sm"
+                        >Discard</button>
+                        <button
+                            disabled={saving || !currentData.spot_id}
+                            onClick={async () => {
+                                setSaving(true); setSaveMsg("");
+                                try {
+                                    const api = adminApi();
+                                    await api.put(`/spots/${currentData.spot_id}`, {
+                                        name: currentData.name,
+                                        description: currentData.description,
+                                        location: currentData.location,
+                                        spot_rules: currentData.rules
+                                    });
+                                    await api.put(`/spots/${currentData.spot_id}/recipients`, {
+                                        recipients: currentData.recipients
+                                    });
+                                    setSaveMsg(`✓ Saved for ${currentData.name}`);
+                                } catch { setSaveMsg("✗ Save failed. Try again."); }
+                                finally { setSaving(false); }
+                            }}
+                            className="bg-[#0052cc] text-white px-8 py-2.5 rounded-xl font-bold hover:shadow-lg active:scale-95 transition-all text-sm disabled:opacity-60"
                         >
-                            Save Changes
+                            {saving ? "Saving..." : "Save Changes"}
                         </button>
                     </div>
                 </div>
@@ -1234,7 +1300,7 @@ const BookingApprovals = () => {
                 }));
                 setPendingData(normalized);
             })
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setLoadingApprovals(false));
     };
 
@@ -1366,7 +1432,7 @@ const BookingApprovals = () => {
                 const timeB = new Date(b.timestamp).getTime();
                 return sortOrder === "newest" ? timeB - timeA : timeA - timeB;
             });
-    }, [filterSpot, filterDate, sortOrder]);
+    }, [pendingData, filterSpot, filterDate, sortOrder]);
 
     // 4. TIME FORMATTING HELPER (Bangladeshi 12h Format)
     const formatBDTime = (isoString) => {
@@ -1768,7 +1834,7 @@ const BookingHistory = () => {
                 });
                 setAllHistoryData(normalized);
             })
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setLoadingHistory(false));
     }, []);
 
@@ -2049,9 +2115,10 @@ const StatusBadge = ({ status }) => {
         Approved: "bg-green-100 text-green-700 border-green-200",
         Rejected: "bg-red-100 text-red-700 border-red-200",
         Cancelled: "bg-orange-100 text-orange-700 border-orange-200",
+        Pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
     }
     return (
-        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border tracking-widest ${styles[status]}`}>
+        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border tracking-widest ${styles[status] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
             {status}
         </span>
     )
@@ -2063,75 +2130,86 @@ import music from "../assets/consert.png";
 
 const BlogModeration = () => {
     const [selectedBlog, setSelectedBlog] = useState(null);
-    const [activeTab, setActiveTab] = useState('blogs'); // blogs, feedbacks
-    const [blogStatus, setBlogStatus] = useState('pending'); // pending, published
+    const [activeTab, setActiveTab] = useState('blogs');
+    const [blogStatus, setBlogStatus] = useState('pending');
 
-    // স্যাম্পল ডেটা (ইমেজসহ)
-    const pendingBlogs = [
-        {
-            id: 1,
-            title: "Music Night on 30 years celebration of SUST Press Club",
-            author: "Sadia Nusrat",
-            date: "Jan 11, 2026",
-            image: music,
-            spot: "Handball Ground",
-            eventdate: "10-01-2025",
-            content: `The night of January 11, 2026, marked a monumental milestone as the SUST Press Club celebrated its 30th anniversary with a grand 'Music Night' at the Central Auditorium. The event was a soulful journey through three decades of journalism, unity, and excellence.
+    // ── Real data from DB ─────────────────────────────────────
+    const [pendingBlogs, setPendingBlogs] = useState([]);
+    const [publishedBlogs, setPublishedBlogs] = useState([]);
+    const [feedbacks, setFeedbacks] = useState([]);
+    const [loadingBlogs, setLoadingBlogs] = useState(true);
+    const [loadingFeedbacks, setLoadingFeedbacks] = useState(true);
 
-The event followed a structured timeline to ensure a memorable experience:
+    const fetchBlogs = () => {
+        const api = adminApi();
+        setLoadingBlogs(true);
+        Promise.all([
+            api.get("/blogs?status=pending"),
+            api.get("/blogs?status=published")
+        ]).then(([pendingRes, publishedRes]) => {
+            setPendingBlogs((pendingRes.data || []).map(b => ({
+                id: b.blog_id,
+                title: b.blog_title,
+                author: b.author || "Unknown",
+                date: b.submitted_at ? new Date(b.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "",
+                image: b.cover_image ? `http://localhost:5000/uploads/${b.cover_image}` : music,
+                spot: b.spot_name || "",
+                eventdate: b.event_date ? b.event_date.split('T')[0] : "",
+                content: b.story_details || b.summary || ""
+            })));
+            setPublishedBlogs((publishedRes.data || []).map(b => ({
+                id: b.blog_id,
+                title: b.blog_title,
+                author: b.author || "Unknown",
+                date: b.submitted_at ? new Date(b.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "",
+                image: b.cover_image ? `http://localhost:5000/uploads/${b.cover_image}` : music,
+                spot: b.spot_name || "",
+                eventdate: b.event_date ? b.event_date.split('T')[0] : "",
+                content: b.story_details || b.summary || ""
+            })));
+        }).catch(() => { }).finally(() => setLoadingBlogs(false));
+    };
 
-05:30 PM — Guest Arrival & Networking
-Alumni and guests gathered at the auditorium foyer for a nostalgic meet-and-greet.
+    const fetchFeedbacks = () => {
+        const api = adminApi();
+        setLoadingFeedbacks(true);
+        api.get("/feedbacks").then(res => {
+            setFeedbacks((res.data || []).map(fb => ({
+                id: fb.event_id,
+                user: fb.user_name || "Anonymous",
+                message: fb.feedback || "",
+                date: fb.event_date ? fb.event_date.split('T')[0] : "",
+                spot: fb.spot_name || "",
+                eventdate: fb.event_date ? fb.event_date.split('T')[0] : "",
+                title: fb.event_title || ""
+            })));
+        }).catch(() => { }).finally(() => setLoadingFeedbacks(false));
+    };
 
-06:15 PM — Opening & Cake Cutting
-Official remarks followed by a grand ceremony to honor 30 years of excellence.
+    useEffect(() => { fetchBlogs(); fetchFeedbacks(); }, []);
 
-07:00 PM — Unplugged Session
-Student artists performed acoustic melodies, blending classical and contemporary hits.
+    const handlePublish = async (blogId) => {
+        try {
+            await adminApi().post(`/blogs/${blogId}/publish`);
+            fetchBlogs();
+            setSelectedBlog(null);
+        } catch { alert("Failed to publish blog."); }
+    };
 
-08:15 PM — Main Musical Performance
-The energy peaked as a guest band delivered a high-octane performance for the crowd.
+    const handleRejectBlog = async (blogId) => {
+        try {
+            await adminApi().post(`/blogs/${blogId}/reject`);
+            fetchBlogs();
+        } catch { alert("Failed to reject blog."); }
+    };
 
-10:00 PM — Closing & Alumni Recognition
-A tribute to the veteran journalists followed by a documentary screening of the club's history.
-
-This celebration was a tribute to the legacy of the voices that have shaped SUST’s narrative since its inception.`}
-    ];
-
-    const publishedBlogs = [
-        {
-            id: 101,
-            title: "SUST Tech Fest 2025 Highlights",
-            author: "S. M. Rahman",
-            date: "Dec 20, 2025",
-            image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=500",
-            spot: "Handball Ground",
-            eventdate: "10-01-2025",
-        },
-    ];
-
-    const feedbacks = [
-        {
-            id: 1,
-            user: "Abir Hossain",
-            message: "lighting system was good in the event ,  spot management was excellent,",
-            date: "Jan 11, 2026",
-            spot: "Handball Ground",
-            eventdate: "10-01-2026",
-            title: "Music Festival on 30th Anniversary of SUST Press Club"
-
-        },
-        {
-            id: 2,
-            user: "Nusrat Jahan",
-            message: "Our match was on night session , so electricity supply was good but bulb quality was not satisfactory",
-            date: "Jan 09, 2026",
-            spot: "Central Field",
-            eventdate: "10-01-2026",
-            title: "SWE Society Final Football Match"
-
-        },
-    ];
+    const handleDeleteBlog = async (blogId) => {
+        if (!window.confirm("Delete this blog permanently?")) return;
+        try {
+            await adminApi().delete(`/blogs/${blogId}`);
+            fetchBlogs();
+        } catch { alert("Failed to delete blog."); }
+    };
 
     return (
         <div className="p-8 bg-white rounded-[40px] border border-slate-100 shadow-sm min-h-[600px] font-sans">
@@ -2180,10 +2258,15 @@ This celebration was a tribute to the legacy of the voices that have shaped SUST
             )}
 
             {/* CONTENT AREA */}
+            {loadingBlogs && activeTab === 'blogs' && <div className="text-center py-12 text-gray-400 font-bold">Loading blogs...</div>}
+            {loadingFeedbacks && activeTab === 'feedbacks' && <div className="text-center py-12 text-gray-400 font-bold">Loading feedbacks...</div>}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
                 {/* 1. BLOG CARDS (Pending & Published) */}
-                {activeTab === 'blogs' && (blogStatus === 'pending' ? pendingBlogs : publishedBlogs).map(blog => (
+                {activeTab === 'blogs' && !loadingBlogs && (blogStatus === 'pending' ? pendingBlogs : publishedBlogs).length === 0 && (
+                    <div className="col-span-3 text-center py-16 text-gray-400 font-medium">No {blogStatus} blogs found.</div>
+                )}
+                {activeTab === 'blogs' && !loadingBlogs && (blogStatus === 'pending' ? pendingBlogs : publishedBlogs).map(blog => (
                     <div key={blog.id} className="group bg-white border border-slate-100 rounded-[32px] overflow-hidden hover:shadow-xl hover:shadow-slate-100 transition-all duration-300">
                         <div className="relative h-48 overflow-hidden">
                             <img src={blog.image} alt={blog.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -2218,19 +2301,19 @@ This celebration was a tribute to the legacy of the voices that have shaped SUST
                                         <button onClick={() => setSelectedBlog(blog)} className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold hover:bg-blue-500 hover:text-white transition-all">
                                             <Eye size={14} /> DETAILS
                                         </button>
-                                        <button className="flex items-center gap-1.5 px-3 py-2 bg-green-50 text-green-600 rounded-xl text-[10px] font-bold hover:bg-green-500 hover:text-white transition-all">
+                                        <button onClick={() => handlePublish(blog.id)} className="flex items-center gap-1.5 px-3 py-2 bg-green-50 text-green-600 rounded-xl text-[10px] font-bold hover:bg-green-500 hover:text-white transition-all">
                                             <CheckCircle size={14} /> PUBLISH
                                         </button>
-                                        <button className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold hover:bg-red-500 hover:text-white transition-all">
+                                        <button onClick={() => handleRejectBlog(blog.id)} className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold hover:bg-red-500 hover:text-white transition-all">
                                             <XCircle size={14} /> REJECT
                                         </button>
                                     </>
                                 ) : (
                                     <>
-                                        <button className="flex items-center gap-1.5 px-3 py-2 bg-gray-200 text-slate-600 rounded-xl text-[10px] font-bold hover:bg-blue-500 hover:text-white transition-all">
+                                        <button onClick={() => setSelectedBlog(blog)} className="flex items-center gap-1.5 px-3 py-2 bg-gray-200 text-slate-600 rounded-xl text-[10px] font-bold hover:bg-blue-500 hover:text-white transition-all">
                                             <Eye size={14} /> VIEW BLOG
                                         </button>
-                                        <button className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold hover:bg-red-500 hover:text-white transition-all">
+                                        <button onClick={() => handleDeleteBlog(blog.id)} className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold hover:bg-red-500 hover:text-white transition-all">
                                             <Trash2 size={14} /> DELETE
                                         </button>
                                     </>
@@ -2295,9 +2378,11 @@ This celebration was a tribute to the legacy of the voices that have shaped SUST
 
 
                             <div className="flex gap-4">
-                                <button className="flex-1 bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold transition-all shadow-lg shadow-green-100 flex items-center justify-center gap-2">
-                                    <CheckCircle size={18} /> Publish Blog
-                                </button>
+                                {selectedBlog && !publishedBlogs.find(b => b.id === selectedBlog.id) && (
+                                    <button onClick={() => handlePublish(selectedBlog.id)} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold transition-all shadow-lg shadow-green-100 flex items-center justify-center gap-2">
+                                        <CheckCircle size={18} /> Publish Blog
+                                    </button>
+                                )}
                                 <button onClick={() => setSelectedBlog(null)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-2xl font-bold transition-all">
                                     Cancel
                                 </button>
