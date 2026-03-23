@@ -18,18 +18,14 @@ const Spot = {
         db.query(sql, callback);
     },
     getSpotDetails: (id, callback) => {
-        // SQL JOIN ব্যবহার করে স্পট এবং রুলস একসাথে আনা হচ্ছে
-        // আমরা এখানে GROUP_CONCAT ব্যবহার করছি যাতে সব রুলস একটি স্ট্রিং বা অ্যারে হিসেবে পাওয়া যায়
-        const sql = `
-            SELECT s.spot_id, s.name, s.description, s.location, s.display_image, 
-            GROUP_CONCAT(r.rules SEPARATOR '||') as rules
-            FROM spots s
-            LEFT JOIN spot_rules r ON s.spot_id = r.spot_id
-            WHERE s.spot_id = ?
-            GROUP BY s.spot_id
-        `;
-        db.query(sql, [id], callback);
-    }
+    // এখন আর LEFT JOIN বা GROUP_CONCAT দরকার নেই
+    const sql = `
+        SELECT spot_id, name, description, location, display_image, approval_copy_recipient, rules , image1, image2, image3
+        FROM spots 
+        WHERE spot_id = ?
+    `;
+    db.query(sql, [id], callback);
+}
 };
 
 module.exports = Spot;
