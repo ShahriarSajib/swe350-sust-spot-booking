@@ -27,10 +27,15 @@ const UpcomingEventsSection = () => {
         fetchEvents();
     }, []);
 
-    // 2. Helper function to format ISO date to YYYY-MM-DD
+    
     const formatDate = (isoString) => {
         if (!isoString) return null;
-        return isoString.split('T')[0];
+        const date = new Date(isoString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
     };
 
     // 3. Filtering Logic
@@ -39,16 +44,14 @@ const UpcomingEventsSection = () => {
         return events
             .filter(event => {
                 const matchSpot = selectedSpot === "All" || event.spot_name === selectedSpot;
-                
+
                 let matchDate = true;
+                
                 if (filterDate) {
-                    const selected = new Date(filterDate).setHours(0,0,0,0);
-                    const start = new Date(formatDate(event.start_date)).setHours(0,0,0,0);
-                    // If end_date is null, use start_date for comparison
-                    const end = event.end_date 
-                        ? new Date(formatDate(event.end_date)).setHours(0,0,0,0) 
-                        : start;
-                    
+                    const selected = filterDate; // "YYYY-MM-DD"
+                    const start = formatDate(event.start_date); // "YYYY-MM-DD"
+                    const end = event.end_date ? formatDate(event.end_date) : start;
+
                     matchDate = selected >= start && selected <= end;
                 }
                 return matchSpot && matchDate;
@@ -63,7 +66,7 @@ const UpcomingEventsSection = () => {
     return (
         <section className="w-full bg-slate-50 py-16 px-4 md:px-10 min-h-screen">
             <div className="max-w-7xl mx-auto">
-                
+
                 {/* 1. HEADER SECTION */}
                 <div className="mb-10 flex flex-col items-center text-center">
                     <h2 className="text-3xl md:text-4xl font-black text-slate-900 uppercase tracking-tighter mb-3">
@@ -81,11 +84,10 @@ const UpcomingEventsSection = () => {
                             <button
                                 key={spot}
                                 onClick={() => setSelectedSpot(spot)}
-                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all border ${
-                                    selectedSpot === spot 
-                                    ? "bg-slate-900 text-white border-slate-900 shadow-md" 
-                                    : "bg-white text-slate-500 border-transparent hover:border-blue-300 hover:text-blue-600"
-                                }`}
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all border ${selectedSpot === spot
+                                        ? "bg-slate-900 text-white border-slate-900 shadow-md"
+                                        : "bg-white text-slate-500 border-transparent hover:border-blue-300 hover:text-blue-600"
+                                    }`}
                             >
                                 {spot}
                             </button>
@@ -93,8 +95,8 @@ const UpcomingEventsSection = () => {
                     </div>
 
                     <div className="flex items-center gap-3 bg-white p-1.5 rounded-xl border border-slate-100">
-                        <input 
-                            type="date" 
+                        <input
+                            type="date"
                             value={filterDate}
                             onChange={(e) => setFilterDate(e.target.value)}
                             className="bg-transparent outline-none text-xs font-bold text-slate-700 px-1 cursor-pointer"
@@ -115,7 +117,7 @@ const UpcomingEventsSection = () => {
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {eventsToShow.map(event => (
-                                    <div 
+                                    <div
                                         key={event.booking_id}
                                         className="bg-slate-800 rounded-2xl p-4 shadow-xl transition-all duration-300 group relative overflow-hidden border border-slate-700"
                                     >
@@ -126,9 +128,8 @@ const UpcomingEventsSection = () => {
                                                 <span className="text-[9px] font-black text-blue-400 uppercase tracking-tighter">Organizer</span>
                                                 <span className="text-xs font-bold text-slate-300 truncate max-w-[80px]">{event.organizer}</span>
                                             </div>
-                                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${
-                                                event.session?.toLowerCase().includes('night') ? "bg-blue-600 text-white" : "bg-sky-400 text-slate-900"
-                                            }`}>
+                                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${event.session?.toLowerCase().includes('night') ? "bg-blue-600 text-white" : "bg-sky-400 text-slate-900"
+                                                }`}>
                                                 {event.session}
                                             </span>
                                         </div>
@@ -136,7 +137,7 @@ const UpcomingEventsSection = () => {
                                         <h3 className="text-sm font-black text-white mb-1 leading-tight group-hover:text-sky-400 transition-colors line-clamp-2 min-h-[2.5rem]">
                                             {event.title}
                                         </h3>
-                                        
+
                                         <div className="flex items-center gap-1.5 mb-4">
                                             <div className="h-[1.5px] w-3 bg-blue-500"></div>
                                             <span className="text-[10px] font-bold text-slate-400 uppercase truncate">{event.spot_name}</span>
@@ -147,7 +148,7 @@ const UpcomingEventsSection = () => {
                                                 <span className="text-[8px] font-black text-slate-500 uppercase">Schedule</span>
                                                 <span className="text-[9px] font-bold text-slate-200">
                                                     {!event.end_date || formatDate(event.start_date) === formatDate(event.end_date)
-                                                        ? formatDate(event.start_date) 
+                                                        ? formatDate(event.start_date)
                                                         : `${formatDate(event.start_date)}..`
                                                     }
                                                 </span>
@@ -168,16 +169,16 @@ const UpcomingEventsSection = () => {
                             {/* BUTTONS */}
                             <div className="mt-10 flex justify-center gap-3">
                                 {visibleCount < filteredEvents.length && (
-                                    <button 
+                                    <button
                                         onClick={() => setVisibleCount(prev => prev + 4)}
                                         className="px-6 py-2.5 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-600 transition-all shadow-md"
                                     >
                                         See More
                                     </button>
                                 )}
-                                
+
                                 {visibleCount > INITIAL_VISIBLE_COUNT && (
-                                    <button 
+                                    <button
                                         onClick={() => setVisibleCount(INITIAL_VISIBLE_COUNT)}
                                         className="px-6 py-2.5 bg-white text-slate-900 border border-slate-200 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-50 transition-all shadow-sm"
                                     >

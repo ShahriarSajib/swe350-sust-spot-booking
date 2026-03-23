@@ -1,34 +1,41 @@
+require('dotenv').config({ path: './backend/.env' });  
+
 const express = require('express');
-const dotenv = require('dotenv');
+const path = require('path');
+const cors = require('cors');
+
+// Routes
 const userRoutes = require('./routes/userRoutes');
+const spotRoutes = require('./routes/spotRoutes');
 const availabilityRoutes = require('./routes/availabilityCalenderRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
-const path = require('path');
-const cors = require('cors');
+// DB (now env is already loaded ✅)
+require('./config/db');
 
-dotenv.config();
 const app = express();
 
-// Enable CORS for all origins
+// ================= MIDDLEWARE =================
+
+// CORS (use env later)
 app.use(cors({
-  origin: 'http://localhost:5173', // frontend URL
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
-console.log(process.env.DB_NAME);
 
-app.get("/", (req, res) => {
-  res.send("Backend is running!");
-});
-
+// Body parser
 app.use(express.json());
+
+// Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// ================= ROUTES =================
+
 app.use('/api/users', userRoutes);
-app.use('/api/spots', require('./routes/spotRoutes'));
+app.use('/api/spots', spotRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/events', eventRoutes);
@@ -36,5 +43,29 @@ app.use('/api/events', eventRoutes);
 //admin
 app.use("/api/admin", adminRoutes);
 
+// ================= 404 HANDLER =================
+
+app.use((req, res) => {
+  res.status(404).json({
+    message: 'Route not found'
+  });
+});
+
+// ================= GLOBAL ERROR HANDLER =================
+
+app.use((err, req, res, next) => {
+  console.error('❌ Error:', err.message);
+
+  res.status(500).json({
+    message: err.message || 'Server Error'
+  });
+});
+
+// ================= SERVER START =================
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+

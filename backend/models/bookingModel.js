@@ -4,12 +4,12 @@ const createBooking = (data, callback) => {
     // insert into bookings table
     const bookingQuery = `
         INSERT INTO bookings 
-        (user_id, spot_id, booking_type, organizer, start_date, end_date, session, title, description, spot_name, start_time, end_time, is_recommended) 
+        (user_id, spot_id, organizer, start_date, end_date, session, title, description, spot_name, start_time, end_time, is_recommended) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const bookingValues = [
-        data.userId, data.spotId, data.bookingType, data.organizer, 
+        data.userId, data.spotId, data.organizer, 
         data.startDate, data.endDate, data.session, data.title, 
         data.description, data.spotName, data.startTime, data.endTime, 0 // is_recommended = false
     ];
