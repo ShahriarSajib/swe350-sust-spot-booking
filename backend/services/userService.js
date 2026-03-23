@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const userModel = require('../models/userModel');
 const { deleteFile } = require('../utils/fileHelper');
-
+const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sendMail } = require('../utils/mailer');
 const db = require('../config/db');
@@ -96,15 +96,24 @@ exports.loginUser = async (email, password) => {
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
-
   if (!isMatch) throw new Error('Invalid password');
 
+  // ✅ generate token
+  const token = jwt.sign(
+    { id: user.id, user_type: user.user_type },
+    process.env.JWT_SECRET,
+    { expiresIn: '1d' }
+  );
+
   return {
-    id: user.id,
-    email: user.email,
-    user_type: user.user_type,
-    full_name: user.full_name,
-    contact_number: user.contact_number
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      user_type: user.user_type,
+      full_name: user.full_name,
+      contact_number: user.contact_number
+    }
   };
 };
 

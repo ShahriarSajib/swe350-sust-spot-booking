@@ -1,3 +1,4 @@
+CREATE DATABASE IF NOT EXISTS spot_booking_system;
 USE spot_booking_system;
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -12,6 +13,20 @@ CREATE TABLE users (
     signature VARCHAR(255),
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE users 
+ADD email_verified TINYINT(1) DEFAULT 0;
+ALTER TABLE users 
+ADD user_type ENUM('external','internal') NOT NULL;
+
+CREATE TABLE tokens (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  token VARCHAR(255),
+  type VARCHAR(50),
+  expires_at DATETIME,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 CREATE TABLE spots (
     spot_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -39,8 +54,6 @@ CREATE TABLE bookings (
     booking_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     spot_id INT NOT NULL,
-
-    booking_type ENUM('external','internal') NOT NULL,
     booking_status ENUM('pending','approved','rejected','cancelled') DEFAULT 'pending',
 
     organizer VARCHAR(255),
