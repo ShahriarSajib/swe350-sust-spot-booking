@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import AnimatedSpotShowcase from "../AnimatedSpotShowcase";
-import { Link } from "react-router-dom";
 import axios from "axios";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import AnimatedSpotShowcase from "../../components/authentication/AnimatedSpotShowcase";
 
 const Login = ({ onLogin }) => {
-  const [loginType, setLoginType] = useState('user');
+  const [loginType, setLoginType] = useState("user");
   // New state to toggle between Login and Forgot Password view
   const [isForgotMode, setIsForgotMode] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,19 +16,18 @@ const Login = ({ onLogin }) => {
     try {
       const res = await axios.post("http://localhost:5000/api/users/login", {
         email,
-        password
+        password,
       });
 
       alert("Login Successful!");
       console.log(res.data);
-      
+
       localStorage.setItem("userId", res.data.user.id);
       localStorage.setItem("userName", res.data.user.full_name || "");
       localStorage.setItem("userContact", res.data.user.contact_number || "");
       localStorage.setItem("userType", res.data.user.user_type || "user");
 
       onLogin(loginType);
-
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
     }
@@ -47,17 +46,23 @@ const Login = ({ onLogin }) => {
 
       <div className="w-full lg:w-1/2 flex items-center justify-center px-8 lg:px-16 bg-slate-100">
         <div className="w-full max-w-md bg-white p-10 rounded-[40px] shadow-2xl shadow-slate-200 border border-white">
-
           {/* Header section changes based on mode */}
           <div className="mb-10 text-center lg:text-left">
             <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase mb-2">
-              {isForgotMode ? <>Reset <span className="text-blue-600">Password</span></> : <>Welcome <span className="text-blue-600">Back</span></>}
+              {isForgotMode ? (
+                <>
+                  Reset <span className="text-blue-600">Password</span>
+                </>
+              ) : (
+                <>
+                  Welcome <span className="text-blue-600">Back</span>
+                </>
+              )}
             </h2>
             <p className="text-slate-500 font-medium">
               {isForgotMode
                 ? "Enter your email to receive a password reset link."
-                : `Enter your ${loginType === 'admin' ? 'admin' : ''} credentials to access your account.`
-              }
+                : `Enter your ${loginType === "admin" ? "admin" : ""} credentials to access your account.`}
             </p>
           </div>
 
@@ -65,7 +70,9 @@ const Login = ({ onLogin }) => {
             /* --- EXISTING LOGIN FORM --- */
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Email Address</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">
+                  Email Address
+                </label>
                 <input
                   type="email"
                   required
@@ -78,8 +85,10 @@ const Login = ({ onLogin }) => {
 
               <div className="space-y-1">
                 <div className="flex justify-between items-center pr-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Password</label>
-                  {loginType === 'user' && (
+                  <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">
+                    Password
+                  </label>
+                  {loginType === "user" && (
                     <button
                       type="button"
                       onClick={() => setIsForgotMode(true)}
@@ -104,7 +113,7 @@ const Login = ({ onLogin }) => {
                   type="submit"
                   className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-blue-100 hover:bg-blue-600 hover:shadow-blue-200 transition-all active:scale-[0.98]"
                 >
-                  {loginType === 'user' ? 'Login' : 'Login as Admin'}
+                  {loginType === "user" ? "Login" : "Login as Admin"}
                 </button>
               </div>
             </form>
@@ -112,7 +121,9 @@ const Login = ({ onLogin }) => {
             /* --- FORGOT PASSWORD FORM --- */
             <form className="space-y-6" onSubmit={handleResetSubmit}>
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">Email Address</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-2 tracking-widest">
+                  Email Address
+                </label>
                 <input
                   type="email"
                   required
@@ -140,38 +151,58 @@ const Login = ({ onLogin }) => {
 
           {/* Footer Section - Only show when not in Forgot Mode to keep it clean */}
           {!isForgotMode && (
-            <div className="mt-10 space-y-8">
-              {loginType === 'user' && (
-                <p className="text-sm text-slate-500 text-center font-medium">
-                  Don’t have an account?{" "}
-                  <Link
-                    to="/register"
-                    className="text-blue-600 font-bold hover:underline underline-offset-4"
-                  >
-                    Create an account
-                  </Link>
-                </p>
-              )}
+            <div className="mt-10 space-y-4">
+              {" "}
+              {/* Adjusted spacing */}
+              {loginType === "user" && (
+                <>
+                  {/* Registration Link */}
+                  <p className="text-sm text-slate-500 text-center font-medium">
+                    Don’t have an account?{" "}
+                    <Link
+                      to="/register"
+                      className="text-blue-600 font-bold hover:underline underline-offset-4"
+                    >
+                      Create an account
+                    </Link>
+                  </p>
 
-              <div className="flex items-center justify-center gap-3">
-                <div
-                  onClick={() => setLoginType('user')}
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === 'user'
-                      ? "border-blue-600 text-blue-600 bg-blue-50"
-                      : "border-slate-200 text-slate-400 hover:border-slate-300"
+                  {/* External User Booking Link - New Section */}
+                  <p className="text-sm text-slate-500 text-center font-medium">
+                    Are you an external?{" "}
+                    <Link
+                      to="/external-booking" // You can change this path later
+                      className="text-blue-600 font-bold hover:underline underline-offset-4"
+                    >
+                      Click here
+                    </Link>
+                  </p>
+                </>
+              )}
+              {/* Divider and Login Type Switcher */}
+              <div className="pt-4 flex flex-col items-center gap-6">
+                <div className="flex items-center justify-center gap-3">
+                  <div
+                    onClick={() => setLoginType("user")}
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${
+                      loginType === "user"
+                        ? "border-blue-600 text-blue-600 bg-blue-50"
+                        : "border-slate-200 text-slate-400 hover:border-slate-300"
                     }`}
-                >
-                  login as User
-                </div>
-                <div className="h-1 w-1 bg-slate-200 rounded-full"></div>
-                <div
-                  onClick={() => setLoginType('admin')}
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === 'admin'
-                      ? "border-blue-600 text-blue-600 bg-blue-50"
-                      : "border-slate-200 text-slate-400 hover:border-slate-300"
+                  >
+                    login as User
+                  </div>
+                  <div className="h-1 w-1 bg-slate-200 rounded-full"></div>
+                  <div
+                    onClick={() => setLoginType("admin")}
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${
+                      loginType === "admin"
+                        ? "border-blue-600 text-blue-600 bg-blue-50"
+                        : "border-slate-200 text-slate-400 hover:border-slate-300"
                     }`}
-                >
-                  login as Admin
+                  >
+                    login as Admin
+                  </div>
                 </div>
               </div>
             </div>
