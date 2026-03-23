@@ -35,17 +35,6 @@ exports.addNewSpot = (req, res) => {
 exports.onlyAddRules = (req, res) => {
     const { spot_id, rules } = req.body;
 
-    // console.log("Received spot_id:", spot_id);
-    // console.log("Received rules:", rules);
-
-    // if (!spot_id) {
-    //     return res.status(400).json({ error: "Spot ID is missing!" });
-    // }
-    // if (!rules) {
-    //     return res.status(400).json({ error: "Rules are missing!" });
-    // }
-
-    // Rules যদি স্ট্রিং হিসেবে আসে (Postman থেকে), তবে সেটাকে অ্যারে করে নেওয়া
     let rulesArray = rules;
     if (typeof rules === 'string') {
         try {
@@ -59,7 +48,6 @@ exports.onlyAddRules = (req, res) => {
         return res.status(400).json({ error: "Spot ID and rules are required!" });
     }
 
-    // আপনার মডেলের addRules ফাংশনটি ব্যবহার করা হচ্ছে
     Spot.addRules(spot_id, rulesArray, (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.status(200).json({ message: "Rules added successfully to the spot!" });
@@ -88,6 +76,9 @@ exports.getSpotById = (req, res) => {
             description: spot.description,
             location: spot.location,
             display_image: spot.display_image,
+            image1: spot.image1,
+            image2: spot.image2,
+            image3: spot.image3,
             rules: rulesArray
         });
     });
