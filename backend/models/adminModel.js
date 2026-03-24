@@ -1,47 +1,34 @@
 const db = require("../config/db");
 
-// Find admin by email
 const findAdminByEmail = async (email) => {
   const [rows] = await db.query(
-    "SELECT * FROM approver WHERE approver_email = ?",
+    "SELECT * FROM approver WHERE approver_email = ? LIMIT 1",
     [email]
   );
-  return rows[0];
+  return rows[0] || null;
 };
 
-// Create admin
-const createAdmin = async ({ name, email, designation, password }) => {
-  const [result] = await db.query(
-    `INSERT INTO approver 
-    (approver_name, approver_email, approver_designation, password)
-    VALUES (?, ?, ?, ?)`,
-    [name, email, designation, password]
-  );
-  return result;
-};
-
-// Get admin by ID
 const getAdminById = async (id) => {
   const [rows] = await db.query(
-    "SELECT * FROM approver WHERE approver_id = ?",
+    "SELECT approver_id, approver_name, approver_email, approver_designation, approver_signature FROM approver WHERE approver_id = ?",
     [id]
   );
-  return rows[0];
+  return rows[0] || null;
 };
 
-// Update admin
-const updateAdmin = async (id, { name, designation, signature }) => {
+const updateAdmin = async (id, data) => {
+  const { approver_name, approver_email, approver_designation } = data;
   await db.query(
-    `UPDATE approver
-     SET approver_name=?, approver_designation=?, approver_signature=?
-     WHERE approver_id=?`,
-    [name, designation, signature, id]
+    `UPDATE approver SET approver_name = ?, approver_email = ?, approver_designation = ? WHERE approver_id = ?`,
+    [approver_name, approver_email, approver_designation, id]
   );
 };
 
-module.exports = {
-  findAdminByEmail,
-  createAdmin,
-  getAdminById,
-  updateAdmin
+const updateSignature = async (id, signaturePath) => {
+  await db.query(
+    "UPDATE approver SET approver_signature = ? WHERE approver_id = ?",
+    [signaturePath, id]
+  );
 };
+
+module.exports = { findAdminByEmail, getAdminById, updateAdmin, updateSignature };

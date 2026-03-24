@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
   LayoutDashboard, MapPin, ClipboardCheck, History, FileText, Settings,
   Calendar, Clock, CheckCircle2, Users, ArrowRight, Camera, ImagePlus, X, Check, Info, AlertCircle, Eye
@@ -108,6 +108,30 @@ const SidebarItem = ({ icon, label, active, onClick }) => (
 )
 
 const DashboardOverview = () => {
+  const [stats, setStats] = useState({
+    total: 8,
+    approved: 0,
+    pending: 0,
+    rejected: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/admin/dashboard", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        });
+        const data = await res.json();
+        setStats(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchStats();
+  }, []);
   return (
     <div className="space-y-8">
       <div>
@@ -124,19 +148,19 @@ const DashboardOverview = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white/60 p-4 rounded-2xl">
             <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total</p>
-            <p className="text-2xl font-black text-slate-800">12</p>
+            <p className="text-2xl font-black text-slate-800">{stats.total}</p>
           </div>
           <div className="bg-white/60 p-4 rounded-2xl">
             <p className="text-xs text-emerald-600 uppercase font-bold tracking-wider">Approved</p>
-            <p className="text-2xl font-black text-emerald-700">8</p>
+            <p className="text-2xl font-black text-emerald-700">{stats.approved}</p>
           </div>
           <div className="bg-white/60 p-4 rounded-2xl">
             <p className="text-xs text-orange-600 uppercase font-bold tracking-wider">Pending</p>
-            <p className="text-2xl font-black text-orange-700">2</p>
+            <p className="text-2xl font-black text-orange-700">{stats.pending}</p>
           </div>
           <div className="bg-white/60 p-4 rounded-2xl">
             <p className="text-xs text-red-600 uppercase font-bold tracking-wider">Rejected</p>
-            <p className="text-2xl font-black text-red-700">2</p>
+            <p className="text-2xl font-black text-red-700">{stats.rejected}</p>
           </div>
         </div>
       </div>
@@ -235,128 +259,418 @@ const Placeholder = ({ title }) => (
 
 import mainImage_display from "../assets/central_auditorium.png";
 
-const SpotManagement = () => {
-  // ১. ইমেজ স্টোর করার জন্য স্টেট
-  const [mainImage, setMainImage] = useState(mainImage_display);
-  const [galleryImages, setGalleryImages] = useState([
-    "https://images.unsplash.com/photo-1514525253361-bee8a48790c3",
-    "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4"
-  ]);
+// const SpotManagement = () => {
 
-  // ২. রিফ তৈরি (Input ফিল্ড ট্রিগার করার জন্য)
+//   // // ১. ইমেজ স্টোর করার জন্য স্টেট
+//   // const [mainImage, setMainImage] = useState(mainImage_display);
+//   // const [galleryImages, setGalleryImages] = useState([
+//   //   "https://images.unsplash.com/photo-1514525253361-bee8a48790c3",
+//   //   "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4"
+//   // ]);
+
+//   const [mainImage, setMainImage] = useState(null);
+//   const [galleryImages, setGalleryImages] = useState([]);
+
+//   const [mainPreview, setMainPreview] = useState(null);
+//   const [galleryPreview, setGalleryPreview] = useState([]);
+
+//   // ২. রিফ তৈরি (Input ফিল্ড ট্রিগার করার জন্য)
+//   const mainInputRef = useRef(null);
+//   const galleryInputRef = useRef(null);
+
+//   // ৩. মেইন ইমেজ পরিবর্তন
+//   const handleMainImageChange = (e) => {
+//     const file = e.target.files[0];
+//     if (file) {
+//       setMainImage(file);
+//       setMainPreview(URL.createObjectURL(file));
+//     }
+//   };
+
+//   // ৪. গ্যালারিতে নতুন ইমেজ যোগ
+//   const handleAddGalleryImages = (e) => {
+//     const files = Array.from(e.target.files);
+
+//     setGalleryImages(prev => [...prev, ...files]);
+
+//     const previews = files.map(file => URL.createObjectURL(file));
+//     setGalleryPreview(prev => [...prev, ...previews]);
+//   };
+
+//   // ৫. ইমেজ রিমুভ
+//   const removeGalleryImage = (index) => {
+//     setGalleryImages(prev => prev.filter((_, i) => i !== index));
+//     setGalleryPreview(prev => prev.filter((_, i) => i !== index));
+//   };
+
+//   return (
+//     <div className="max-w-5xl space-y-8 animate-in fade-in duration-500">
+//       {/* Hidden File Inputs */}
+//       <input type="file" ref={mainInputRef} className="hidden" accept="image/*" onChange={handleMainImageChange} />
+//       <input type="file" ref={galleryInputRef} className="hidden" accept="image/*" multiple onChange={handleAddGalleryImages} />
+
+//       <div>
+//         <h1 className="text-3xl font-bold text-[#0f172a]">Spot Management</h1>
+//         <p className="text-gray-500 mt-1">Manage visuals and details for Central Auditorium.</p>
+//       </div>
+
+//       {/* মেইন ব্যানার */}
+//       <div className="relative h-[350px] w-full rounded-[32px] overflow-hidden shadow-sm group">
+//         <img src={mainImage} alt="Main Banner" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+//         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-all flex items-end justify-end p-8">
+//           <button
+//             onClick={() => mainInputRef.current.click()} // এটি এখন আপনার গ্যালারি ওপেন করবে
+//             className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-5 py-2.5 rounded-2xl text-sm font-bold text-gray-800 hover:bg-white shadow-xl transition-all"
+//           >
+//             <Camera size={18} className="text-[#0052cc]" /> Change Main Image
+//           </button>
+//         </div>
+//       </div>
+
+//       <div className="bg-white rounded-[32px] border border-gray-100 p-10 shadow-sm space-y-8">
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+//           <InputField label="Spot Name" defaultValue="Central Auditorium" />
+//           <InputField label="Location" defaultValue="Main Building, 2nd Floor" />
+//           <InputField label="Capacity" defaultValue="500" type="number" />
+//           <InputField label="Max Booking Range (Days)" defaultValue="7" type="number" />
+
+//           <div className="col-span-1 md:col-span-2">
+//             <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+//             <textarea className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none h-24 transition-all resize-none" defaultValue="A state-of-the-art auditorium suitable for seminars and cultural events." />
+//           </div>
+
+//           <div className="col-span-1 md:col-span-2">
+//             <label className="block text-sm font-bold text-gray-700 mb-2">Instructions & Rules</label>
+//             <textarea className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none h-24 transition-all resize-none" defaultValue="1. No food allowed. 2. Sound system operated by staff only." />
+//           </div>
+//         </div>
+
+//         {/* এডিশনাল গ্যালারি */}
+//         <div className="space-y-4">
+//           <div className="flex justify-between items-center">
+//             <label className="block text-sm font-bold text-gray-700">Extra Gallery Images</label>
+//             <button onClick={() => galleryInputRef.current.click()} className="text-[#0052cc] text-xs font-bold hover:underline">Add Images</button>
+//           </div>
+
+//           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+//             {galleryImages.map((img, index) => (
+//               <div key={index} className="relative aspect-[4/3] rounded-2xl overflow-hidden group border">
+//                 <img src={img} className="w-full h-full object-cover" />
+//                 <button
+//                   onClick={() => removeGalleryImage(index)} // এটি এখন ইমেজ রিমুভ করবে
+//                   className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+//                 >
+//                   <X size={14} />
+//                 </button>
+//               </div>
+//             ))}
+//             <div onClick={() => galleryInputRef.current.click()} className="aspect-[4/3] bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-all group">
+//               <ImagePlus size={28} className="mb-1 group-hover:text-[#0052cc]" />
+//               <span className="text-xs font-bold group-hover:text-[#0052cc]">Add New</span>
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="pt-8 border-t border-gray-50 flex justify-end gap-4">
+//           <button className="px-8 py-3 rounded-2xl font-bold text-gray-500 hover:bg-gray-100">Discard</button>
+//           <button onClick={() => alert("Changes saved temporarily in UI!")} className="bg-[#0052cc] text-white px-10 py-3 rounded-2xl font-bold hover:shadow-lg active:scale-95 transition-all">
+//             Save Changes
+//           </button>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
+
+// // হেল্পার ইনপুট কম্পোনেন্ট
+// const InputField = ({ label, type = "text", placeholder, defaultValue }) => (
+//   <div className="space-y-2">
+//     <label className="block text-sm font-bold text-gray-700">{label}</label>
+//     <input
+//       type={type}
+//       defaultValue={defaultValue}
+//       placeholder={placeholder}
+//       className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+//     />
+//   </div>
+// );
+const API = "http://localhost:5000/api/admin";
+
+const SpotManagement = () => {
+  const [spots, setSpots] = useState([]);
+  const [activeSpot, setActiveSpot] = useState(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    location: "",
+    description: "",
+    spot_rules: ""
+  });
+
+  const [mainImage, setMainImage] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
+
   const mainInputRef = useRef(null);
   const galleryInputRef = useRef(null);
 
-  // ৩. মেইন ইমেজ পরিবর্তন
+  /* ================= LOAD SPOTS ================= */
+  useEffect(() => {
+    fetchSpots();
+  }, []);
+
+  const fetchSpots = async () => {
+    try {
+      const res = await fetch(`${API}/spots`);
+      const data = await res.json();
+
+      setSpots(data);
+
+      // 🔥 don't override manually selected spot
+      if (!activeSpot && data.length) {
+        setActiveSpot(data[0]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  /* ================= SET FORM WHEN SPOT SELECTED ================= */
+  useEffect(() => {
+    if (!activeSpot) return;
+
+    setForm({
+      name: activeSpot.name || "",
+      location: activeSpot.location || "",
+      description: activeSpot.description || "",
+      spot_rules: activeSpot.spot_rules || ""
+    });
+
+    // 🔥 IMPORTANT: assume backend gives full URL
+    setMainImage(activeSpot.image1 || null);
+
+    setGalleryImages(
+      [activeSpot.image2, activeSpot.image3].filter(Boolean)
+    );
+  }, [activeSpot]);
+
+  /* ================= ADD NEW SPOT ================= */
+  const handleAddSpot = () => {
+    const tempSpot = {
+      spot_id: "new",
+      name: "New Spot"
+    };
+
+    // 🔥 insert at beginning (slide effect)
+    setSpots(prev => [tempSpot, ...prev]);
+
+    setActiveSpot(tempSpot);
+
+    setForm({
+      name: "",
+      location: "",
+      description: "",
+      spot_rules: ""
+    });
+
+    setMainImage(null);
+    setGalleryImages([]);
+  };
+
+  /* ================= IMAGE HANDLING ================= */
   const handleMainImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) setMainImage(URL.createObjectURL(file));
+    if (file) setMainImage(file);
   };
 
-  // ৪. গ্যালারিতে নতুন ইমেজ যোগ
-  const handleAddGalleryImages = (e) => {
+  const handleGalleryChange = (e) => {
     const files = Array.from(e.target.files);
-    const newImages = files.map(file => URL.createObjectURL(file));
-    setGalleryImages([...galleryImages, ...newImages]);
+    setGalleryImages(prev => [...prev, ...files]);
   };
 
-  // ৫. ইমেজ রিমুভ
   const removeGalleryImage = (index) => {
-    setGalleryImages(galleryImages.filter((_, i) => i !== index));
+    setGalleryImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  /* ================= SAVE ================= */
+  const handleSave = async () => {
+    try {
+      const formData = new FormData();
+
+      formData.append("name", form.name);
+      formData.append("location", form.location);
+      formData.append("description", form.description);
+      formData.append("spot_rules", form.spot_rules);
+
+      // 🔥 send only new files
+      if (mainImage instanceof File) {
+        formData.append("image1", mainImage);
+      }
+
+      galleryImages.forEach((img, index) => {
+        if (img instanceof File) {
+          formData.append(`image${index + 2}`, img);
+        }
+      });
+
+      let url = `${API}/spots`;
+      let method = "POST";
+
+      if (activeSpot && activeSpot.spot_id !== "new") {
+        url = `${API}/spots/${activeSpot.spot_id}`;
+        method = "PUT";
+      }
+
+      const res = await fetch(url, {
+        method,
+        body: formData
+      });
+
+      if (!res.ok) throw new Error("Save failed");
+
+      alert("Saved successfully ✅");
+
+      setActiveSpot(null); // reset selection
+      await fetchSpots();
+
+    } catch (err) {
+      console.error(err);
+      alert("Error saving spot ❌");
+    }
   };
 
   return (
-    <div className="max-w-5xl space-y-8 animate-in fade-in duration-500">
-      {/* Hidden File Inputs */}
-      <input type="file" ref={mainInputRef} className="hidden" accept="image/*" onChange={handleMainImageChange} />
-      <input type="file" ref={galleryInputRef} className="hidden" accept="image/*" multiple onChange={handleAddGalleryImages} />
+    <div className="space-y-6">
 
-      <div>
-        <h1 className="text-3xl font-bold text-[#0f172a]">Spot Management</h1>
-        <p className="text-gray-500 mt-1">Manage visuals and details for Central Auditorium.</p>
-      </div>
-
-      {/* মেইন ব্যানার */}
-      <div className="relative h-[350px] w-full rounded-[32px] overflow-hidden shadow-sm group">
-        <img src={mainImage} alt="Main Banner" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-all flex items-end justify-end p-8">
+      {/* ================= TABS ================= */}
+      <div className="flex gap-3 flex-wrap items-center">
+        {spots.map((spot) => (
           <button
-            onClick={() => mainInputRef.current.click()} // এটি এখন আপনার গ্যালারি ওপেন করবে
-            className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-5 py-2.5 rounded-2xl text-sm font-bold text-gray-800 hover:bg-white shadow-xl transition-all"
+            key={spot.spot_id}
+            onClick={() => setActiveSpot(spot)}
+            className={`px-4 py-2 rounded-xl border ${activeSpot?.spot_id === spot.spot_id
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100"
+              }`}
           >
-            <Camera size={18} className="text-[#0052cc]" /> Change Main Image
+            {spot.name}
           </button>
-        </div>
+        ))}
+
+        {/* ADD BUTTON */}
+        <button
+          onClick={handleAddSpot}
+          className="px-4 py-2 rounded-xl bg-green-600 text-white"
+        >
+          + Add New Spot
+        </button>
       </div>
 
-      <div className="bg-white rounded-[32px] border border-gray-100 p-10 shadow-sm space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <InputField label="Spot Name" defaultValue="Central Auditorium" />
-          <InputField label="Location" defaultValue="Main Building, 2nd Floor" />
-          <InputField label="Capacity" defaultValue="500" type="number" />
-          <InputField label="Max Booking Range (Days)" defaultValue="7" type="number" />
+      {/* ================= MAIN IMAGE ================= */}
+      <div className="relative h-[300px] bg-gray-200 rounded-2xl overflow-hidden">
+        {mainImage && (
+          <img
+            src={
+              typeof mainImage === "string"
+                ? mainImage
+                : URL.createObjectURL(mainImage)
+            }
+            className="w-full h-full object-cover"
+          />
+        )}
 
-          <div className="col-span-1 md:col-span-2">
-            <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
-            <textarea className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none h-24 transition-all resize-none" defaultValue="A state-of-the-art auditorium suitable for seminars and cultural events." />
-          </div>
+        <button
+          onClick={() => mainInputRef.current.click()}
+          className="absolute bottom-4 right-4 bg-white px-4 py-2 rounded-xl"
+        >
+          Change Image
+        </button>
 
-          <div className="col-span-1 md:col-span-2">
-            <label className="block text-sm font-bold text-gray-700 mb-2">Instructions & Rules</label>
-            <textarea className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none h-24 transition-all resize-none" defaultValue="1. No food allowed. 2. Sound system operated by staff only." />
-          </div>
-        </div>
-
-        {/* এডিশনাল গ্যালারি */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <label className="block text-sm font-bold text-gray-700">Extra Gallery Images</label>
-            <button onClick={() => galleryInputRef.current.click()} className="text-[#0052cc] text-xs font-bold hover:underline">Add Images</button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {galleryImages.map((img, index) => (
-              <div key={index} className="relative aspect-[4/3] rounded-2xl overflow-hidden group border">
-                <img src={img} className="w-full h-full object-cover" />
-                <button
-                  onClick={() => removeGalleryImage(index)} // এটি এখন ইমেজ রিমুভ করবে
-                  className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 transition-all shadow-lg"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
-            <div onClick={() => galleryInputRef.current.click()} className="aspect-[4/3] bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-all group">
-              <ImagePlus size={28} className="mb-1 group-hover:text-[#0052cc]" />
-              <span className="text-xs font-bold group-hover:text-[#0052cc]">Add New</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-8 border-t border-gray-50 flex justify-end gap-4">
-          <button className="px-8 py-3 rounded-2xl font-bold text-gray-500 hover:bg-gray-100">Discard</button>
-          <button onClick={() => alert("Changes saved temporarily in UI!")} className="bg-[#0052cc] text-white px-10 py-3 rounded-2xl font-bold hover:shadow-lg active:scale-95 transition-all">
-            Save Changes
-          </button>
-        </div>
+        <input
+          type="file"
+          hidden
+          ref={mainInputRef}
+          onChange={handleMainImageChange}
+        />
       </div>
+
+      {/* ================= FORM ================= */}
+      <div className="grid grid-cols-2 gap-4">
+        <input
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          placeholder="Spot Name"
+          className="p-3 border rounded-xl"
+        />
+
+        <input
+          value={form.location}
+          onChange={(e) => setForm({ ...form, location: e.target.value })}
+          placeholder="Location"
+          className="p-3 border rounded-xl"
+        />
+
+        <textarea
+          value={form.description}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+          placeholder="Description"
+          className="p-3 border rounded-xl col-span-2"
+        />
+
+        <textarea
+          value={form.spot_rules}
+          onChange={(e) => setForm({ ...form, spot_rules: e.target.value })}
+          placeholder="Rules"
+          className="p-3 border rounded-xl col-span-2"
+        />
+      </div>
+
+      {/* ================= GALLERY ================= */}
+      <div className="flex gap-3 flex-wrap">
+        {galleryImages.map((img, i) => (
+          <div key={i} className="relative w-32 h-24">
+            <img
+              src={
+                typeof img === "string"
+                  ? img
+                  : URL.createObjectURL(img)
+              }
+              className="w-full h-full object-cover rounded"
+            />
+            <button
+              onClick={() => removeGalleryImage(i)}
+              className="absolute top-1 right-1 bg-red-500 text-white px-1"
+            >
+              X
+            </button>
+          </div>
+        ))}
+
+        <button
+          onClick={() => galleryInputRef.current.click()}
+          className="w-32 h-24 border flex items-center justify-center"
+        >
+          +
+        </button>
+
+        <input
+          type="file"
+          hidden
+          multiple
+          ref={galleryInputRef}
+          onChange={handleGalleryChange}
+        />
+      </div>
+
+      {/* ================= SAVE ================= */}
+      <button
+        onClick={handleSave}
+        className="bg-blue-600 text-white px-6 py-3 rounded-xl"
+      >
+        Save Changes
+      </button>
     </div>
-  )
-}
-
-// হেল্পার ইনপুট কম্পোনেন্ট
-const InputField = ({ label, type = "text", placeholder, defaultValue }) => (
-  <div className="space-y-2">
-    <label className="block text-sm font-bold text-gray-700">{label}</label>
-    <input
-      type={type}
-      defaultValue={defaultValue}
-      placeholder={placeholder}
-      className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-    />
-  </div>
-);
-
+  );
+};
 
 
 /* ================= 2. BOOKING APPROVALS (LOGIC INCLUDED) ================= */
@@ -597,8 +911,8 @@ const BookingHistory = () => {
                 key={status}
                 onClick={() => setFilterStatus(status)}
                 className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${filterStatus === status
-                    ? "bg-white text-[#0052cc] shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
+                  ? "bg-white text-[#0052cc] shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
                   }`}
               >
                 {status}

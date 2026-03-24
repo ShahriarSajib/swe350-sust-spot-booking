@@ -173,3 +173,25 @@ CREATE TABLE notification (
 ALTER TABLE approver
 ADD COLUMN password VARCHAR(255) NOT NULL,
 ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE event_blog
+ADD COLUMN blog_status ENUM('pending','published','rejected') DEFAULT 'pending',
+ADD COLUMN submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN cover_image VARCHAR(255);
+
+-- Run these if columns don't exist yet on your bookings / spots tables
+
+-- Add capacity and max_booking to spots (if not present)
+ALTER TABLE spots
+  ADD COLUMN IF NOT EXISTS capacity INT DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS max_booking INT DEFAULT NULL;
+
+-- Ensure bookings.title exists (some schemas use event_title instead)
+ALTER TABLE bookings
+  ADD COLUMN IF NOT EXISTS title VARCHAR(255) DEFAULT NULL;
+
+-- Ensure approver has all required columns
+ALTER TABLE approver
+  ADD COLUMN IF NOT EXISTS password VARCHAR(255) NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+

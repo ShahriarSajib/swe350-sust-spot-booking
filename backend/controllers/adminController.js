@@ -3,39 +3,81 @@ const jwt = require("jsonwebtoken");
 const db = require("../config/db");
 const Admin = require("../models/adminModel");
 
-// LOGIN
+const JWT_SECRET = process.env.JWT_SECRET || "SECRET_KEY";
+
+// ── AUTH ─────────────────────────────────────────────────────────────────────
+
 const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(400).json({ message: "Email and password are required" });
 
     const admin = await Admin.findAdminByEmail(email);
-    if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
-    }
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
 
     const match = await bcrypt.compare(password, admin.password);
-    if (!match) {
-      return res.status(400).json({ message: "Invalid password" });
-    }
+    if (!match) return res.status(400).json({ message: "Invalid password" });
 
-    const token = jwt.sign(
-      { id: admin.approver_id },
-      "SECRET_KEY",
-      { expiresIn: "1d" }
-    );
+    const token = jwt.sign({ id: admin.approver_id }, JWT_SECRET, { expiresIn: "7d" });
 
-    res.json({ token, admin });
+    res.json({
+      token,
+      admin: {
+        approver_id: admin.approver_id,
+        approver_name: admin.approver_name,
+        approver_email: admin.approver_email,
+        approver_designation: admin.approver_designation,
+      },
+    });
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
+const logoutAdmin = async (req, res) => {
+  res.json({ message: "Logged out successfully" });
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword)
+      return res.status(400).json({ message: "Both passwords are required" });
+
+    const [rows] = await db.query(
+      "SELECT password FROM approver WHERE approver_id = ?",
+      [req.admin.id]
+    );
+    if (!rows[0]) return res.status(404).json({ message: "Admin not found" });
+
+    const match = await bcrypt.compare(oldPassword, rows[0].password);
+    if (!match) return res.status(400).json({ message: "Old password incorrect" });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.query("UPDATE approver SET password = ? WHERE approver_id = ?", [
+      hashed,
+      req.admin.id,
+    ]);
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ── PROFILE ───────────────────────────────────────────────────────────────────
 
 const getProfile = async (req, res) => {
   try {
     const admin = await Admin.getAdminById(req.admin.id);
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
     res.json(admin);
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Get profile error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -44,49 +86,27 @@ const updateProfile = async (req, res) => {
     await Admin.updateAdmin(req.admin.id, req.body);
     res.json({ message: "Profile updated" });
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Update profile error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-const changePassword = async (req, res) => {
+const updateSignature = async (req, res) => {
   try {
-    const { oldPassword, newPassword } = req.body;
-
-    const [rows] = await db.query(
-      "SELECT password FROM approver WHERE approver_id = ?",
-      [req.admin.id]
-    );
-
-    const admin = rows[0];
-
-    const match = await bcrypt.compare(oldPassword, admin.password);
-    if (!match) {
-      return res.status(400).json({ message: "Old password incorrect" });
-    }
-
-    const hashed = await bcrypt.hash(newPassword, 10);
-
-    await db.query(
-      "UPDATE approver SET password = ? WHERE approver_id = ?",
-      [hashed, req.admin.id]
-    );
-
-    res.json({ message: "Password updated successfully" });
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    const filePath = req.file.path;
+    await Admin.updateSignature(req.admin.id, filePath);
+    res.json({ message: "Signature updated", path: filePath });
   } catch (err) {
-    console.error("Change password error:", err);
-    res.status(500).json(err);
+    console.error("Update signature error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-const logoutAdmin = async (req, res) => {
-  // Frontend will remove token
-  res.json({ message: "Logged out successfully" });
-};
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
 
-// ENHANCED DASHBOARD - includes recommender info in pending bookings
 const dashboard = async (req, res) => {
   try {
-    // Overall booking stats
     const [[stats]] = await db.query(`
       SELECT 
         COUNT(*) AS total,
@@ -100,7 +120,6 @@ const dashboard = async (req, res) => {
       "SELECT COUNT(*) AS total_spots FROM spots"
     );
 
-    // Recent activity: last 5 bookings with user + spot names
     const [recent] = await db.query(`
       SELECT b.booking_id, b.booking_status, b.timestamp,
              b.title AS event_title, b.start_date,
@@ -112,12 +131,11 @@ const dashboard = async (req, res) => {
       LIMIT 5
     `);
 
-    // Pending bookings WITH full recommender info via JOIN
     const [pending] = await db.query(`
       SELECT
         b.booking_id, b.title AS event_title, b.start_date, b.end_date,
         b.session, b.description, b.start_time, b.end_time,
-        b.timestamp, b.organizer, b.booking_type,
+        b.timestamp, b.organizer,
         u.full_name, u.department AS dept, u.email AS user_email,
         u.contact_number,
         s.name AS spot_name,
@@ -133,7 +151,6 @@ const dashboard = async (req, res) => {
       ORDER BY b.timestamp DESC
     `);
 
-    // Upcoming approved events (next 30 days)
     const [upcoming] = await db.query(`
       SELECT b.booking_id, b.title AS event_title, b.start_date, b.end_date,
              s.name AS spot_name
@@ -149,30 +166,55 @@ const dashboard = async (req, res) => {
     res.json({ stats, spots: spotsRow, recent, pending, upcoming });
   } catch (err) {
     console.error("Dashboard error:", err);
-    res.status(500).json(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// GET ALL BOOKINGS (with user + spot names)
-const getBookings = async (req, res) => {
+// ── BOOKINGS ──────────────────────────────────────────────────────────────────
+
+const getAllBookings = async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT b.*, u.full_name, s.name AS spot_name
+    const { status, spot_id, start_date, end_date } = req.query;
+
+    let query = `
+      SELECT b.booking_id, b.booking_status, b.timestamp, b.start_date, b.end_date,
+             b.session, b.title AS event_title,
+             u.full_name, s.name AS spot_name
       FROM bookings b
       JOIN users u ON b.user_id = u.id
       JOIN spots s ON b.spot_id = s.spot_id
-      ORDER BY b.timestamp DESC
-    `);
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (status && status !== "all") {
+      query += " AND b.booking_status = ?";
+      params.push(status);
+    }
+    if (spot_id) {
+      query += " AND b.spot_id = ?";
+      params.push(spot_id);
+    }
+    if (start_date && end_date) {
+      query += " AND b.start_date BETWEEN ? AND ?";
+      params.push(start_date, end_date);
+    }
+
+    query += " ORDER BY b.timestamp DESC";
+
+    const [rows] = await db.query(query, params);
     res.json(rows);
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Get bookings error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 const getSingleBooking = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT b.*, u.full_name, s.name AS spot_name,
+      `SELECT b.*, u.full_name, u.department AS dept, u.contact_number,
+              s.name AS spot_name,
               rec_user.full_name AS recommender_name,
               r.recommender_designation AS recommender_post
        FROM bookings b
@@ -183,19 +225,19 @@ const getSingleBooking = async (req, res) => {
        WHERE b.booking_id = ?`,
       [req.params.id]
     );
+    if (!rows[0]) return res.status(404).json({ message: "Booking not found" });
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Get booking error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// APPROVE BOOKING
 const approveBooking = async (req, res) => {
   const bookingId = req.params.id;
   const adminId = req.admin.id;
 
   try {
-    // Check if approval record already exists
     const [existing] = await db.query(
       "SELECT booking_id FROM approval WHERE booking_id = ?",
       [bookingId]
@@ -203,14 +245,12 @@ const approveBooking = async (req, res) => {
 
     if (existing.length > 0) {
       await db.query(
-        `UPDATE approval SET approver_id = ?, decision_time = NOW(), approvers_remarks = NULL
-         WHERE booking_id = ?`,
+        `UPDATE approval SET approver_id = ?, decision_time = NOW(), approvers_remarks = NULL WHERE booking_id = ?`,
         [adminId, bookingId]
       );
     } else {
       await db.query(
-        `INSERT INTO approval (booking_id, approver_id, decision_time)
-         VALUES (?, ?, NOW())`,
+        `INSERT INTO approval (booking_id, approver_id, decision_time) VALUES (?, ?, NOW())`,
         [bookingId, adminId]
       );
     }
@@ -220,7 +260,6 @@ const approveBooking = async (req, res) => {
       [bookingId]
     );
 
-    // Add to availability calendar if not already there
     const [calExisting] = await db.query(
       "SELECT booking_id FROM availability_calendar WHERE booking_id = ?",
       [bookingId]
@@ -228,8 +267,7 @@ const approveBooking = async (req, res) => {
     if (calExisting.length === 0) {
       await db.query(
         `INSERT INTO availability_calendar (booking_id, spot_id, start_date, end_date)
-         SELECT booking_id, spot_id, start_date, end_date
-         FROM bookings WHERE booking_id = ?`,
+         SELECT booking_id, spot_id, start_date, end_date FROM bookings WHERE booking_id = ?`,
         [bookingId]
       );
     }
@@ -237,11 +275,10 @@ const approveBooking = async (req, res) => {
     res.json({ message: "Booking approved" });
   } catch (err) {
     console.error("Approve error:", err);
-    res.status(500).json(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// REJECT BOOKING (stores reason)
 const rejectBooking = async (req, res) => {
   try {
     const { reason } = req.body;
@@ -253,7 +290,6 @@ const rejectBooking = async (req, res) => {
       [bookingId]
     );
 
-    // Store rejection remark in approval table
     const [existing] = await db.query(
       "SELECT booking_id FROM approval WHERE booking_id = ?",
       [bookingId]
@@ -261,14 +297,12 @@ const rejectBooking = async (req, res) => {
 
     if (existing.length > 0) {
       await db.query(
-        `UPDATE approval SET approver_id = ?, approvers_remarks = ?, decision_time = NOW()
-         WHERE booking_id = ?`,
+        `UPDATE approval SET approver_id = ?, approvers_remarks = ?, decision_time = NOW() WHERE booking_id = ?`,
         [adminId, reason || null, bookingId]
       );
     } else {
       await db.query(
-        `INSERT INTO approval (booking_id, approver_id, approvers_remarks, decision_time)
-         VALUES (?, ?, ?, NOW())`,
+        `INSERT INTO approval (booking_id, approver_id, approvers_remarks, decision_time) VALUES (?, ?, ?, NOW())`,
         [bookingId, adminId, reason || null]
       );
     }
@@ -276,168 +310,146 @@ const rejectBooking = async (req, res) => {
     res.json({ message: "Booking rejected" });
   } catch (err) {
     console.error("Reject error:", err);
-    res.status(500).json(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-const filterBookings = async (req, res) => {
+// Admin self-reserve
+const reserveSpotByAdmin = async (req, res) => {
   try {
-    const { status, spot_id, start_date, end_date } = req.query;
+    const { spot_id, start_date, end_date, session, title, description, start_time, end_time } = req.body;
 
-    let query = `
-      SELECT b.*, u.full_name, s.name AS spot_name
-      FROM bookings b
-      JOIN users u ON b.user_id = u.id
-      JOIN spots s ON b.spot_id = s.spot_id
-      WHERE 1=1
-    `;
+    if (!spot_id || !start_date || !session)
+      return res.status(400).json({ message: "spot_id, start_date and session are required" });
 
-    const params = [];
+    // Cancel conflicting approved bookings for that spot+date
+    await db.query(
+      `UPDATE bookings SET booking_status = 'cancelled'
+       WHERE spot_id = ? AND booking_status = 'approved'
+         AND start_date <= ? AND (end_date IS NULL OR end_date >= ?)`,
+      [spot_id, end_date || start_date, start_date]
+    );
 
-    if (status) {
-      query += " AND b.booking_status = ?";
-      params.push(status);
-    }
+    const [result] = await db.query(
+      `INSERT INTO bookings
+        (user_id, spot_id, booking_status, title, start_date, end_date, session, description, start_time, end_time)
+       VALUES (NULL, ?, 'approved', ?, ?, ?, ?, ?, ?, ?)`,
+      [spot_id, title || "Admin Reserved", start_date, end_date || null, session, description || "", start_time || null, end_time || null]
+    );
 
-    if (spot_id) {
-      query += " AND b.spot_id = ?";
-      params.push(spot_id);
-    }
+    const bookingId = result.insertId;
+    await db.query(
+      `INSERT INTO availability_calendar (booking_id, spot_id, start_date, end_date) VALUES (?, ?, ?, ?)`,
+      [bookingId, spot_id, start_date, end_date || null]
+    );
 
-    if (start_date && end_date) {
-      query += " AND b.start_date BETWEEN ? AND ?";
-      params.push(start_date, end_date);
-    }
-
-    query += " ORDER BY b.timestamp DESC";
-
-    const [rows] = await db.query(query, params);
-
-    res.json(rows);
+    res.json({ message: "Spot reserved by admin", bookingId });
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Reserve spot error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// ── SPOT MANAGEMENT ──────────────────────────────────────────────────────────
+// ── SPOT MANAGEMENT ───────────────────────────────────────────────────────────
 
 const getSpots = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM spots ORDER BY spot_id ASC");
     res.json(rows);
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Get spots error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 const getSingleSpot = async (req, res) => {
   try {
-    const [rows] = await db.query(
-      "SELECT * FROM spots WHERE spot_id = ?",
-      [req.params.id]
-    );
+    const [rows] = await db.query("SELECT * FROM spots WHERE spot_id = ?", [req.params.id]);
     if (!rows[0]) return res.status(404).json({ message: "Spot not found" });
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Get spot error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 const createSpot = async (req, res) => {
   try {
-    const { name, description, location } = req.body;
-    await db.query(
-      `INSERT INTO spots (name, description, location) VALUES (?, ?, ?)`,
-      [name, description, location]
+    const { name, description, location, spot_rules, capacity, max_booking } = req.body;
+    if (!name) return res.status(400).json({ message: "Spot name is required" });
+
+    const image1 = req.files?.["image1"]?.[0]?.path || null;
+    const image2 = req.files?.["image2"]?.[0]?.path || null;
+    const image3 = req.files?.["image3"]?.[0]?.path || null;
+
+    const [result] = await db.query(
+      `INSERT INTO spots (name, description, location, image1, image2, image3, spot_rules, capacity, max_booking)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, description || null, location || null, image1, image2, image3, spot_rules || null, capacity || null, max_booking || null]
     );
-    res.json({ message: "Spot created" });
+
+    res.status(201).json({ message: "Spot created", spot_id: result.insertId });
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Create spot error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// UPDATE SPOT - includes spot_rules field
 const updateSpot = async (req, res) => {
   try {
-    const { name, description, location, spot_rules } = req.body;
+    const { name, description, location, spot_rules, capacity, max_booking } = req.body;
+    const spotId = req.params.id;
+
+    // Check if spot exists
+    const [existing] = await db.query("SELECT spot_id FROM spots WHERE spot_id = ?", [spotId]);
+    if (!existing[0]) return res.status(404).json({ message: "Spot not found" });
+
+    // Build dynamic update query for images (only update if new file uploaded)
+    let imageUpdates = "";
+    const params = [name, description || null, location || null, spot_rules || null, capacity || null, max_booking || null];
+
+    if (req.files?.["image1"]?.[0]) {
+      imageUpdates += ", image1 = ?";
+      params.push(req.files["image1"][0].path);
+    }
+    if (req.files?.["image2"]?.[0]) {
+      imageUpdates += ", image2 = ?";
+      params.push(req.files["image2"][0].path);
+    }
+    if (req.files?.["image3"]?.[0]) {
+      imageUpdates += ", image3 = ?";
+      params.push(req.files["image3"][0].path);
+    }
+
+    params.push(spotId);
+
     await db.query(
-      `UPDATE spots SET name = ?, description = ?, location = ?, spot_rules = ? WHERE spot_id = ?`,
-      [name, description, location, spot_rules || null, req.params.id]
+      `UPDATE spots SET name = ?, description = ?, location = ?, spot_rules = ?, capacity = ?, max_booking = ?${imageUpdates}
+       WHERE spot_id = ?`,
+      params
     );
+
     res.json({ message: "Spot updated" });
   } catch (err) {
     console.error("Update spot error:", err);
-    res.status(500).json(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 const deleteSpot = async (req, res) => {
   try {
+    const [existing] = await db.query("SELECT spot_id FROM spots WHERE spot_id = ?", [req.params.id]);
+    if (!existing[0]) return res.status(404).json({ message: "Spot not found" });
+
     await db.query("DELETE FROM spots WHERE spot_id = ?", [req.params.id]);
     res.json({ message: "Spot deleted" });
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Delete spot error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-const reserveSpotByAdmin = async (req, res) => {
-  try {
-    const {
-      spot_id,
-      start_date,
-      end_date,
-      session,
-      title,
-      description,
-      start_time,
-      end_time
-    } = req.body;
-
-    // 1. Cancel conflicting bookings
-    await db.query(`
-      UPDATE bookings
-      SET booking_status = 'cancelled'
-      WHERE spot_id = ?
-      AND booking_status = 'approved'
-      AND (
-        (start_date <= ? AND (end_date IS NULL OR end_date >= ?))
-      )
-    `, [spot_id, start_date, start_date]);
-
-    // 2. Create admin booking (user_id = NULL or 0)
-    const [result] = await db.query(`
-      INSERT INTO bookings
-      (user_id, spot_id, booking_type, booking_status, title,
-       start_date, end_date, session, description, start_time, end_time)
-      VALUES (NULL, ?, 'internal', 'approved', ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      spot_id,
-      title || "Admin Reserved",
-      start_date,
-      end_date || null,
-      session,
-      description || "Reserved by admin",
-      start_time || null,
-      end_time || null
-    ]);
-
-    const bookingId = result.insertId;
-
-    // 3. Insert into availability calendar
-    await db.query(`
-      INSERT INTO availability_calendar (booking_id, spot_id, start_date, end_date)
-      VALUES (?, ?, ?, ?)
-    `, [bookingId, spot_id, start_date, end_date]);
-
-    res.json({ message: "Spot reserved by admin", bookingId });
-
-  } catch (err) {
-    console.error("Reserve spot error:", err);
-    res.status(500).json(err);
-  }
-};
-
-// ── SPOT RECIPIENTS ────────────────────────────────────────────────────────────
+// ── SPOT RECIPIENTS ───────────────────────────────────────────────────────────
 
 const getSpotRecipients = async (req, res) => {
   try {
@@ -447,26 +459,22 @@ const getSpotRecipients = async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Get recipients error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 const updateSpotRecipients = async (req, res) => {
   try {
-    const { recipients } = req.body; // array of { name, email }
+    const { recipients } = req.body;
     const spotId = req.params.id;
 
-    // Delete old recipients for this spot
-    await db.query(
-      "DELETE FROM approval_copy_recipients WHERE spot_id = ?",
-      [spotId]
-    );
+    await db.query("DELETE FROM approval_copy_recipients WHERE spot_id = ?", [spotId]);
 
-    // Insert new ones (recipient_designation maps to 'name' in frontend)
     if (recipients && recipients.length > 0) {
       const values = recipients
-        .filter(r => r.email) // skip empty rows
-        .map(r => [spotId, r.email, r.name || ""]);
+        .filter((r) => r.recipient_email)
+        .map((r) => [spotId, r.recipient_email, r.recipient_name || ""]);
 
       if (values.length > 0) {
         await db.query(
@@ -479,7 +487,7 @@ const updateSpotRecipients = async (req, res) => {
     res.json({ message: "Recipients updated" });
   } catch (err) {
     console.error("Update recipients error:", err);
-    res.status(500).json(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -487,9 +495,7 @@ const updateSpotRecipients = async (req, res) => {
 
 const getBlogs = async (req, res) => {
   try {
-    const { status } = req.query; // 'pending' or 'published'
-
-    // Build optional status filter
+    const { status } = req.query;
     let whereClause = "";
     const params = [];
     if (status && status !== "all") {
@@ -497,50 +503,46 @@ const getBlogs = async (req, res) => {
       params.push(status);
     }
 
-    const [blogs] = await db.query(`
-      SELECT eb.blog_id, eb.blog_title, eb.summary, eb.story_details,
-             eb.blog_status, eb.submitted_at, eb.cover_image,
-             u.full_name AS author,
-             s.name AS spot_name,
-             bk.start_date AS event_date
-      FROM event_blog eb
-      JOIN events ev ON eb.event_id = ev.id
-      JOIN bookings bk ON ev.booking_id = bk.booking_id
-      JOIN users u ON bk.user_id = u.id
-      JOIN spots s ON bk.spot_id = s.spot_id
-      ${whereClause}
-      ORDER BY eb.submitted_at DESC
-    `, params);
+    const [blogs] = await db.query(
+      `SELECT eb.blog_id, eb.blog_title, eb.summary, eb.story_details,
+              eb.blog_status, eb.submitted_at, eb.cover_image,
+              u.full_name AS author,
+              s.name AS spot_name,
+              bk.start_date AS event_date
+       FROM event_blog eb
+       JOIN events ev ON eb.event_id = ev.id
+       JOIN bookings bk ON ev.booking_id = bk.booking_id
+       JOIN users u ON bk.user_id = u.id
+       JOIN spots s ON bk.spot_id = s.spot_id
+       ${whereClause}
+       ORDER BY eb.submitted_at DESC`,
+      params
+    );
 
     res.json(blogs);
   } catch (err) {
     console.error("Get blogs error:", err);
-    // Return empty array gracefully so frontend doesn't crash
     res.json([]);
   }
 };
 
 const publishBlog = async (req, res) => {
   try {
-    await db.query(
-      "UPDATE event_blog SET blog_status = 'published' WHERE blog_id = ?",
-      [req.params.id]
-    );
+    await db.query("UPDATE event_blog SET blog_status = 'published' WHERE blog_id = ?", [req.params.id]);
     res.json({ message: "Blog published" });
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Publish blog error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 const rejectBlog = async (req, res) => {
   try {
-    await db.query(
-      "UPDATE event_blog SET blog_status = 'rejected' WHERE blog_id = ?",
-      [req.params.id]
-    );
+    await db.query("UPDATE event_blog SET blog_status = 'rejected' WHERE blog_id = ?", [req.params.id]);
     res.json({ message: "Blog rejected" });
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Reject blog error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -549,7 +551,8 @@ const deleteBlog = async (req, res) => {
     await db.query("DELETE FROM event_blog WHERE blog_id = ?", [req.params.id]);
     res.json({ message: "Blog deleted" });
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Delete blog error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -581,6 +584,8 @@ const getFeedbacks = async (req, res) => {
 const getReport = async (req, res) => {
   try {
     const { start, end } = req.query;
+    if (!start || !end) return res.status(400).json({ message: "start and end dates required" });
+
     const [rows] = await db.query(
       `SELECT b.*, u.full_name, s.name AS spot_name
        FROM bookings b
@@ -592,7 +597,8 @@ const getReport = async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Report error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -602,18 +608,18 @@ module.exports = {
   changePassword,
   getProfile,
   updateProfile,
+  updateSignature,
   dashboard,
-  getBookings,
+  getAllBookings,
   getSingleBooking,
   approveBooking,
   rejectBooking,
-  filterBookings,
+  reserveSpotByAdmin,
   getSpots,
   getSingleSpot,
   createSpot,
   updateSpot,
   deleteSpot,
-  reserveSpotByAdmin,
   getSpotRecipients,
   updateSpotRecipients,
   getBlogs,
@@ -621,5 +627,5 @@ module.exports = {
   rejectBlog,
   deleteBlog,
   getFeedbacks,
-  getReport
+  getReport,
 };

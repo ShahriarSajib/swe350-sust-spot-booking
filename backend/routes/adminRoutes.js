@@ -2,47 +2,81 @@ const express = require("express");
 const router = express.Router();
 
 const adminAuth = require("../middlewares/adminAuth");
-const ctrl = require("../controllers/adminController");
+const { uploadSpotImages, uploadSignature } = require("../middlewares/uploadSpots");
+const {
+  loginAdmin,
+  logoutAdmin,
+  changePassword,
+  getProfile,
+  updateProfile,
+  updateSignature,
+  dashboard,
+  getAllBookings,
+  getSingleBooking,
+  approveBooking,
+  rejectBooking,
+  reserveSpotByAdmin,
+  getSpots,
+  getSingleSpot,
+  createSpot,
+  updateSpot,
+  deleteSpot,
+  getSpotRecipients,
+  updateSpotRecipients,
+  getBlogs,
+  publishBlog,
+  rejectBlog,
+  deleteBlog,
+  getFeedbacks,
+  getReport,
+} = require("../controllers/adminController");
 
-// AUTH
-router.post("/login", ctrl.loginAdmin);
+// ── PUBLIC (no auth needed) ───────────────────────────────────────────────────
+router.post("/login", loginAdmin);
 
-// PROFILE
-router.get("/profile", adminAuth, ctrl.getProfile);
-router.put("/profile", adminAuth, ctrl.updateProfile);
+// ── PROTECTED (require adminAuth) ─────────────────────────────────────────────
+router.use(adminAuth);
 
-// DASHBOARD (stats + pending list + recent activity + upcoming events)
-router.get("/dashboard", adminAuth, ctrl.dashboard);
+// Auth
+router.post("/logout", logoutAdmin);
+router.put("/change-password", changePassword);
 
-// BOOKINGS (history list)
-router.get("/bookings", adminAuth, ctrl.getBookings);
-router.get("/bookings/:id", adminAuth, ctrl.getSingleBooking);
+// Profile
+router.get("/profile", getProfile);
+router.put("/profile", updateProfile);
+router.put("/profile/signature", uploadSignature, updateSignature);
 
-// APPROVAL ACTIONS
-router.post("/bookings/:id/approve", adminAuth, ctrl.approveBooking);
-router.post("/bookings/:id/reject", adminAuth, ctrl.rejectBooking);
+// Dashboard
+router.get("/dashboard", dashboard);
 
-// SPOTS (full CRUD)
-router.get("/spots", adminAuth, ctrl.getSpots);
-router.get("/spots/:id", adminAuth, ctrl.getSingleSpot);
-router.post("/spots", adminAuth, ctrl.createSpot);
-router.put("/spots/:id", adminAuth, ctrl.updateSpot);
-router.delete("/spots/:id", adminAuth, ctrl.deleteSpot);
+// Bookings
+router.get("/bookings", getAllBookings);
+router.get("/bookings/:id", getSingleBooking);
+router.post("/bookings/:id/approve", approveBooking);
+router.post("/bookings/:id/reject", rejectBooking);
+router.post("/bookings/reserve", reserveSpotByAdmin);
 
-// SPOT RECIPIENTS (get/update per spot)
-router.get("/spots/:id/recipients", adminAuth, ctrl.getSpotRecipients);
-router.put("/spots/:id/recipients", adminAuth, ctrl.updateSpotRecipients);
+// Spots
+router.get("/spots", getSpots);
+router.get("/spots/:id", getSingleSpot);
+router.post("/spots", uploadSpotImages, createSpot);
+router.put("/spots/:id", uploadSpotImages, updateSpot);
+router.delete("/spots/:id", deleteSpot);
 
-// BLOG MODERATION
-router.get("/blogs", adminAuth, ctrl.getBlogs);           // ?status=pending|published|all
-router.post("/blogs/:id/publish", adminAuth, ctrl.publishBlog);
-router.post("/blogs/:id/reject", adminAuth, ctrl.rejectBlog);
-router.delete("/blogs/:id", adminAuth, ctrl.deleteBlog);
+// Spot Recipients
+router.get("/spots/:id/recipients", getSpotRecipients);
+router.put("/spots/:id/recipients", updateSpotRecipients);
 
-// FEEDBACKS
-router.get("/feedbacks", adminAuth, ctrl.getFeedbacks);
+// Blog Moderation
+router.get("/blogs", getBlogs);
+router.post("/blogs/:id/publish", publishBlog);
+router.post("/blogs/:id/reject", rejectBlog);
+router.delete("/blogs/:id", deleteBlog);
 
-// REPORT
-router.get("/reports", adminAuth, ctrl.getReport);
+// Feedbacks
+router.get("/feedbacks", getFeedbacks);
+
+// Reports
+router.get("/report", getReport);
 
 module.exports = router;
