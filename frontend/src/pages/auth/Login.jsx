@@ -14,50 +14,26 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
 
     try {
-<<<<<<< HEAD
-      if (loginType === 'admin') {
-        // ── Admin Login ──────────────────────────────────────────────
-        const res = await axios.post("http://localhost:5000/api/admin/login", {
-          email,
-          password
-        });
+      const url =
+        loginType === "admin"
+          ? "http://localhost:5000/api/admin/login"
+          : "http://localhost:5000/api/users/login";
 
-        localStorage.setItem("adminToken", res.data.token);
-        localStorage.setItem("adminId", res.data.admin.approver_id);
-        localStorage.setItem("adminName", res.data.admin.approver_name || "");
-        localStorage.setItem("adminDesignation", res.data.admin.approver_designation || "");
-
-        onLogin('admin');
-      } else {
-        // ── User Login ───────────────────────────────────────────────
-        const res = await axios.post("http://localhost:5000/api/users/login", {
-          email,
-          password
-        });
-
-        localStorage.setItem("userId", res.data.user.id);
-        localStorage.setItem("userName", res.data.user.full_name || "");
-        localStorage.setItem("userContact", res.data.user.contact_number || "");
-        localStorage.setItem("userType", res.data.user.user_type || "user");
-
-        onLogin('user');
-      }
-=======
-      const res = await axios.post("http://localhost:5000/api/users/login", {
+      const res = await axios.post(url, {
         email,
         password,
       });
 
       alert("Login Successful!");
-      console.log(res.data);
 
-      localStorage.setItem("userId", res.data.user.id);
-      localStorage.setItem("userName", res.data.user.full_name || "");
-      localStorage.setItem("userContact", res.data.user.contact_number || "");
-      localStorage.setItem("userType", res.data.user.user_type || "user");
+      if (loginType === "admin") {
+        localStorage.setItem("adminToken", res.data.token);
+        localStorage.setItem("adminId", res.data.admin.approver_id);
+      } else {
+        localStorage.setItem("userId", res.data.user.id);
+      }
 
       onLogin(loginType);
->>>>>>> 7d0f75a021eaec42fda9e8fcbfbbf90342e38336
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
     }
@@ -214,22 +190,20 @@ const Login = ({ onLogin }) => {
                 <div className="flex items-center justify-center gap-3">
                   <div
                     onClick={() => setLoginType("user")}
-                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${
-                      loginType === "user"
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === "user"
                         ? "border-blue-600 text-blue-600 bg-blue-50"
                         : "border-slate-200 text-slate-400 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     login as User
                   </div>
                   <div className="h-1 w-1 bg-slate-200 rounded-full"></div>
                   <div
                     onClick={() => setLoginType("admin")}
-                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${
-                      loginType === "admin"
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === "admin"
                         ? "border-blue-600 text-blue-600 bg-blue-50"
                         : "border-slate-200 text-slate-400 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     login as Admin
                   </div>
