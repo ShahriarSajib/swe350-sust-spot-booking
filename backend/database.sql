@@ -12,12 +12,11 @@ CREATE TABLE users (
     profile_picture VARCHAR(255),
     signature VARCHAR(255),
 
+    email_verified TINYINT(1) DEFAULT 0,
+    user_type ENUM('external','internal') NOT NULL,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-ALTER TABLE users 
-ADD email_verified TINYINT(1) DEFAULT 0;
-ALTER TABLE users 
-ADD user_type ENUM('external','internal') NOT NULL;
 
 CREATE TABLE tokens (
   id INT AUTO_INCREMENT PRIMARY KEY,
