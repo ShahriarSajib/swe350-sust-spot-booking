@@ -1,4 +1,4 @@
-"use client";
+// "use client";
 
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import axios from "axios";
@@ -6,6 +6,7 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { Bell } from "lucide-react";
 import {
   LayoutDashboard, MapPin, ClipboardCheck, History, FileText,
   Calendar, Clock, Camera, CheckCircle2, User, Mail, Plus, X,
@@ -15,7 +16,6 @@ import {
   Trash2, Shield, LogOut, AlertTriangle, Loader2, RefreshCw,
   ChevronRight, Layers, Star, Activity, TrendingUp, Users, BarChart2,
 } from "lucide-react";
-import { CheckCircle as CheckCircleIcon } from "lucide-react";
 
 // ── API HELPER ────────────────────────────────────────────────────────────────
 const BASE_URL = "http://localhost:5000/api/admin";
@@ -31,6 +31,9 @@ const adminApi = () => {
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 export default function FieldsAdminDashboard() {
   const [activeSection, setActiveSection] = useState("overview");
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const navItems = [
     { id: "overview", icon: LayoutDashboard, label: "Overview" },
@@ -40,56 +43,79 @@ export default function FieldsAdminDashboard() {
     { id: "blogs", icon: FileText, label: "Blog Moderation" },
   ];
 
+  // Fetch notifications on mount + poll every 30s
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await adminApi().get("/notifications");
+      const data = res.data || [];
+      setNotifications(data);
+      setUnreadCount(data.filter(n => !n.is_read).length);
+    } catch {
+      // silently fail — backend may not have this endpoint yet
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  const markAllRead = async () => {
+    try {
+      await adminApi().put("/notifications/read-all");
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+    } catch { }
+  };
+
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)", color: "var(--text)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", fontFamily: "'Sora', sans-serif" }}>
+      {/* ── STYLES ── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
-
+ 
         :root {
-          --bg: #0a0c14;
-          --bg2: #0f1120;
-          --bg3: #141828;
-          --surface: #1a1f35;
-          --surface2: #212740;
-          --border: rgba(255,255,255,0.06);
-          --border2: rgba(255,255,255,0.10);
-          --text: #e8eaf0;
-          --text2: #8892a4;
-          --text3: #5a6478;
-          --accent: #4f6ef7;
-          --accent2: #6c83fa;
-          --accent-glow: rgba(79,110,247,0.25);
-          --green: #22c55e;
-          --red: #ef4444;
-          --orange: #f97316;
-          --yellow: #eab308;
-          --purple: #a855f7;
+          --bg: #f0f4f8;
+          --bg2: #ffffff;
+          --bg3: #f8fafc;
+          --surface: #ffffff;
+          --surface2: #f1f5f9;
+          --border: rgba(0,0,0,0.07);
+          --border2: rgba(0,0,0,0.11);
+          --text: #0f172a;
+          --text2: #475569;
+          --text3: #94a3b8;
+          --accent: #0284c7;
+          --accent2: #0369a1;
+          --accent-glow: rgba(2,132,199,0.15);
+          --green: #16a34a;
+          --red: #dc2626;
+          --orange: #ea580c;
+          --yellow: #d97706;
+          --purple: #7c3aed;
+          --header-bg: #0ea5e9;
         }
-
+ 
         * { box-sizing: border-box; }
         body { font-family: 'Sora', sans-serif; }
-
+ 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg2); }
-        ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 2px; }
-
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+ 
         .mono { font-family: 'JetBrains Mono', monospace; }
-
+ 
         .glass {
           background: var(--surface);
           border: 1px solid var(--border);
-          backdrop-filter: blur(20px);
         }
-
+ 
         .glass2 {
           background: var(--surface2);
           border: 1px solid var(--border2);
         }
-
-        .glow-accent {
-          box-shadow: 0 0 30px var(--accent-glow);
-        }
-
+ 
         .btn-primary {
           background: var(--accent);
           color: white;
@@ -97,9 +123,9 @@ export default function FieldsAdminDashboard() {
           cursor: pointer;
           transition: all 0.2s;
         }
-        .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
+        .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
         .btn-primary:active { transform: translateY(0); }
-
+ 
         .btn-ghost {
           background: transparent;
           border: 1px solid var(--border2);
@@ -107,21 +133,22 @@ export default function FieldsAdminDashboard() {
           cursor: pointer;
           transition: all 0.2s;
         }
-        .btn-ghost:hover { border-color: var(--accent); color: var(--text); background: rgba(79,110,247,0.08); }
-
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: rgba(2,132,199,0.05); }
+ 
         .nav-item {
           display: flex; align-items: center; gap: 12px;
           padding: 10px 14px; border-radius: 10px;
           cursor: pointer; transition: all 0.2s;
-          color: var(--text3); font-size: 13px; font-weight: 500;
-          border: 1px solid transparent;
+          color: var(--text2); font-size: 13px; font-weight: 500;
+          border: 1px solid transparent; background: none;
+          width: 100%; text-align: left;
         }
-        .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); border-color: var(--border); }
+        .nav-item:hover { color: var(--accent); background: rgba(2,132,199,0.06); border-color: rgba(2,132,199,0.15); }
         .nav-item.active {
-          color: var(--accent2); background: rgba(79,110,247,0.12);
-          border-color: rgba(79,110,247,0.25);
+          color: var(--accent); background: rgba(2,132,199,0.1);
+          border-color: rgba(2,132,199,0.2);
         }
-
+ 
         .stat-card {
           background: var(--surface);
           border: 1px solid var(--border);
@@ -130,19 +157,20 @@ export default function FieldsAdminDashboard() {
           position: relative;
           overflow: hidden;
           transition: all 0.2s;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
-        .stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
-
+        .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-2px); }
+ 
         .input-field {
           width: 100%; padding: 10px 14px;
-          background: var(--bg2); border: 1px solid var(--border);
+          background: var(--bg3); border: 1px solid var(--border2);
           border-radius: 10px; color: var(--text);
           font-family: 'Sora', sans-serif; font-size: 13px;
           outline: none; transition: border-color 0.2s;
         }
-        .input-field:focus { border-color: var(--accent); }
+        .input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(2,132,199,0.08); }
         .input-field::placeholder { color: var(--text3); }
-
+ 
         .badge {
           display: inline-flex; align-items: center;
           padding: 3px 10px; border-radius: 20px;
@@ -150,136 +178,191 @@ export default function FieldsAdminDashboard() {
           font-family: 'JetBrains Mono', monospace;
           letter-spacing: 0.05em;
         }
-
+ 
         .modal-overlay {
           position: fixed; inset: 0; z-index: 100;
-          background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+          background: rgba(15,23,42,0.5); backdrop-filter: blur(6px);
           display: flex; align-items: center; justify-content: center; padding: 16px;
         }
-
+ 
         .modal-box {
           background: var(--bg2); border: 1px solid var(--border2);
           border-radius: 24px; padding: 32px;
           width: 100%; max-width: 560px;
           animation: modalIn 0.2s ease;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.12);
         }
-
+ 
         @keyframes modalIn {
           from { opacity: 0; transform: scale(0.95) translateY(10px); }
           to { opacity: 1; transform: scale(1) translateY(0); }
         }
-
+ 
         @keyframes fadeSlideIn {
           from { opacity: 0; transform: translateY(16px); }
           to { opacity: 1; transform: translateY(0); }
         }
-
+ 
         .fade-in { animation: fadeSlideIn 0.3s ease both; }
-
+ 
         .section-header {
           display: flex; flex-direction: column; gap: 4px;
           margin-bottom: 28px;
         }
-
+ 
         .section-title {
           font-size: 22px; font-weight: 700; color: var(--text);
           letter-spacing: -0.02em;
         }
-
+ 
         .section-subtitle { font-size: 13px; color: var(--text3); }
-
+ 
         /* Day Picker overrides */
         .rdp {
           --rdp-cell-size: 36px !important;
           --rdp-accent-color: var(--accent) !important;
-          --rdp-background-color: var(--surface) !important;
+          --rdp-background-color: #e0f2fe !important;
           color: var(--text) !important;
         }
-        .rdp-day_selected { background: var(--accent) !important; }
-        .rdp-button:hover { background: var(--surface2) !important; }
-        .rdp-day_outside { opacity: 0.3 !important; }
-
+        .rdp-day_selected { background: var(--accent) !important; color: white !important; }
+        .rdp-button:hover:not([disabled]) { background: #e0f2fe !important; }
+        .rdp-caption_label { color: var(--text) !important; font-weight: 700 !important; }
+        .rdp-head_cell { color: var(--text3) !important; }
+ 
         .table-row { transition: background 0.15s; }
-        .table-row:hover { background: rgba(255,255,255,0.025); }
-
+        .table-row:hover { background: rgba(2,132,199,0.03); }
+ 
         .spot-tab {
           padding: 8px 18px; border-radius: 8px; cursor: pointer;
           font-size: 12px; font-weight: 600; transition: all 0.2s;
-          border: 1px solid var(--border); color: var(--text2);
+          border: 1px solid var(--border2); color: var(--text2); background: var(--surface);
         }
-        .spot-tab:hover { border-color: var(--border2); color: var(--text); }
+        .spot-tab:hover { border-color: var(--accent); color: var(--accent); }
         .spot-tab.active {
           background: var(--accent); color: white;
           border-color: var(--accent);
         }
-
+ 
         .image-drop {
           border: 2px dashed var(--border2); border-radius: 12px;
           display: flex; flex-direction: column; align-items: center;
           justify-content: center; cursor: pointer;
           transition: all 0.2s; padding: 20px;
         }
-        .image-drop:hover { border-color: var(--accent); background: rgba(79,110,247,0.05); }
-
+        .image-drop:hover { border-color: var(--accent); background: rgba(2,132,199,0.03); }
+ 
         .toast {
           position: fixed; bottom: 24px; right: 24px; z-index: 9999;
           padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 600;
           display: flex; align-items: center; gap: 10px;
           animation: toastIn 0.3s ease;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.12);
         }
         @keyframes toastIn {
           from { opacity: 0; transform: translateY(16px) scale(0.95); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .toast.success { background: #14532d; border: 1px solid #22c55e; color: #86efac; }
-        .toast.error { background: #450a0a; border: 1px solid #ef4444; color: #fca5a5; }
+        .toast.success { background: #f0fdf4; border: 1px solid #22c55e; color: #15803d; }
+        .toast.error { background: #fef2f2; border: 1px solid #ef4444; color: #b91c1c; }
+ 
+        /* Notification item */
+        .notif-item {
+          display: flex; gap: 12px; padding: 14px 16px;
+          border-radius: 12px; cursor: pointer; transition: background 0.15s;
+          border: 1px solid transparent;
+        }
+        .notif-item:hover { background: #f0f9ff; border-color: #bae6fd; }
+        .notif-item.unread { background: #f0f9ff; }
       `}</style>
 
-      <div className="flex h-screen overflow-hidden">
-        {/* SIDEBAR */}
-        <aside style={{ width: 220, background: "var(--bg2)", borderRight: "1px solid var(--border)", flexShrink: 0 }}
-          className="flex flex-col">
-          {/* Logo */}
-          <div className="p-5 mb-2" style={{ borderBottom: "1px solid var(--border)" }}>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: "var(--accent)" }}>
-                <Layers size={16} color="white" />
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>SUST Admin</div>
-                <div style={{ fontSize: 10, color: "var(--text3)", fontFamily: "JetBrains Mono" }}>v2.0</div>
-              </div>
-            </div>
+      {/* ── TOP HEADER ── */}
+      <header style={{
+        background: "var(--header-bg)",
+        height: 64,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 28px",
+        position: "sticky", top: 0, zIndex: 50,
+        boxShadow: "0 2px 12px rgba(14,165,233,0.3)",
+      }}>
+        {/* Brand */}
+        <div className="flex items-center gap-3">
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Layers size={18} color="white" />
           </div>
+          <span style={{ color: "white", fontWeight: 700, fontSize: 16, letterSpacing: "-0.01em" }}>SUST Spot Booking</span>
+        </div>
 
-          {/* Nav */}
-          <nav className="flex-1 px-3 py-3 flex flex-col gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button key={item.id} className={`nav-item ${activeSection === item.id ? "active" : ""}`}
-                  onClick={() => setActiveSection(item.id)}>
-                  <Icon size={15} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
+        {/* Right: Notifications + Logout */}
+        <div className="flex items-center gap-3">
+          {/* Notification Bell */}
+          <button
+            onClick={() => setShowNotifications(true)}
+            style={{
+              position: "relative", background: "rgba(255,255,255,0.15)", border: "none",
+              borderRadius: 10, padding: "8px 16px", cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 8,
+              color: "white", fontWeight: 700, fontSize: 14, transition: "background 0.2s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.25)"}
+            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
+          >
+            <Bell size={16} />
+            <span>Notifications</span>
+            {unreadCount > 0 && (
+              <span style={{
+                position: "absolute", top: 4, right: 4,
+                background: "#ef4444", color: "white",
+                borderRadius: "50%", width: 18, height: 18,
+                fontSize: 10, fontWeight: 800,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "JetBrains Mono",
+              }}>{unreadCount > 9 ? "9+" : unreadCount}</span>
+            )}
+          </button>
+
+          {/* Logout */}
+          <button
+            onClick={() => { localStorage.removeItem("adminToken"); window.location.href = "/login"; }}
+            style={{
+              background: "white", color: "#0284c7", border: "none",
+              borderRadius: 10, padding: "8px 20px", cursor: "pointer",
+              fontWeight: 700, fontSize: 14, transition: "all 0.2s",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+      {/* ── BODY ── */}
+      <div style={{ display: "flex", height: "calc(100vh - 64px)" }}>
+
+        {/* ── SIDEBAR ── */}
+        <aside style={{
+          width: 220, background: "var(--bg2)",
+          borderRight: "1px solid var(--border)",
+          flexShrink: 0, display: "flex", flexDirection: "column",
+          boxShadow: "2px 0 8px rgba(0,0,0,0.04)",
+        }}>
+          <nav style={{ flex: 1, padding: "16px 12px", display: "flex", flexDirection: "column", gap: 4 }}>
+            {navItems.map(({ id, icon: Icon, label }) => (
+              <button
+                key={id}
+                className={`nav-item ${activeSection === id ? "active" : ""}`}
+                onClick={() => setActiveSection(id)}
+              >
+                <Icon size={15} />
+                <span>{label}</span>
+              </button>
+            ))}
           </nav>
-
-          {/* Bottom */}
-          <div className="p-3" style={{ borderTop: "1px solid var(--border)" }}>
-            <button className="nav-item w-full" style={{ color: "var(--red)" }}
-              onClick={() => { localStorage.removeItem("adminToken"); window.location.href = "/login"; }}>
-              <LogOut size={14} />
-              <span>Sign Out</span>
-            </button>
-          </div>
         </aside>
 
-        {/* MAIN */}
-        <main className="flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
+        {/* ── MAIN CONTENT ── */}
+        <main style={{ flex: 1, overflowY: "auto", background: "var(--bg)" }}>
           <div className="p-8 fade-in" key={activeSection}>
             {activeSection === "overview" && <DashboardOverview setActiveSection={setActiveSection} />}
             {activeSection === "spots" && <SpotManagement />}
@@ -289,6 +372,17 @@ export default function FieldsAdminDashboard() {
           </div>
         </main>
       </div>
+
+      {/* ── NOTIFICATIONS MODAL ── */}
+      {showNotifications && (
+        <NotificationsModal
+          notifications={notifications}
+          onClose={() => setShowNotifications(false)}
+          onMarkAllRead={markAllRead}
+          onRefresh={fetchNotifications}
+          setActiveSection={setActiveSection}
+        />
+      )}
     </div>
   );
 }
@@ -304,6 +398,373 @@ const Toast = ({ message, type, onDone }) => {
   );
 };
 
+//notification modal
+const NotificationsModal = ({ notifications, onClose, onMarkAllRead, onRefresh, setActiveSection }) => {
+  const unread = notifications.filter(n => !n.is_read).length;
+
+  // Notification type → icon + color
+  const getTypeStyle = (type) => {
+    switch (type) {
+      case "new_booking": return { icon: CalendarIcon, color: "#0284c7", bg: "#e0f2fe" };
+      case "cancellation": return { icon: XCircle, color: "#dc2626", bg: "#fee2e2" };
+      case "feedback": return { icon: MessageSquare, color: "#7c3aed", bg: "#f3e8ff" };
+      case "blog_request": return { icon: FileText, color: "#d97706", bg: "#fef3c7" };
+      case "approval": return { icon: CheckCircle2, color: "#16a34a", bg: "#dcfce7" };
+      case "rejection": return { icon: AlertTriangle, color: "#dc2626", bg: "#fee2e2" };
+      default: return { icon: Bell, color: "#64748b", bg: "#f1f5f9" };
+    }
+  };
+
+  // Relative time helper
+  const relTime = (ts) => {
+    if (!ts) return "";
+    const diff = (Date.now() - new Date(ts).getTime()) / 1000;
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hour${Math.floor(diff / 3600) > 1 ? "s" : ""} ago`;
+    if (diff < 172800) return "Yesterday";
+    return new Date(ts).toLocaleDateString("en-GB");
+  };
+
+  return (
+    <div
+      style={{
+        position: "fixed", inset: 0, zIndex: 200,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "rgba(15,23,42,0.45)", backdropFilter: "blur(4px)",
+      }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        style={{
+          background: "white", borderRadius: 20, width: "100%", maxWidth: 520,
+          boxShadow: "0 24px 64px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0",
+          animation: "modalIn 0.2s ease",
+          display: "flex", flexDirection: "column", maxHeight: "80vh",
+        }}
+      >
+        {/* Header */}
+        <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 18, color: "#0f172a" }}>Notifications</div>
+              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>Stay updated with user activities</div>
+            </div>
+            <button
+              onClick={onClose}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 6, borderRadius: 8, color: "#94a3b8" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#f1f5f9"; e.currentTarget.style.color = "#0f172a"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#94a3b8"; }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* List */}
+        <div style={{ overflowY: "auto", flex: 1, padding: "12px 16px" }}>
+          {notifications.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px 0", color: "#94a3b8" }}>
+              <Bell size={32} style={{ margin: "0 auto 10px", opacity: 0.3 }} />
+              <div style={{ fontSize: 14 }}>No notifications yet</div>
+            </div>
+          ) : (
+            notifications.map((notif) => {
+              const { icon: Icon, color, bg } = getTypeStyle(notif.type);
+              return (
+                <div
+                  key={notif.notification_id}
+                  className={`notif-item ${!notif.is_read ? "unread" : ""}`}
+                  onClick={() => {
+                    // Navigate to the relevant section
+                    if (notif.type === "new_booking") { setActiveSection("approvals"); onClose(); }
+                    if (notif.type === "blog_request") { setActiveSection("blogs"); onClose(); }
+                    if (notif.type === "feedback") { setActiveSection("blogs"); onClose(); }
+                  }}
+                >
+                  {/* Icon */}
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Icon size={16} color={color} />
+                  </div>
+
+                  {/* Content */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, color: "#0f172a", fontWeight: notif.is_read ? 400 : 600, lineHeight: 1.5 }}>
+                      {notif.message}
+                    </div>
+                    {notif.booking_id && (
+                      <button
+                        onClick={e => { e.stopPropagation(); setActiveSection("approvals"); onClose(); }}
+                        style={{ fontSize: 12, color: "#0284c7", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}
+                      >
+                        View Details <ChevronRight size={12} />
+                      </button>
+                    )}
+                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3, fontFamily: "JetBrains Mono" }}>
+                      {relTime(notif.created_at)}
+                    </div>
+                  </div>
+
+                  {/* Unread dot */}
+                  {!notif.is_read && (
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#0284c7", flexShrink: 0, marginTop: 4 }} />
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Footer */}
+        {notifications.length > 0 && (
+          <div style={{ padding: "12px 24px", borderTop: "1px solid #f1f5f9", textAlign: "center" }}>
+            <button
+              onClick={onMarkAllRead}
+              style={{ fontSize: 13, fontWeight: 700, color: "#0284c7", background: "none", border: "none", cursor: "pointer", letterSpacing: "0.02em" }}
+              onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+              onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
+            >
+              MARK ALL AS READ
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+//reserve spot panel
+const ReserveSpotPanel = ({ onClose }) => {
+  const [spots, setSpots] = useState([]);
+  const [selectedSpotId, setSelectedSpotId] = useState("");
+  const [selectedSpotName, setSelectedSpotName] = useState("");
+  const [bookingType, setBookingType] = useState("single"); // "single" | "range"
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
+  const [session, setSession] = useState("");
+  const [conflictInfo, setConflictInfo] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
+  const today = new Date();
+
+  // Load spots list
+  useEffect(() => {
+    adminApi().get("/spots").then(r => setSpots(r.data || [])).catch(() => { });
+  }, []);
+
+  const formatDate = (d) => {
+    if (!d) return null;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  // Check conflicts against real DB
+  const checkConflict = async (date) => {
+    if (!selectedSpotId || !date) return;
+    try {
+      const res = await adminApi().get(`/spots/${selectedSpotId}/availability?date=${formatDate(date)}`);
+      setConflictInfo(res.data.conflict ? res.data : null);
+    } catch {
+      setConflictInfo(null); // no conflict endpoint = allow
+    }
+  };
+
+  const handleDateSelect = (val) => {
+    if (bookingType === "single") {
+      setSelectedDate(val);
+      setConflictInfo(null);
+      if (val) checkConflict(val);
+    } else {
+      setDateRange(val || { from: null, to: null });
+      setConflictInfo(null);
+    }
+  };
+
+  const handleReserve = async () => {
+    if (!selectedSpotId || !session) return;
+    const startDate = bookingType === "single" ? formatDate(selectedDate) : formatDate(dateRange.from);
+    const endDate = bookingType === "range" ? formatDate(dateRange.to) : null;
+    if (!startDate) return;
+
+    setSaving(true);
+    try {
+      await adminApi().post("/bookings/reserve", {
+        spot_id: selectedSpotId,
+        start_date: startDate,
+        end_date: endDate,
+        session,
+        title: `Admin Reserved — ${selectedSpotName}`,
+      });
+      setToast({ msg: `${selectedSpotName} reserved successfully!`, type: "success" });
+      setTimeout(onClose, 1500);
+    } catch {
+      setToast({ msg: "Reservation failed. Try again.", type: "error" });
+    }
+    setSaving(false);
+  };
+
+  const dateReady = bookingType === "single" ? !!selectedDate : !!(dateRange?.from && dateRange?.to);
+
+  return (
+    <>
+      {toast && <Toast message={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
+      <div style={{
+        background: "#f0f9ff", border: "1.5px solid #bae6fd", borderRadius: 20,
+        padding: 24, marginBottom: 4,
+        animation: "fadeSlideIn 0.25s ease",
+      }}>
+        {/* Panel Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <CalendarIcon size={18} color="#0284c7" />
+              <span style={{ fontWeight: 700, fontSize: 15, color: "#0c4a6e" }}>Admin Priority Reservation</span>
+            </div>
+            <div style={{ fontSize: 12, color: "#0284c7", marginTop: 3, marginLeft: 26 }}>
+              Spot: {selectedSpotName || "Not selected"}
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <select
+              value={selectedSpotId}
+              onChange={e => {
+                const opt = e.target.options[e.target.selectedIndex];
+                setSelectedSpotId(e.target.value);
+                setSelectedSpotName(opt.text);
+                setSelectedDate(null); setDateRange({ from: null, to: null }); setConflictInfo(null);
+              }}
+              style={{ padding: "8px 14px", borderRadius: 10, border: "1.5px solid #7dd3fc", background: "white", color: "#0c4a6e", fontWeight: 700, fontSize: 12, outline: "none", cursor: "pointer" }}
+            >
+              <option value="">Select Spot</option>
+              {spots.map(s => <option key={s.spot_id} value={s.spot_id}>{s.name}</option>)}
+            </select>
+
+            <select
+              value={bookingType}
+              onChange={e => { setBookingType(e.target.value); setSelectedDate(null); setDateRange({ from: null, to: null }); setConflictInfo(null); }}
+              style={{ padding: "8px 14px", borderRadius: 10, border: "1.5px solid #cbd5e1", background: "white", color: "#475569", fontWeight: 600, fontSize: 12, outline: "none", cursor: "pointer" }}
+            >
+              <option value="single">Single Day</option>
+              <option value="range">Multiple Days</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Body */}
+        {!selectedSpotId ? (
+          <div style={{ textAlign: "center", padding: "32px 0", border: "1.5px dashed #bae6fd", borderRadius: 14, background: "rgba(255,255,255,0.5)" }}>
+            <MapPin size={28} color="#bae6fd" style={{ margin: "0 auto 8px" }} />
+            <div style={{ color: "#94a3b8", fontWeight: 600, fontSize: 13 }}>Please select a spot first</div>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 20 }}>
+            {/* Calendar */}
+            <div style={{ background: "white", borderRadius: 16, padding: 16, border: "1px solid #e0f2fe", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <DayPicker
+                mode={bookingType === "single" ? "single" : "range"}
+                selected={bookingType === "single" ? selectedDate : dateRange}
+                onSelect={handleDateSelect}
+                disabled={d => d < today}
+              />
+            </div>
+
+            {/* Right Panel */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* Conflict warning */}
+              {conflictInfo && (
+                <div style={{ background: "#fef2f2", border: "1.5px solid #fca5a5", borderRadius: 14, padding: 16 }}>
+                  <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <AlertTriangle size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 1 }} />
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 12, color: "#dc2626", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Conflict Detected</div>
+                      <div style={{ fontSize: 13, color: "#7f1d1d" }}>{conflictInfo.msg || "An event is already booked on this date."}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Date display */}
+              {dateReady && (
+                <div style={{ background: "#dcfce7", border: "1.5px solid #86efac", borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+                  <Check size={16} color="#16a34a" />
+                  <span style={{ fontWeight: 700, fontSize: 13, color: "#15803d" }}>
+                    {bookingType === "single"
+                      ? `Selected: ${formatDate(selectedDate)}`
+                      : `${formatDate(dateRange.from)} → ${formatDate(dateRange.to)}`}
+                  </span>
+                </div>
+              )}
+
+              {/* Session picker */}
+              {dateReady && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>Select Session</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[
+                      { val: "day", label: "Day", sub: "Morning to afternoon" },
+                      { val: "night", label: "Night", sub: "Evening to midnight" },
+                      { val: "day+night", label: "Day & Night", sub: "Full day" },
+                    ].map(({ val, label, sub }) => (
+                      <label
+                        key={val}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 12,
+                          padding: "12px 16px", borderRadius: 12, cursor: "pointer",
+                          border: `1.5px solid ${session === val ? "#7dd3fc" : "#e2e8f0"}`,
+                          background: session === val ? "#f0f9ff" : "white",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        <input type="radio" name="reserve-session" value={val}
+                          checked={session === val} onChange={() => setSession(val)}
+                          style={{ accentColor: "#0284c7", width: 16, height: 16 }} />
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 13, color: "#0c4a6e" }}>{label}</div>
+                          <div style={{ fontSize: 11, color: "#94a3b8" }}>{sub}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Reserve Button */}
+              {dateReady && session && (
+                <button
+                  onClick={handleReserve}
+                  disabled={saving}
+                  style={{
+                    width: "100%", padding: "14px", borderRadius: 14, border: "none",
+                    background: saving ? "#94a3b8" : "#0284c7", color: "white",
+                    fontWeight: 800, fontSize: 15, cursor: saving ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    boxShadow: saving ? "none" : "0 4px 14px rgba(2,132,199,0.35)",
+                    transition: "all 0.2s", marginTop: "auto",
+                  }}
+                >
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : null}
+                  {saving ? "Reserving..." : `Reserve ${selectedSpotName}`}
+                </button>
+              )}
+
+              {/* Empty state */}
+              {!dateReady && !conflictInfo && (
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px dashed #bae6fd", borderRadius: 14, padding: 32, background: "rgba(255,255,255,0.4)" }}>
+                  <div style={{ textAlign: "center", color: "#94a3b8" }}>
+                    <CalendarIcon size={32} style={{ margin: "0 auto 8px", opacity: 0.3 }} />
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>
+                      {bookingType === "single" ? "Pick a date from the calendar" : "Pick start and end dates"}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
 // ── DASHBOARD OVERVIEW ────────────────────────────────────────────────────────
 const DashboardOverview = ({ setActiveSection }) => {
   const [adminData, setAdminData] = useState({ approver_name: "", approver_email: "", approver_designation: "", approver_signature: null });
@@ -312,16 +773,17 @@ const DashboardOverview = ({ setActiveSection }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [toast, setToast] = useState(null);
+  const [showReserve, setShowReserve] = useState(false);
   const sigInputRef = useRef(null);
 
   useEffect(() => {
     const api = adminApi();
-    api.get("/profile").then(r => { setAdminData(r.data); setEditForm(r.data); }).catch(() => {});
+    api.get("/profile").then(r => { setAdminData(r.data); setEditForm(r.data); }).catch(() => { });
     api.get("/dashboard").then(r => {
       const s = r.data.stats || {};
       setStats({ total: +s.total || 0, pending: +s.pending || 0, approved: +s.approved || 0, rejected: +s.rejected || 0 });
       setUpcoming(r.data.upcoming || []);
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const saveProfile = async () => {
@@ -352,10 +814,33 @@ const DashboardOverview = ({ setActiveSection }) => {
   return (
     <div>
       {toast && <Toast message={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
-      <div className="section-header">
-        <h1 className="section-title">Overview</h1>
-        <p className="section-subtitle">Welcome back, {adminData.approver_name || "Admin"}</p>
+      <div className="flex items-center justify-between px-8 py-6 bg-slate-50 rounded-xl">
+
+        {/* Left Side */}
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Admin Dashboard
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Manage your system at a glance.
+          </p>
+        </div>
+
+        {/* Right Button */}
+        <button
+          onClick={() => setShowReserve(v => !v)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full 
+               bg-gradient-to-r from-sky-500 to-blue-600 
+               text-white text-sm font-semibold 
+               shadow-md hover:shadow-lg 
+               hover:-translate-y-0.5 transition-all duration-200"
+        >
+          <Plus size={16} />
+          {showReserve ? "Close Reservation" : "Reserve a Spot"}
+        </button>
+
       </div>
+      {showReserve && <ReserveSpotPanel onClose={() => setShowReserve(false)} />}
 
       <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 24 }}>
         {/* LEFT: Profile */}
@@ -623,7 +1108,7 @@ const SpotManagement = () => {
                 </div>
               )}
               <button className="btn-ghost" onClick={() => mainRef.current.click()}
-                style={{ position: "absolute", bottom: 10, right: 10, padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, background: "rgba(10,12,20,0.8)" }}>
+                style={{ position: "absolute", bottom: 10, right: 10, padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, background: "rgba(168, 182, 214, 0.8)" }}>
                 <Camera size={12} /> Change
               </button>
               <input type="file" hidden ref={mainRef} accept="image/*" onChange={e => e.target.files[0] && setMainImage(e.target.files[0])} />
@@ -832,9 +1317,11 @@ const BookingApprovals = () => {
         <div className="flex items-center gap-2">
           {spots.map(s => (
             <button key={s} onClick={() => setFilterSpot(s)}
-              style={{ padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
+              style={{
+                padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
                 background: filterSpot === s ? "var(--accent)" : "var(--bg2)", color: filterSpot === s ? "white" : "var(--text2)",
-                border: `1px solid ${filterSpot === s ? "var(--accent)" : "var(--border)"}` }}>
+                border: `1px solid ${filterSpot === s ? "var(--accent)" : "var(--border)"}`
+              }}>
               {s}
             </button>
           ))}
@@ -1143,9 +1630,11 @@ const BookingHistory = () => {
             <div className="flex gap-1">
               {spots.map(s => (
                 <button key={s} onClick={() => setFilterSpot(s)}
-                  style={{ padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
+                  style={{
+                    padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
                     background: filterSpot === s ? "var(--accent)" : "var(--bg2)", color: filterSpot === s ? "white" : "var(--text2)",
-                    border: `1px solid ${filterSpot === s ? "var(--accent)" : "var(--border)"}` }}>
+                    border: `1px solid ${filterSpot === s ? "var(--accent)" : "var(--border)"}`
+                  }}>
                   {s}
                 </button>
               ))}
@@ -1156,9 +1645,11 @@ const BookingHistory = () => {
             <div className="flex gap-1">
               {statuses.map(s => (
                 <button key={s} onClick={() => setFilterStatus(s)}
-                  style={{ padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
+                  style={{
+                    padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
                     background: filterStatus === s ? "var(--accent)" : "var(--bg2)", color: filterStatus === s ? "white" : "var(--text2)",
-                    border: `1px solid ${filterStatus === s ? "var(--accent)" : "var(--border)"}` }}>
+                    border: `1px solid ${filterStatus === s ? "var(--accent)" : "var(--border)"}`
+                  }}>
                   {s}
                 </button>
               ))}
@@ -1284,7 +1775,7 @@ const BlogModeration = () => {
       }));
       setPendingBlogs(normalize(pRes.data));
       setPublishedBlogs(normalize(pubRes.data));
-    } catch {} finally { setLoading(false); }
+    } catch { } finally { setLoading(false); }
   }, []);
 
   const fetchFeedbacks = useCallback(async () => {
@@ -1295,7 +1786,7 @@ const BlogModeration = () => {
         message: fb.feedback || "", date: fb.event_date?.split("T")[0] || "",
         spot: fb.spot_name || "", title: fb.event_title || "",
       })));
-    } catch {}
+    } catch { }
   }, []);
 
   useEffect(() => { fetchBlogs(); fetchFeedbacks(); }, [fetchBlogs, fetchFeedbacks]);
@@ -1327,13 +1818,17 @@ const BlogModeration = () => {
           </div>
           <div className="flex gap-2" style={{ background: "var(--surface)", padding: "4px", borderRadius: 12, border: "1px solid var(--border)" }}>
             <button onClick={() => setActiveTab("blogs")}
-              style={{ padding: "8px 18px", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6,
-                background: activeTab === "blogs" ? "var(--accent)" : "transparent", color: activeTab === "blogs" ? "white" : "var(--text2)", border: "none" }}>
+              style={{
+                padding: "8px 18px", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6,
+                background: activeTab === "blogs" ? "var(--accent)" : "transparent", color: activeTab === "blogs" ? "white" : "var(--text2)", border: "none"
+              }}>
               <FileText size={13} /> Blogs
             </button>
             <button onClick={() => setActiveTab("feedbacks")}
-              style={{ padding: "8px 18px", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6,
-                background: activeTab === "feedbacks" ? "var(--accent)" : "transparent", color: activeTab === "feedbacks" ? "white" : "var(--text2)", border: "none" }}>
+              style={{
+                padding: "8px 18px", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6,
+                background: activeTab === "feedbacks" ? "var(--accent)" : "transparent", color: activeTab === "feedbacks" ? "white" : "var(--text2)", border: "none"
+              }}>
               <MessageSquare size={13} /> Feedbacks
             </button>
           </div>
@@ -1344,10 +1839,12 @@ const BlogModeration = () => {
         <div className="flex gap-2 mb-6">
           {["pending", "published"].map(s => (
             <button key={s} onClick={() => setBlogStatus(s)}
-              style={{ padding: "7px 18px", borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "capitalize", letterSpacing: "0.05em",
+              style={{
+                padding: "7px 18px", borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "capitalize", letterSpacing: "0.05em",
                 background: blogStatus === s ? (s === "pending" ? "rgba(234,179,8,0.15)" : "rgba(34,197,94,0.15)") : "var(--surface)",
                 color: blogStatus === s ? (s === "pending" ? "var(--yellow)" : "var(--green)") : "var(--text3)",
-                border: `1px solid ${blogStatus === s ? (s === "pending" ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.3)") : "var(--border)"}` }}>
+                border: `1px solid ${blogStatus === s ? (s === "pending" ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.3)") : "var(--border)"}`
+              }}>
               {s === "pending" ? "Pending" : "Published"} ({s === "pending" ? pendingBlogs.length : publishedBlogs.length})
             </button>
           ))}
@@ -1386,27 +1883,35 @@ const BlogModeration = () => {
                   </div>
                   <div className="flex gap-2 flex-wrap" style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>
                     <button onClick={() => setSelectedBlog(blog)}
-                      style={{ padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
-                        background: "var(--surface2)", border: "1px solid var(--border2)", color: "var(--text2)" }}>
+                      style={{
+                        padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
+                        background: "var(--surface2)", border: "1px solid var(--border2)", color: "var(--text2)"
+                      }}>
                       <Eye size={12} /> View
                     </button>
                     {blogStatus === "pending" ? (
                       <>
                         <button onClick={() => handlePublish(blog.id)}
-                          style={{ padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
-                            background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "var(--green)" }}>
+                          style={{
+                            padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
+                            background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "var(--green)"
+                          }}>
                           <CheckCircle size={12} /> Publish
                         </button>
                         <button onClick={() => handleReject(blog.id)}
-                          style={{ padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
-                            background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)" }}>
+                          style={{
+                            padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
+                            background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)"
+                          }}>
                           <XCircle size={12} /> Reject
                         </button>
                       </>
                     ) : (
                       <button onClick={() => handleDelete(blog.id)}
-                        style={{ padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
-                          background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)" }}>
+                        style={{
+                          padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
+                          background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)"
+                        }}>
                         <Trash2 size={12} /> Delete
                       </button>
                     )}

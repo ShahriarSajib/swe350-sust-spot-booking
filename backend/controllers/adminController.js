@@ -330,11 +330,23 @@ const reserveSpotByAdmin = async (req, res) => {
       [spot_id, end_date || start_date, start_date]
     );
 
+    const ADMIN_USER_ID = 7;
+
     const [result] = await db.query(
       `INSERT INTO bookings
-        (user_id, spot_id, booking_status, title, start_date, end_date, session, description, start_time, end_time)
-       VALUES (NULL, ?, 'approved', ?, ?, ?, ?, ?, ?, ?)`,
-      [spot_id, title || "Admin Reserved", start_date, end_date || null, session, description || "", start_time || null, end_time || null]
+    (user_id, spot_id, booking_status, title, start_date, end_date, session, description, start_time, end_time)
+    VALUES (?, ?, 'approved', ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        ADMIN_USER_ID,
+        spot_id,
+        title || "Admin Reserved",
+        start_date,
+        end_date || null,
+        session,
+        description || "",
+        start_time || null,
+        end_time || null
+      ]
     );
 
     const bookingId = result.insertId;
@@ -602,6 +614,78 @@ const getReport = async (req, res) => {
   }
 };
 
+//notifications
+const getNotifications = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        n.notification_id,
+        n.booking_id,
+        n.email_subject AS type,
+        n.message,
+        n.is_read,
+        n.created_at,
+        b.title AS event_title,
+        s.name AS spot_name,
+        u.full_name AS user_name
+      FROM notification n
+      LEFT JOIN bookings b ON n.booking_id = b.booking_id
+      LEFT JOIN spots s ON b.spot_id = s.spot_id
+      LEFT JOIN users u ON b.user_id = u.id
+      ORDER BY n.created_at DESC
+      LIMIT 50
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error("Get notifications error:", err);
+    res.json([]);
+  }
+};
+
+// MARK ALL NOTIFICATIONS as read
+const markAllNotificationsRead = async (req, res) => {
+  try {
+    await db.query("UPDATE notification SET is_read = 1");
+    res.json({ message: "All marked as read" });
+  } catch (err) {
+    console.error("Mark read error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// AVAILABILITY CHECK (for conflict detection in Reserve panel)
+const checkSpotAvailability = async (req, res) => {
+  try {
+    const { id } = req.params;       // spot_id
+    const { date } = req.query;      // YYYY-MM-DD
+    if (!date) return res.json({ conflict: false });
+
+    const [rows] = await db.query(`
+      SELECT b.booking_id, b.session, b.title, u.full_name AS organizer,
+             b.booking_status
+      FROM bookings b
+      LEFT JOIN users u ON b.user_id = u.id
+      WHERE b.spot_id = ?
+        AND b.booking_status IN ('approved','pending')
+        AND b.start_date <= ?
+        AND (b.end_date IS NULL OR b.end_date >= ?)
+    `, [id, date, date]);
+
+    if (rows.length > 0) {
+      const b = rows[0];
+      res.json({
+        conflict: true,
+        msg: `'${b.title || "An event"}' by ${b.organizer || "unknown"} is ${b.booking_status} on this date (${b.session} session).`,
+      });
+    } else {
+      res.json({ conflict: false });
+    }
+  } catch (err) {
+    console.error("Availability check error:", err);
+    res.json({ conflict: false });
+  }
+};
+
 module.exports = {
   loginAdmin,
   logoutAdmin,
@@ -628,4 +712,7 @@ module.exports = {
   deleteBlog,
   getFeedbacks,
   getReport,
+  getNotifications,
+  markAllNotificationsRead,
+  checkSpotAvailability,
 };

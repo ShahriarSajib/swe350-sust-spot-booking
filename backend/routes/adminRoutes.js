@@ -29,6 +29,9 @@ const {
   deleteBlog,
   getFeedbacks,
   getReport,
+  getNotifications,
+  markAllNotificationsRead,
+  checkSpotAvailability,
 } = require("../controllers/adminController");
 
 // ── PUBLIC (no auth needed) ───────────────────────────────────────────────────
@@ -78,5 +81,12 @@ router.get("/feedbacks", getFeedbacks);
 
 // Reports
 router.get("/report", getReport);
+
+// Notifications
+router.get("/notifications", getNotifications);
+router.put("/notifications/read-all", markAllNotificationsRead);
+ 
+// Spot availability check
+router.get("/spots/:id/availability", checkSpotAvailability);
 
 module.exports = router;

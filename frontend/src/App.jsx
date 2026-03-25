@@ -279,7 +279,7 @@ function App() {
       )}
 
       {/* 2. Header (passing the new openNotif function) */}
-      {authRole && (
+      {authRole === 'user' && (
         <Header 
           role={authRole} 
           onLogout={() =>{ 

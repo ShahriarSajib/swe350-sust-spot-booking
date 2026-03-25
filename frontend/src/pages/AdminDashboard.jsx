@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 
 // import { Camera, ImagePlus, X } from "lucide-react";
-import Header from "../components/Header/Header" // adjust path if needed
+// import Header from "../components/Header/Header" // adjust path if needed
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("overview")
