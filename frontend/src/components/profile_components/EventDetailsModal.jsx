@@ -11,8 +11,9 @@ const EventDetailsModal = ({ isOpen, event, onClose }) => {
                 <div className="grid grid-cols-2 gap-4 text-sm md:text-base">
                     <p><strong>Title:</strong> {event.title}</p>
                     <p><strong>Organizer:</strong> {event.organizer}</p>
-                    <p><strong>Location:</strong> {event.spotName}</p>
-                    <p><strong>Date:</strong> {event.date}</p>
+                    <p><strong>Location:</strong> {event.name}</p>
+                    <p><strong>Date:</strong> {event.start_date}
+                            {event.end_date && event.end_date !== event.start_date ? ` to ${event.end_date}` : ""}</p>
                     <p><strong>Session:</strong> {event.session}</p>
                 </div>
 

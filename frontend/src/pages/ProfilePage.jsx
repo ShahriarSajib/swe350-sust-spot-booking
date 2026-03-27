@@ -6,9 +6,9 @@ import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
-import applicantSignature from "../assets/applicant_sig.png";
-import recommenderSignature from "../assets/recommender_sig.png";
-import approverSignature from "../assets/approver_sig.png";
+// import applicantSignature from "../assets/applicant_sig.png";
+// import recommenderSignature from "../assets/recommender_sig.png";
+// import approverSignature from "../assets/approver_sig.png";
 
 import innovation from "../assets/innovation.png";
 
@@ -36,7 +36,7 @@ export default function ProfilePage() {
         email: "",
         department: "",
         contact: "",
-        image: "",       // profile picture
+        profile_picture: "",       // profile picture
         signature: ""    // signature
     });
 
@@ -50,8 +50,6 @@ export default function ProfilePage() {
 
     // URL থেকে ট্যাব নিবে, না থাকলে ডিফল্ট "events"
     const [selectedTab, setSelectedTab] = useState(window.location.hash.replace('#', '') || "events");
-    const [eventCategory, setEventCategory] = useState("all")
-
     const [showBlogForm, setShowBlogForm] = useState(false)
     const [selectedEvent, setSelectedEvent] = useState(null)
 
@@ -64,156 +62,156 @@ export default function ProfilePage() {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false); // Approval Preview-এর জন্য
     const [isDetailsOpen, setIsDetailsOpen] = useState(false); // See Details-এর জন্য
 
-    const events = [
-        {
-            id: 1,
-            title: "Annual Meet",
-            session: "Day+Night",
-            organizer: "Administration",
-            spotName: "Central Auditorium",
-            date: "2/15/2026",
-            endDate: "2/16/2026",
-            category: "upcoming",
-            startTime: "10:00 AM",
-            endTime: "09:00 PM",
-            description: "Yearly gathering for all administrative staff to discuss progress and future goals.",
-            applicant: {
-                name: "John Doe",
-                post: "Event Coordinator",
-                department: "Administration",
-                signature: applicantSignature
+    // const events = [
+    //     {
+    //         id: 1,
+    //         title: "Annual Meet",
+    //         session: "Day+Night",
+    //         organizer: "Administration",
+    //         spotName: "Central Auditorium",
+    //         date: "2/15/2026",
+    //         endDate: "2/16/2026",
+    //         category: "upcoming",
+    //         startTime: "10:00 AM",
+    //         endTime: "09:00 PM",
+    //         description: "Yearly gathering for all administrative staff to discuss progress and future goals.",
+    //         applicant: {
+    //             name: "John Doe",
+    //             post: "Event Coordinator",
+    //             department: "Administration",
+    //             signature: applicantSignature
 
-            },
-            recommender: {
-                name: "Dr. M. A. Rashid",
-                post: "Registrar, SUST",
-                signature: recommenderSignature
-            },
-            approver: {
-                name: "Prof. Dr. Kamal Uddin",
-                post: "Vice Chancellor, SUST",
-                signature: approverSignature
-            }
-        },
-        {
-            id: 2,
-            title: "Coding Hackathon",
-            session: "Night",
-            organizer: "Tech Club",
-            spotName: "Mini Auditorium",
-            date: "2/10/2026 ",
-            endDate: "2/12/2026",
-            category: "upcoming",
-            description: "A 48-hour non-stop coding competition to solve real-world problems.",
-            startTime: "04:30 PM",
-            endTime: "08:30 PM",
-            applicant: {
-                name: "John Doe",
-                post: "Event Coordinator",
-                department: "Administration",
-                signature: applicantSignature
+    //         },
+    //         recommender: {
+    //             name: "Dr. M. A. Rashid",
+    //             post: "Registrar, SUST",
+    //             signature: recommenderSignature
+    //         },
+    //         approver: {
+    //             name: "Prof. Dr. Kamal Uddin",
+    //             post: "Vice Chancellor, SUST",
+    //             signature: approverSignature
+    //         }
+    //     },
+    //     {
+    //         id: 2,
+    //         title: "Coding Hackathon",
+    //         session: "Night",
+    //         organizer: "Tech Club",
+    //         spotName: "Mini Auditorium",
+    //         date: "2/10/2026 ",
+    //         endDate: "2/12/2026",
+    //         category: "upcoming",
+    //         description: "A 48-hour non-stop coding competition to solve real-world problems.",
+    //         startTime: "04:30 PM",
+    //         endTime: "08:30 PM",
+    //         applicant: {
+    //             name: "John Doe",
+    //             post: "Event Coordinator",
+    //             department: "Administration",
+    //             signature: applicantSignature
 
-            },
-            recommender: {
-                name: "Prof. Dr. Ariful Islam",
-                post: "Head of CSE",
-                signature: recommenderSignature
-            },
-            approver: {
-                name: "Prof. Dr. Kamal Uddin",
-                post: "Vice Chancellor, SUST",
-                signature: approverSignature
-            }
-        },
-        {
-            id: 5,
-            title: "Science Fair",
-            session: "Day",
-            organizer: "Science Club",
-            spotName: "Lab Hall",
-            date: "3/10/2026",
-            category: "pending",
-            startTime: "09:00 AM",
-            endTime: "05:00 PM",
-            description: "Showcasing innovative research projects from undergraduate students.",
-            applicant: {
-                name: "John Doe",
-                post: "Event Coordinator",
-                department: "Administration",
-                signature: applicantSignature
+    //         },
+    //         recommender: {
+    //             name: "Prof. Dr. Ariful Islam",
+    //             post: "Head of CSE",
+    //             signature: recommenderSignature
+    //         },
+    //         approver: {
+    //             name: "Prof. Dr. Kamal Uddin",
+    //             post: "Vice Chancellor, SUST",
+    //             signature: approverSignature
+    //         }
+    //     },
+    //     {
+    //         id: 5,
+    //         title: "Science Fair",
+    //         session: "Day",
+    //         organizer: "Science Club",
+    //         spotName: "Lab Hall",
+    //         date: "3/10/2026",
+    //         category: "pending",
+    //         startTime: "09:00 AM",
+    //         endTime: "05:00 PM",
+    //         description: "Showcasing innovative research projects from undergraduate students.",
+    //         applicant: {
+    //             name: "John Doe",
+    //             post: "Event Coordinator",
+    //             department: "Administration",
+    //             signature: applicantSignature
 
-            },
-            recommender: {
-                name: "Dr. Sabina Yasmin",
-                post: "Dean of Physical Sciences",
-                signature: recommenderSignature
-            },
-            approver: {
-                name: "Prof. Dr. Kamal Uddin",
-                post: "Vice Chancellor, SUST",
-                signature: approverSignature
-            }
-        },
-        {
-            id: 3,
-            title: "Art Exhibition",
-            session: "Day",
-            organizer: "Art Club",
-            spotName: "Central Field",
-            date: "8/5/2025",
-            category: "past",
-            startTime: "09:00 AM",
-            endTime: "05:00 PM",
-            description: "Showcasing innovative research projects from undergraduate students.",
-            applicant: {
-                name: "John Doe",
-                post: "Event Coordinator",
-                department: "Administration",
-                signature: recommenderSignature
+    //         },
+    //         recommender: {
+    //             name: "Dr. Sabina Yasmin",
+    //             post: "Dean of Physical Sciences",
+    //             signature: recommenderSignature
+    //         },
+    //         approver: {
+    //             name: "Prof. Dr. Kamal Uddin",
+    //             post: "Vice Chancellor, SUST",
+    //             signature: approverSignature
+    //         }
+    //     },
+    //     {
+    //         id: 3,
+    //         title: "Art Exhibition",
+    //         session: "Day",
+    //         organizer: "Art Club",
+    //         spotName: "Central Field",
+    //         date: "8/5/2025",
+    //         category: "past",
+    //         startTime: "09:00 AM",
+    //         endTime: "05:00 PM",
+    //         description: "Showcasing innovative research projects from undergraduate students.",
+    //         applicant: {
+    //             name: "John Doe",
+    //             post: "Event Coordinator",
+    //             department: "Administration",
+    //             signature: recommenderSignature
 
-            },
-            recommender: {
-                name: "Dr. Sabina Yasmin",
-                post: "Dean of Physical Sciences",
-                signature: applicantSignature
-            },
-            approver: {
-                name: "Prof. Dr. Kamal Uddin",
-                post: "Vice Chancellor, SUST",
-                signature: approverSignature
-            }
-        },
-        {
-            id: 4,
-            title: "Tech Conference 2025",
-            session: "Day+Night",
-            organizer: "Tech Club",
-            spotName: "Main Hall",
-            date: "6/20/2025",
-            endDate: "6/22/2025",
-            category: "past",
-            startTime: "10:00 AM",
-            endTime: "09:00 PM",
-            description: "Showcasing innovative research projects from undergraduate students.",
-            applicant: {
-                name: "John Doe",
-                post: "Event Coordinator",
-                department: "Administration",
-                signature: applicantSignature
+    //         },
+    //         recommender: {
+    //             name: "Dr. Sabina Yasmin",
+    //             post: "Dean of Physical Sciences",
+    //             signature: applicantSignature
+    //         },
+    //         approver: {
+    //             name: "Prof. Dr. Kamal Uddin",
+    //             post: "Vice Chancellor, SUST",
+    //             signature: approverSignature
+    //         }
+    //     },
+    //     {
+    //         id: 4,
+    //         title: "Tech Conference 2025",
+    //         session: "Day+Night",
+    //         organizer: "Tech Club",
+    //         spotName: "Main Hall",
+    //         date: "6/20/2025",
+    //         endDate: "6/22/2025",
+    //         category: "past",
+    //         startTime: "10:00 AM",
+    //         endTime: "09:00 PM",
+    //         description: "Showcasing innovative research projects from undergraduate students.",
+    //         applicant: {
+    //             name: "John Doe",
+    //             post: "Event Coordinator",
+    //             department: "Administration",
+    //             signature: applicantSignature
 
-            },
-            recommender: {
-                name: "Dr. Sabina Yasmin",
-                post: "Dean of Physical Sciences",
-                signature: recommenderSignature
-            },
-            approver: {
-                name: "Prof. Dr. Kamal Uddin",
-                post: "Vice Chancellor, SUST",
-                signature: approverSignature
-            }
-        },
-    ];
+    //         },
+    //         recommender: {
+    //             name: "Dr. Sabina Yasmin",
+    //             post: "Dean of Physical Sciences",
+    //             signature: recommenderSignature
+    //         },
+    //         approver: {
+    //             name: "Prof. Dr. Kamal Uddin",
+    //             post: "Vice Chancellor, SUST",
+    //             signature: approverSignature
+    //         }
+    //     },
+    // ];
     const myBlogs = [
         {
             id: "1",
@@ -233,9 +231,9 @@ export default function ProfilePage() {
         }
     ];
 
-    const filteredEvents = eventCategory === "all"
-        ? events
-        : events.filter((e) => e.category === eventCategory);
+    // const filteredEvents = eventCategory === "all"
+    //     ? events
+    //     : events.filter((e) => e.category === eventCategory);
 
     const [signaturePreview, setSignaturePreview] = useState(profile.signature || null);
 
@@ -290,12 +288,41 @@ export default function ProfilePage() {
                 });
 
             } catch (err) {
-                console.error("Error fetching profile:",  err);
+                console.error("Error fetching profile:", err);
             }
         };
 
         fetchProfile();
     }, []);
+
+
+    const [allEvents, setAllEvents] = useState([]); // ব্যাকএন্ড থেকে আসা সব ডাটা
+    const [eventCategory, setEventCategory] = useState("all"); // ফিল্টার স্টেট
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            const userId = localStorage.getItem("userId");
+            const token = localStorage.getItem("token");
+            try {
+                const res = await axios.get(`http://localhost:5000/api/bookings/user-events/${userId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setAllEvents(res.data);
+            } catch (err) {
+                console.error("Fetch error:", err);
+            }
+
+        };
+        fetchEvents();
+    }, []);
+
+    // ইউজার যখন বাটনে ক্লিক করবে, তখন এই ফিল্টারড লিস্টটি রেন্ডার হবে
+    const filteredEvents = allEvents.filter(event => {
+        if (eventCategory === "all") return true;
+        return event.category === eventCategory;
+    });
+
+    console.log("All Events:", allEvents);
 
     if (!profile) {
         return (

@@ -53,11 +53,11 @@ export default function ApprovalModal({ selectedReq, setIsPreviewOpen }) {
                                 <h2 className="bg-slate-100 px-3 py-1 text-[11px] font-black uppercase mb-4 inline-block">01. Event Details</h2>
                                 <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-sm ml-2">
                                     <PdfRow label="Title" value={selectedReq.title} />
-                                    <PdfRow label="Spot" value={selectedReq.spotName} />
-                                    <PdfRow label="Date" value={selectedReq.endDate ? `${selectedReq.date} to ${selectedReq.endDate}` : selectedReq.date} />
+                                    <PdfRow label="Spot" value={selectedReq.name} />
+                                    <PdfRow label="Date" value={selectedReq.end_date ? `${selectedReq.start_date} to ${selectedReq.end_date}` : selectedReq.start_date} />
                                     <PdfRow label="Session" value={selectedReq.session} />
                                     <PdfRow label="Organizer" value={selectedReq.organizer} />
-                                    <PdfRow label="Timing" value={`${selectedReq.startTime || '00:00'} - ${selectedReq.endTime || '00:00'}`} />
+                                    <PdfRow label="Timing" value={`${selectedReq.start_time || '00:00'} - ${selectedReq.end_time || '00:00'}`} />
                                 </div>
                             </section>
                             {/* Stakeholders etc... */}
