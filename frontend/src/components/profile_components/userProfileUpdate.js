@@ -28,6 +28,8 @@ export const useProfileUpdate = (profile, setProfile, setSignaturePreview, setSh
    // useProfileUpdate.js এর ভেতর এই অংশটি একদম হুবহু কপি-পেস্ট করুন
 const handleProfileUpdate = async () => {
     const userId = localStorage.getItem("userId");
+    const token = localStorage.getItem("token");
+
     if (!userId) return;
 
     setSavingProfile(true);
@@ -57,7 +59,8 @@ const handleProfileUpdate = async () => {
             formData,
             {
                 headers: { 
-                    "Content-Type": "multipart/form-data" // এই হেডারটি মাস্ট
+                    "Content-Type": "multipart/form-data" ,// এই হেডারটি মাস্ট
+                    "Authorization": `Bearer ${token}`
                 },
             }
         );

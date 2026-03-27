@@ -118,11 +118,12 @@ exports.loginUser = async (email, password) => {
 };
 
 exports.getUserProfile = async (id) => {
-  const user = await userModel.findUserById(id);
-
-  if (!user) throw new Error('User not found');
-
-  return user;
+    try {
+        const user = await userModel.findUserById(id);
+        return user;
+    } catch (err) {
+        throw new Error("Service Error: " + err.message);
+    }
 };
 
 exports.updateUserProfile = async (id, body, files) => {

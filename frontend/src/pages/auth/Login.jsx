@@ -22,6 +22,7 @@ const Login = ({ onLogin }) => {
       alert("Login Successful!");
       console.log(res.data);
 
+      localStorage.setItem("token", res.data.token);
       localStorage.setItem("userId", res.data.user.id);
       localStorage.setItem("userName", res.data.user.full_name || "");
       localStorage.setItem("userContact", res.data.user.contact_number || "");

@@ -1,5 +1,8 @@
 import { X, Download } from "lucide-react";
 
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+
 const PdfRow = ({ label, value }) => (
     <div className="flex border-b border-gray-50 pb-2">
         <span className="w-32 text-gray-400 font-bold uppercase text-[10px] tracking-wider">{label}</span>
@@ -7,7 +10,30 @@ const PdfRow = ({ label, value }) => (
     </div>
 );
 
-export default function ApprovalModal({ selectedReq, setIsPreviewOpen, handleDownloadPdf }) {
+export default function ApprovalModal({ selectedReq, setIsPreviewOpen }) {
+
+    const handleDownloadPdf = () => {
+        const input = document.getElementById('pdf-content');
+
+        if (!input) {
+            console.error("ID 'pdf-content' not found");
+            return;
+        }
+
+        html2canvas(input, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#ffffff"
+        }).then((canvas) => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`Approval_Copy_${selectedReq?.id || 'Request'}.pdf`);
+        });
+    };
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsPreviewOpen(false)}></div>
