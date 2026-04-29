@@ -1,15 +1,15 @@
 const db = require('../db');
 
 const saveBlog = (data, contentItems, callback) => {
-    // 1. Get a connection for the transaction
+    
     db.getConnection((err, connection) => {
         if (err) return callback(err);
 
-        // 2. Start Transaction
+      
         connection.beginTransaction((err) => {
             if (err) { connection.release(); return callback(err); }
 
-            // 3. Find event_id using booking_id
+            //Find event_id using booking_id
             connection.query('SELECT id FROM events WHERE booking_id = ?', [data.bookingId], (err, results) => {
                 if (err || results.length === 0) {
                     return connection.rollback(() => { connection.release(); callback(err || new Error("Event not found")); });
@@ -17,17 +17,16 @@ const saveBlog = (data, contentItems, callback) => {
 
                 const event_id = results[0].id;
 
-                // 4. Insert into event_blog
-                const blogQuery = `INSERT INTO event_blog (event_id, blog_title, summary, story_details, cover_image) VALUES (?, ?, ?, ?, ?)`;
-                connection.query(blogQuery, [event_id, data.title, data.summary, data.content, data.coverImage], (err, blogResult) => {
+                //Insert into event_blog
+                const blogQuery = `INSERT INTO event_blog (event_id, blog_title, summary, story_details, author_name, cover_image) VALUES (?, ?, ?, ?, ?, ?)`;
+                connection.query(blogQuery, [event_id, data.title, data.summary, data.content, data.authorName, data.coverImage], (err, blogResult) => {
                     if (err) {
                         return connection.rollback(() => { connection.release(); callback(err); });
                     }
 
                     const blog_id = blogResult.insertId;
 
-                    // 5. Insert contentItems (Bulk Insert)
-                    // We map the array of content to a nested array for MySQL bulk insert: [[val1, val2], [val1, val2]]
+                    //  Insert contentItems
                     const values = contentItems.map(item => [
                         blog_id, 
                         item.type, 

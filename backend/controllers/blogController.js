@@ -8,6 +8,7 @@ const createEventBlog = (req, res) => {
         title: req.body.title,
         summary: req.body.summary,
         content: req.body.content,
+        authorName: req.body.author_name || 'Admin',
         coverImage: req.files['coverImage'] ? req.files['coverImage'][0].filename : null
     };
 
@@ -50,20 +51,24 @@ const createEventBlog = (req, res) => {
 };
 
 const getPublishedBlogs = async (req, res) => {
-    // 1. Get limit from URL query (?limit=4)
     const limit = req.query.limit ? parseInt(req.query.limit) : null;
 
     let sql = `
-        SELECT eb.*, ebc.* FROM event_blog eb
+        SELECT 
+            eb.*, 
+            ebc.*, 
+            s.name AS spot_name 
+        FROM event_blog eb
         LEFT JOIN event_blog_content ebc ON eb.blog_id = ebc.blog_id
+        LEFT JOIN events e ON eb.event_id = e.id
+        LEFT JOIN bookings b ON e.booking_id = b.booking_id
+        LEFT JOIN spots s ON b.spot_id = s.spot_id
         WHERE eb.blog_status = 'published'
         ORDER BY eb.published_at DESC
     `;
 
     try {
         const [rows] = await db.query(sql);
-
-        // We use a Map to preserve the insertion order from the SQL query
         const blogsMap = new Map();
 
         rows.forEach(row => {
@@ -74,10 +79,13 @@ const getPublishedBlogs = async (req, res) => {
                     blog_title: row.blog_title,
                     summary: row.summary,
                     story_details: row.story_details,
+                    author_name: row.author_name,
                     blog_status: row.blog_status,
                     submitted_at: row.submitted_at,
                     published_at: row.published_at,
                     cover_image: row.cover_image,
+                    // This comes from the new JOINs
+                    spot_name: row.spot_name || "Unknown Location", 
                     schedules: [],
                     images: []
                 });
@@ -99,16 +107,12 @@ const getPublishedBlogs = async (req, res) => {
             }
         });
 
-        // Convert Map back to an array
         let results = Array.from(blogsMap.values());
-
-        // 2. Apply the limit if it exists
-        if (limit) {
+        if (limit !== null) {
             results = results.slice(0, limit);
         }
 
         res.status(200).json(results);
-
     } catch (err) {
         console.error("Error fetching blogs:", err);
         res.status(500).json({ error: "Failed to fetch blogs" });

@@ -9,7 +9,7 @@ function BlogForm({ event, onClose }) {
         spot: event?.name || "N/A",
         date: event?.date || event?.start_date || "",
         title: event?.title || "Untitled Blog",
-        author: "",
+        author_name: "",
         summary: "",
         content: "",
         tags: "",
@@ -78,7 +78,7 @@ function BlogForm({ event, onClose }) {
         // 2. Append Text Fields
         payload.append('booking_id', event.booking_id);
         payload.append('title', formData.title);
-        payload.append('author', formData.author);
+        payload.append('author_name', formData.author_name);
         payload.append('summary', formData.summary);
         payload.append('content', formData.content);
 
@@ -170,7 +170,7 @@ function BlogForm({ event, onClose }) {
                 {/* Text Fields */}
                 {[
                     { label: "Blog Title", field: "title", type: "text" },
-                    { label: "Author Name", field: "author", type: "text" },
+                    { label: "Author Name", field: "author_name", type: "text" },
                     { label: "Summary", field: "summary", type: "textarea" },
                     { label: "Full Story Content", field: "content", type: "textarea" },
                 ].map((input, idx) => (

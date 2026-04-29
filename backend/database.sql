@@ -140,6 +140,9 @@ CREATE TABLE event_blog (
 ALTER TABLE event_blog 
 ADD published_at DATETIME NULL AFTER submitted_at;
 
+ALTER TABLE event_blog 
+ADD COLUMN author_name VARCHAR(100) DEFAULT 'Admin' AFTER story_details;
+
 CREATE TABLE event_blog_content (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
