@@ -43,4 +43,24 @@ const createBooking = (data, callback) => {
     });
 };
 
-module.exports = { createBooking };
+const getUserBookings = (userId, callback) => {
+    const sql = `
+    SELECT b.*, s.name, 
+    DATE_FORMAT(b.start_date, '%Y-%m-%d') as start_date,
+    DATE_FORMAT(b.end_date, '%Y-%m-%d') as end_date
+    FROM bookings b
+    JOIN spots s ON b.spot_id = s.spot_id
+    WHERE b.user_id = ?
+    ORDER BY b.start_date DESC
+`;
+
+    db.query(sql, [userId], (err, rows) => {
+        if (err) {
+            return callback(err, null);
+        }
+        callback(null, rows);
+    });
+};
+
+module.exports = { createBooking, getUserBookings };
+

@@ -14,11 +14,8 @@ exports.createUser = async (fields, values) => {
 };
 
 exports.findUserById = async (id) => {
-  const [rows] = await db.query(
-    'SELECT * FROM users WHERE id = ?',
-    [id]
-  );
-  return rows[0];
+    const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+    return rows[0]; 
 };
 
 exports.updateUser = async (id, updateData) => {

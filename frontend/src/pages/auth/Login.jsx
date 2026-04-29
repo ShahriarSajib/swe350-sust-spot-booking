@@ -32,6 +32,11 @@ const Login = ({ onLogin }) => {
       } else {
         localStorage.setItem("userId", res.data.user.id);
       }
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userId", res.data.user.id);
+      localStorage.setItem("userName", res.data.user.full_name || "");
+      localStorage.setItem("userContact", res.data.user.contact_number || "");
+      localStorage.setItem("userType", res.data.user.user_type || "user");
 
       onLogin(loginType);
     } catch (err) {

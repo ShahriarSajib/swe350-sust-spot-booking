@@ -1,6 +1,6 @@
 import { Users, MapPin, Calendar, PenLine } from "lucide-react";
 
-export default function EventCard({ event, eventCategory, onSeeDetails, onApprovalCopy, onWriteBlog,onFeedback, activeFeedbackId ,text, setText}) {
+export default function EventCard({ event, eventCategory, onSeeDetails, onApprovalCopy, onWriteBlog, onFeedback, activeFeedbackId, text, setText }) {
     return (
         <div className="group bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row justify-between items-start gap-4">
             <div className="space-y-3 w-full">
@@ -17,8 +17,15 @@ export default function EventCard({ event, eventCategory, onSeeDetails, onApprov
                 </div>
                 <div className="space-y-2.5 text-sm font-semibold text-gray-600">
                     <div className="flex items-center gap-3"><Users size={16} className="text-sky-500/70" /><span className="text-gray-400 text-[10px] w-20">ORGANIZER:</span> {event.organizer}</div>
-                    <div className="flex items-center gap-3"><MapPin size={16} className="text-sky-500/70" /><span className="text-gray-400 text-[10px] w-20">LOCATION:</span> {event.spotName}</div>
-                    <div className="flex items-center gap-3"><Calendar size={16} className="text-sky-500/70" /><span className="text-gray-400 text-[10px] w-20">DATE:</span> {event.date}</div>
+                    <div className="flex items-center gap-3"><MapPin size={16} className="text-sky-500/70" /><span className="text-gray-400 text-[10px] w-20">LOCATION:</span> {event.name}</div>
+                    <div className="flex items-center gap-3">
+                        <Calendar size={16} className="text-sky-500/70" />
+                        <span className="text-gray-400 text-[10px] w-20">DATE:</span>
+                        <span className="text-gray-700">
+                            {event.start_date}
+                            {event.end_date && event.end_date !== event.start_date ? ` to ${event.end_date}` : ""}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -35,8 +42,8 @@ export default function EventCard({ event, eventCategory, onSeeDetails, onApprov
                 {event.category === "past" && (
                     <>
                         <button onClick={() => onWriteBlog(event)} className="flex items-center justify-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold w-28"><PenLine size={12} /> Write Blog</button>
-                        
-                        <button 
+
+                        <button
                             onClick={() => onFeedback(event.id)} // এখানে মেইন পেজের ফাংশন কল হবে
                             className="bg-white text-gray-700 border border-gray-200 px-2 py-1.5 rounded-md text-[10px] font-bold hover:bg-gray-800 hover:text-white transition-all w-28"
                         >
@@ -46,8 +53,8 @@ export default function EventCard({ event, eventCategory, onSeeDetails, onApprov
                         {/* Feedback Modal (Conditional Rendering) */}
                         {activeFeedbackId === event.id && (
                             <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-                                <div 
-                                    className="absolute inset-0 bg-black/30 backdrop-blur-sm" 
+                                <div
+                                    className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                                     onClick={() => onFeedback(null)} // ক্লোজ করার জন্য
                                 ></div>
                                 <div className="relative w-full max-w-sm p-6 bg-white border border-sky-100 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
@@ -64,7 +71,7 @@ export default function EventCard({ event, eventCategory, onSeeDetails, onApprov
                                     />
                                     <div className="flex justify-end gap-3">
                                         <button onClick={() => onFeedback(null)} className="px-4 py-2 text-xs text-slate-400 font-bold uppercase">Cancel</button>
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 console.log("Feedback Submitted:", text);
                                                 onFeedback(null);

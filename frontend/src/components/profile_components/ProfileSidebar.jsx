@@ -30,7 +30,7 @@ export default function ProfileSidebar({
                 <div className="flex items-center gap-4">
                     <div className="relative w-20 h-20">
                         <img
-                            src={profile.image || "https://via.placeholder.com/150"}
+                            src={profile.profile_picture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(profile.name) + "&background=0D8ABC&color=fff&size=128"}
                             alt="Profile"
                             className="w-full h-full object-cover rounded-full border-2 border-sky-50"
                         />
@@ -53,13 +53,12 @@ export default function ProfileSidebar({
                     <div className="pt-2 border-t border-gray-200">
                         <b className="text-gray-800 block mb-2">Signature:</b>
 
-                        {/* কন্ডিশন: যদি নতুন প্রিভিউ থাকে অথবা প্রোফাইলে সিগনেচার থাকে */}
+                        
                         {(signaturePreview || profile.signature) ? (
                             <div className="space-y-2">
                                 <div className="relative w-full h-24 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden p-2">
                                     <img
-                                        // প্রথম অগ্রাধিকার নতুন সিলেক্ট করা ফাইল (signaturePreview)
-                                        // তা না হলে ডাটাবেসের ফাইল (profile.signature)
+                                        
                                         src={signaturePreview || profile.signature}
                                         alt="Signature"
                                         className="h-full object-contain"
@@ -78,7 +77,7 @@ export default function ProfileSidebar({
                                 </label>
                             </div>
                         ) : (
-                            /* যদি দুটোর একটাও না থাকে (পুরো নতুন ইউজার) */
+                            
                             <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-100 transition-colors">
                                 <p className="text-xs text-gray-500 font-semibold">Upload Signature</p>
                                 <input
@@ -108,7 +107,7 @@ export default function ProfileSidebar({
                 </div>
             </div>
             {/* --- FILE UPDATE ACTION BUTTON --- */}
-            {/* যদি নতুন ইমেজ অথবা নতুন সিগনেচার সিলেক্ট করা হয়, তবেই এই সেকশনটি দেখাবে */}
+            
             {(signaturePreview || (profile.image && profile.image.startsWith('data:image'))) && (
                 <div className="mt-4 p-3 bg-sky-50 border border-sky-100 rounded-xl animate-in fade-in slide-in-from-top-2">
                     <p className="text-[11px] text-sky-700 font-bold mb-2 flex items-center gap-1">

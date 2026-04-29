@@ -11,6 +11,7 @@ const availabilityRoutes = require('./routes/availabilityCalenderRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const blogRoutes = require('./routes/blogRoutes');
 
 // DB (now env is already loaded ✅)
 require('./config/db');
@@ -40,6 +41,7 @@ app.use('/api/spots', spotRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/blog', blogRoutes);
 
 //admin
 app.use("/api/admin", adminRoutes);
