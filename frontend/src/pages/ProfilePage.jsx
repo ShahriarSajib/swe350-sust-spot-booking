@@ -243,6 +243,12 @@ export default function ProfilePage() {
                             {showBlogForm && selectedEvent && (
                                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
                                     <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+                                        <div className="p-6 border-b flex justify-between items-center bg-white">
+                                            <h3 className="text-xl font-bold text-gray-800">Create Event Blog</h3>
+                                            <button onClick={() => { setShowBlogForm(false); setSelectedEvent(null); }} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+                                                <X size={24} />
+                                            </button>
+                                        </div>
                                         <div className="p-6 overflow-y-auto">
                                             <BlogForm event={selectedEvent} onClose={() => { setShowBlogForm(false); setSelectedEvent(null); }} />
                                         </div>

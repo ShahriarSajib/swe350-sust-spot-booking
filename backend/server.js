@@ -10,6 +10,7 @@ const spotRoutes = require('./routes/spotRoutes');
 const availabilityRoutes = require('./routes/availabilityCalenderRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const blogRoutes = require('./routes/blogRoutes');
 
 // DB (now env is already loaded ✅)
 require('./config/db');
@@ -38,6 +39,7 @@ app.use('/api/spots', spotRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/blog', blogRoutes);
 
 // ================= 404 HANDLER =================
 

@@ -22,9 +22,9 @@ function BlogForm({ event, onClose }) {
     const handleCoverImageChange = (file) => {
         if (!file) return;
         if (formData.coverImage.previewUrl) URL.revokeObjectURL(formData.coverImage.previewUrl);
-        setFormData(prev => ({ 
-            ...prev, 
-            coverImage: { file, previewUrl: URL.createObjectURL(file) } 
+        setFormData(prev => ({
+            ...prev,
+            coverImage: { file, previewUrl: URL.createObjectURL(file) }
         }));
     };
 
@@ -66,27 +66,82 @@ function BlogForm({ event, onClose }) {
         setFormData(prev => ({ ...prev, images: updated }));
     };
 
-    const handlePublish = () => {
-        console.log("Submitting:", formData);
-        if (onClose) onClose();
+    // Add this state to your component to handle loading
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handlePublish = async () => {
+        setIsSubmitting(true);
+
+        // 1. Initialize FormData
+        const payload = new FormData();
+
+        // 2. Append Text Fields
+        payload.append('booking_id', event.booking_id);
+        payload.append('title', formData.title);
+        payload.append('author', formData.author);
+        payload.append('summary', formData.summary);
+        payload.append('content', formData.content);
+
+        // 3. Append Cover Image
+        if (formData.coverImage.file) {
+            payload.append('coverImage', formData.coverImage.file);
+        }
+
+        // 4. Append Gallery Images
+        const captions = [];
+        // Removed 'index' because it was unused
+        formData.images.forEach((img) => {
+            if (img.file) {
+                payload.append('galleryImages', img.file);
+                captions.push(img.caption || "");
+            }
+        });
+        payload.append('captions', JSON.stringify(captions));
+
+        // 5. Append Schedule Data
+        payload.append('scheduleData', JSON.stringify(formData.scheduleFragments));
+
+        // 6. Send to Backend
+        try {
+            const response = await fetch('http://localhost:5000/api/blog/create', {
+                method: 'POST',
+                body: payload,
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert("Blog published successfully!");
+                if (onClose) onClose();
+            } else {
+                alert("Error: " + result.error);
+            }
+        } catch (error) {
+            console.error("Submission failed:", error);
+            alert("Server error. Please try again.");
+        } finally {
+            setIsSubmitting(false); // This sets it back to false after completion
+        }
     };
 
     if (!event) return <div className="p-10 text-center text-sky-500">Loading event data...</div>;
 
+    console.log("booking id for blog:", event.booking_id);
+
     return (
-        <div className="space-y-6 max-h-[80vh] overflow-y-auto p-4 bg-white relative">
-            
-            {/* HEADER BAR WITH EXIT BUTTON */}
+        <div className="space-y-6  p-4 bg-white relative">
+
+            {/* HEADER BAR WITH EXIT BUTTON
             <div className="flex items-center justify-between border-b pb-3 sticky top-0 bg-white z-10">
                 <h4 className="font-bold text-xl text-sky-900">Create Event Blog</h4>
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onClick={onClose}
                     className="p-1 rounded-full text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-all"
                 >
                     <X size={24} />
                 </button>
-            </div>
+            </div> */}
 
             {/* Event Info Grid */}
             <div className="grid grid-cols-2 gap-4 p-5 bg-sky-50 rounded-2xl border border-sky-100">
@@ -198,8 +253,14 @@ function BlogForm({ event, onClose }) {
 
             {/* Footer Buttons */}
             <div className="flex gap-3 pt-6 border-t border-sky-100">
-                <button type="button" className="flex-1 bg-sky-600 text-white font-bold py-3 rounded-xl hover:bg-sky-700 shadow-lg shadow-sky-200 transition-all" onClick={handlePublish}>
-                    Publish Blog
+                <button
+                    type="button"
+                    className={`flex-1 text-white font-bold py-3 rounded-xl shadow-lg transition-all ${isSubmitting ? 'bg-sky-400 cursor-not-allowed' : 'bg-sky-600 hover:bg-sky-700 shadow-sky-200'
+                        }`}
+                    onClick={handlePublish}
+                    disabled={isSubmitting} // Prevents clicking while submitting
+                >
+                    {isSubmitting ? "Publishing..." : "Publish Blog"}
                 </button>
                 <button type="button" className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all" onClick={onClose}>
                     Cancel
