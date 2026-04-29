@@ -33,5 +33,6 @@ router.post('/create', upload.fields([
 ]), blogController.createEventBlog);
 
 router.get('/all', blogController.getPublishedBlogs);
+router.get('/user/:userId', blogController.getUserPublishedBlogs);
 
 module.exports = router;
