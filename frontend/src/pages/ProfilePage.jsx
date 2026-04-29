@@ -48,7 +48,6 @@ export default function ProfilePage() {
     const [passwordLoading, setPasswordLoading] = useState(false)
     const [passwordMessage, setPasswordMessage] = useState("")
 
-    // URL থেকে ট্যাব নিবে, না থাকলে ডিফল্ট "events"
     const [selectedTab, setSelectedTab] = useState(window.location.hash.replace('#', '') || "events");
     const [showBlogForm, setShowBlogForm] = useState(false)
     const [selectedEvent, setSelectedEvent] = useState(null)
@@ -58,160 +57,10 @@ export default function ProfilePage() {
 
     const [activeFeedbackId, setActiveFeedbackId] = useState(null);
 
-    const [selectedReq, setSelectedReq] = useState(null); // ডাটা রাখার জন্য
-    const [isPreviewOpen, setIsPreviewOpen] = useState(false); // Approval Preview-এর জন্য
-    const [isDetailsOpen, setIsDetailsOpen] = useState(false); // See Details-এর জন্য
+    const [selectedReq, setSelectedReq] = useState(null); 
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false); 
 
-    // const events = [
-    //     {
-    //         id: 1,
-    //         title: "Annual Meet",
-    //         session: "Day+Night",
-    //         organizer: "Administration",
-    //         spotName: "Central Auditorium",
-    //         date: "2/15/2026",
-    //         endDate: "2/16/2026",
-    //         category: "upcoming",
-    //         startTime: "10:00 AM",
-    //         endTime: "09:00 PM",
-    //         description: "Yearly gathering for all administrative staff to discuss progress and future goals.",
-    //         applicant: {
-    //             name: "John Doe",
-    //             post: "Event Coordinator",
-    //             department: "Administration",
-    //             signature: applicantSignature
-
-    //         },
-    //         recommender: {
-    //             name: "Dr. M. A. Rashid",
-    //             post: "Registrar, SUST",
-    //             signature: recommenderSignature
-    //         },
-    //         approver: {
-    //             name: "Prof. Dr. Kamal Uddin",
-    //             post: "Vice Chancellor, SUST",
-    //             signature: approverSignature
-    //         }
-    //     },
-    //     {
-    //         id: 2,
-    //         title: "Coding Hackathon",
-    //         session: "Night",
-    //         organizer: "Tech Club",
-    //         spotName: "Mini Auditorium",
-    //         date: "2/10/2026 ",
-    //         endDate: "2/12/2026",
-    //         category: "upcoming",
-    //         description: "A 48-hour non-stop coding competition to solve real-world problems.",
-    //         startTime: "04:30 PM",
-    //         endTime: "08:30 PM",
-    //         applicant: {
-    //             name: "John Doe",
-    //             post: "Event Coordinator",
-    //             department: "Administration",
-    //             signature: applicantSignature
-
-    //         },
-    //         recommender: {
-    //             name: "Prof. Dr. Ariful Islam",
-    //             post: "Head of CSE",
-    //             signature: recommenderSignature
-    //         },
-    //         approver: {
-    //             name: "Prof. Dr. Kamal Uddin",
-    //             post: "Vice Chancellor, SUST",
-    //             signature: approverSignature
-    //         }
-    //     },
-    //     {
-    //         id: 5,
-    //         title: "Science Fair",
-    //         session: "Day",
-    //         organizer: "Science Club",
-    //         spotName: "Lab Hall",
-    //         date: "3/10/2026",
-    //         category: "pending",
-    //         startTime: "09:00 AM",
-    //         endTime: "05:00 PM",
-    //         description: "Showcasing innovative research projects from undergraduate students.",
-    //         applicant: {
-    //             name: "John Doe",
-    //             post: "Event Coordinator",
-    //             department: "Administration",
-    //             signature: applicantSignature
-
-    //         },
-    //         recommender: {
-    //             name: "Dr. Sabina Yasmin",
-    //             post: "Dean of Physical Sciences",
-    //             signature: recommenderSignature
-    //         },
-    //         approver: {
-    //             name: "Prof. Dr. Kamal Uddin",
-    //             post: "Vice Chancellor, SUST",
-    //             signature: approverSignature
-    //         }
-    //     },
-    //     {
-    //         id: 3,
-    //         title: "Art Exhibition",
-    //         session: "Day",
-    //         organizer: "Art Club",
-    //         spotName: "Central Field",
-    //         date: "8/5/2025",
-    //         category: "past",
-    //         startTime: "09:00 AM",
-    //         endTime: "05:00 PM",
-    //         description: "Showcasing innovative research projects from undergraduate students.",
-    //         applicant: {
-    //             name: "John Doe",
-    //             post: "Event Coordinator",
-    //             department: "Administration",
-    //             signature: recommenderSignature
-
-    //         },
-    //         recommender: {
-    //             name: "Dr. Sabina Yasmin",
-    //             post: "Dean of Physical Sciences",
-    //             signature: applicantSignature
-    //         },
-    //         approver: {
-    //             name: "Prof. Dr. Kamal Uddin",
-    //             post: "Vice Chancellor, SUST",
-    //             signature: approverSignature
-    //         }
-    //     },
-    //     {
-    //         id: 4,
-    //         title: "Tech Conference 2025",
-    //         session: "Day+Night",
-    //         organizer: "Tech Club",
-    //         spotName: "Main Hall",
-    //         date: "6/20/2025",
-    //         endDate: "6/22/2025",
-    //         category: "past",
-    //         startTime: "10:00 AM",
-    //         endTime: "09:00 PM",
-    //         description: "Showcasing innovative research projects from undergraduate students.",
-    //         applicant: {
-    //             name: "John Doe",
-    //             post: "Event Coordinator",
-    //             department: "Administration",
-    //             signature: applicantSignature
-
-    //         },
-    //         recommender: {
-    //             name: "Dr. Sabina Yasmin",
-    //             post: "Dean of Physical Sciences",
-    //             signature: recommenderSignature
-    //         },
-    //         approver: {
-    //             name: "Prof. Dr. Kamal Uddin",
-    //             post: "Vice Chancellor, SUST",
-    //             signature: approverSignature
-    //         }
-    //     },
-    // ];
     const myBlogs = [
         {
             id: "1",
@@ -231,14 +80,11 @@ export default function ProfilePage() {
         }
     ];
 
-    // const filteredEvents = eventCategory === "all"
-    //     ? events
-    //     : events.filter((e) => e.category === eventCategory);
 
     const [signaturePreview, setSignaturePreview] = useState(profile.signature || null);
 
     const handleTabChange = (tabName) => {
-        window.location.hash = tabName; // ইউআরএল এর শেষে #blogs যোগ করবে
+        window.location.hash = tabName; 
         setSelectedTab(tabName);
     };
     useEffect(() => {
@@ -247,7 +93,7 @@ export default function ProfilePage() {
             if (hash) {
                 setSelectedTab(hash);
             } else {
-                setSelectedTab('events'); // ডিফল্ট ট্যাব
+                setSelectedTab('events'); 
             }
         };
 
@@ -296,8 +142,8 @@ export default function ProfilePage() {
     }, []);
 
 
-    const [allEvents, setAllEvents] = useState([]); // ব্যাকএন্ড থেকে আসা সব ডাটা
-    const [eventCategory, setEventCategory] = useState("all"); // ফিল্টার স্টেট
+    const [allEvents, setAllEvents] = useState([]); 
+    const [eventCategory, setEventCategory] = useState("all");
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -316,7 +162,6 @@ export default function ProfilePage() {
         fetchEvents();
     }, []);
 
-    // ইউজার যখন বাটনে ক্লিক করবে, তখন এই ফিল্টারড লিস্টটি রেন্ডার হবে
     const filteredEvents = allEvents.filter(event => {
         if (eventCategory === "all") return true;
         return event.category === eventCategory;
@@ -398,12 +243,6 @@ export default function ProfilePage() {
                             {showBlogForm && selectedEvent && (
                                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
                                     <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
-                                        <div className="p-6 border-b flex justify-between items-center bg-white">
-                                            <h3 className="text-xl font-bold text-gray-800">Create Event Blog</h3>
-                                            <button onClick={() => { setShowBlogForm(false); setSelectedEvent(null); }} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
-                                                <X size={24} />
-                                            </button>
-                                        </div>
                                         <div className="p-6 overflow-y-auto">
                                             <BlogForm event={selectedEvent} onClose={() => { setShowBlogForm(false); setSelectedEvent(null); }} />
                                         </div>

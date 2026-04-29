@@ -1,258 +1,212 @@
 import React, { useState } from "react";
-import { Plus, X } from "lucide-react";
-
-// import React, { useState } from "react"
-// import { Plus, X } from "lucide-react"
+import { Plus, X, Upload, Image as ImageIcon } from "lucide-react";
 
 function BlogForm({ event, onClose }) {
-    // if (!event) return null;
     const [formData, setFormData] = useState({
-        eventId: event.id || "",
-        eventName: event.name || event.title || "Untitled Event",
-        organizer: event.club || event.organizer || "N/A",
-        spot: event.location || event.spot || "N/A",
-        date: event.date || event.startDate || "",
-        title: `${event.name || event.title || "Event"} Review`,
+        eventId: event?.id || "",
+        eventName: event?.title || "Untitled Event",
+        organizer: event?.club || event?.organizer || "N/A",
+        spot: event?.name || "N/A",
+        date: event?.date || event?.start_date || "",
+        title: event?.title || "Untitled Blog",
         author: "",
         summary: "",
         content: "",
         tags: "",
+        coverImage: { file: null, previewUrl: "" },
         scheduleFragments: [],
         images: [],
-    })
+    });
 
-    const addScheduleFragment = () => {
-        setFormData({
-            ...formData,
-            scheduleFragments: [...formData.scheduleFragments, { time: "", activity: "", description: "" }],
-        })
-    }
+    // --- Image Handlers ---
+    const handleCoverImageChange = (file) => {
+        if (!file) return;
+        if (formData.coverImage.previewUrl) URL.revokeObjectURL(formData.coverImage.previewUrl);
+        setFormData(prev => ({ 
+            ...prev, 
+            coverImage: { file, previewUrl: URL.createObjectURL(file) } 
+        }));
+    };
 
-    const removeScheduleFragment = (index) => {
-        setFormData({
-            ...formData,
-            scheduleFragments: formData.scheduleFragments.filter((_, i) => i !== index),
-        })
-    }
+    const removeCoverImage = () => {
+        if (formData.coverImage.previewUrl) URL.revokeObjectURL(formData.coverImage.previewUrl);
+        setFormData(prev => ({ ...prev, coverImage: { file: null, previewUrl: "" } }));
+    };
 
+    const addScheduleFragment = () => setFormData(prev => ({ ...prev, scheduleFragments: [...prev.scheduleFragments, { time: "", activity: "", description: "" }] }));
+    const removeScheduleFragment = (index) => setFormData(prev => ({ ...prev, scheduleFragments: prev.scheduleFragments.filter((_, i) => i !== index) }));
     const updateScheduleFragment = (index, field, value) => {
-        const updated = [...formData.scheduleFragments]
-        updated[index] = { ...updated[index], [field]: value }
-        setFormData({ ...formData, scheduleFragments: updated })
-    }
+        const updated = [...formData.scheduleFragments];
+        updated[index] = { ...updated[index], [field]: value };
+        setFormData(prev => ({ ...prev, scheduleFragments: updated }));
+    };
 
     const addImage = () => {
-        setFormData({
-            ...formData,
-            images: [...formData.images, { url: "", caption: "", alt: "" }],
-        })
-    }
+        if (formData.images.length < 4) {
+            setFormData(prev => ({ ...prev, images: [...prev.images, { file: null, previewUrl: "", caption: "" }] }));
+        }
+    };
 
     const removeImage = (index) => {
-        setFormData({
-            ...formData,
-            images: formData.images.filter((_, i) => i !== index),
-        })
-    }
+        if (formData.images[index].previewUrl) URL.revokeObjectURL(formData.images[index].previewUrl);
+        setFormData(prev => ({ ...prev, images: formData.images.filter((_, i) => i !== index) }));
+    };
 
-    const updateImage = (index, field, value) => {
-        const updated = [...formData.images]
-        updated[index] = { ...updated[index], [field]: value }
-        setFormData({ ...formData, images: updated })
-    }
+    const handleFileChange = (index, file) => {
+        if (!file) return;
+        if (formData.images[index].previewUrl) URL.revokeObjectURL(formData.images[index].previewUrl);
+        const updated = [...formData.images];
+        updated[index] = { ...updated[index], file: file, previewUrl: URL.createObjectURL(file) };
+        setFormData(prev => ({ ...prev, images: updated }));
+    };
 
-    if (!event) {
-        return (
-            <div className="p-10 text-center text-gray-500">
-                Loading event data...
-            </div>
-        );
-    }
+    const updateImageField = (index, field, value) => {
+        const updated = [...formData.images];
+        updated[index] = { ...updated[index], [field]: value };
+        setFormData(prev => ({ ...prev, images: updated }));
+    };
+
+    const handlePublish = () => {
+        console.log("Submitting:", formData);
+        if (onClose) onClose();
+    };
+
+    if (!event) return <div className="p-10 text-center text-sky-500">Loading event data...</div>;
 
     return (
-        <div className="space-y-4 max-h-[80vh] overflow-y-auto p-1">
-            <h4 className="font-bold text-lg text-gray-800">Write a Blog</h4>
-
-            {/* Auto-filled fields (read-only style) */}
-            <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">Event Name</p>
-                    <p className="text-sm font-semibold text-gray-700">{formData.eventName}</p>
-                </div>
-                <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">Organizer</p>
-                    <p className="text-sm font-semibold text-gray-700">{formData.organizer}</p>
-                </div>
-                <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">Location</p>
-                    <p className="text-sm font-semibold text-gray-700">{formData.spot}</p>
-                </div>
-                <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">Date</p>
-                    <p className="text-sm font-semibold text-gray-700">{formData.date}</p>
-                </div>
+        <div className="space-y-6 max-h-[80vh] overflow-y-auto p-4 bg-white relative">
+            
+            {/* HEADER BAR WITH EXIT BUTTON */}
+            <div className="flex items-center justify-between border-b pb-3 sticky top-0 bg-white z-10">
+                <h4 className="font-bold text-xl text-sky-900">Create Event Blog</h4>
+                <button 
+                    type="button" 
+                    onClick={onClose}
+                    className="p-1 rounded-full text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-all"
+                >
+                    <X size={24} />
+                </button>
             </div>
 
-            {/* User input fields */}
-            <div className="space-y-4">
+            {/* Event Info Grid */}
+            <div className="grid grid-cols-2 gap-4 p-5 bg-sky-50 rounded-2xl border border-sky-100">
+                {[
+                    { label: "Event", value: formData.eventName },
+                    { label: "Organizer", value: formData.organizer },
+                    { label: "Location", value: formData.spot },
+                    { label: "Date", value: formData.date },
+                ].map((item, i) => (
+                    <div key={i}>
+                        <p className="text-[10px] font-bold text-sky-500 uppercase tracking-wider">{item.label}</p>
+                        <p className="text-sm font-semibold text-sky-900">{item.value}</p>
+                    </div>
+                ))}
+            </div>
+
+            <div className="space-y-5">
+                {/* Cover Image */}
                 <div>
-                    <label className="text-sm font-bold text-gray-600">Blog Title</label>
-                    <input
-                        type="text"
-                        className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    />
+                    <label className="text-sm font-bold text-slate-600 block mb-2">Cover Image</label>
+                    <div className="relative border-2 border-dashed border-sky-200 rounded-2xl p-4 bg-sky-50/50 hover:bg-sky-50 transition-colors">
+                        {!formData.coverImage.previewUrl ? (
+                            <label className="flex flex-col items-center justify-center cursor-pointer h-32">
+                                <ImageIcon className="text-sky-400 mb-2" size={32} />
+                                <span className="text-xs font-bold text-sky-600">Click to upload cover</span>
+                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleCoverImageChange(e.target.files[0])} />
+                            </label>
+                        ) : (
+                            <div className="relative h-40 w-full rounded-xl overflow-hidden">
+                                <img src={formData.coverImage.previewUrl} alt="Cover" className="w-full h-full object-cover" />
+                                <button type="button" onClick={removeCoverImage} className="absolute top-2 right-2 bg-white/80 p-1 rounded-full text-red-500 hover:text-red-700">
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div>
-                    <label className="text-sm font-bold text-gray-600">Author Name</label>
-                    <input
-                        type="text"
-                        className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500"
-                        placeholder="Your Name"
-                        value={formData.author}
-                        onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                    />
-                </div>
+                {/* Text Fields */}
+                {[
+                    { label: "Blog Title", field: "title", type: "text" },
+                    { label: "Author Name", field: "author", type: "text" },
+                    { label: "Summary", field: "summary", type: "textarea" },
+                    { label: "Full Story Content", field: "content", type: "textarea" },
+                ].map((input, idx) => (
+                    <div key={idx}>
+                        <label className="text-sm font-bold text-slate-600 block mb-1">{input.label}</label>
+                        {input.type === "textarea" ? (
+                            <textarea
+                                className="w-full px-4 py-3 border border-sky-100 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 bg-white shadow-sm"
+                                rows={input.field === "summary" ? 2 : 5}
+                                value={formData[input.field]}
+                                onChange={(e) => setFormData({ ...formData, [input.field]: e.target.value })}
+                            />
+                        ) : (
+                            <input
+                                type="text"
+                                className="w-full px-4 py-3 border border-sky-100 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 bg-white shadow-sm"
+                                value={formData[input.field]}
+                                onChange={(e) => setFormData({ ...formData, [input.field]: e.target.value })}
+                            />
+                        )}
+                    </div>
+                ))}
 
-                <div>
-                    <label className="text-sm font-bold text-gray-600">Summary</label>
-                    <textarea
-                        className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500"
-                        rows={2}
-                        placeholder="Briefly describe the event highlights..."
-                        value={formData.summary}
-                        onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                    />
-                </div>
-
-                <div>
-                    <label className="text-sm font-bold text-gray-600">Full Story Content</label>
-                    <textarea
-                        className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500"
-                        rows={6}
-                        placeholder="Describe your experience in detail..."
-                        value={formData.content}
-                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    />
-                </div>
-
-                <div>
-                    <label className="text-sm font-bold text-gray-600">Tags (comma separated)</label>
-                    <input
-                        type="text"
-                        className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-teal-500"
-                        placeholder="e.g., Art, Exhibition, Culture"
-                        value={formData.tags}
-                        onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                    />
-                </div>
-
-                {/* Schedule Fragments Section */}
-                <div className="space-y-3 pt-2">
-                    <div className="flex items-center justify-between border-b pb-2">
-                        <label className="text-sm font-extrabold text-gray-800">Event Schedule Highlights</label>
-                        <button
-                            type="button"
-                            onClick={addScheduleFragment}
-                            className="flex items-center gap-1 text-xs font-bold text-teal-600 hover:bg-teal-50 px-2 py-1 rounded-lg transition-colors"
-                        >
+                {/* Schedule */}
+                <div className="pt-2">
+                    <div className="flex items-center justify-between border-b border-sky-100 pb-2 mb-4">
+                        <label className="text-sm font-extrabold text-sky-900">Event Schedule</label>
+                        <button type="button" onClick={addScheduleFragment} className="flex items-center gap-1 text-xs font-bold text-sky-600 hover:bg-sky-100 px-3 py-1.5 rounded-lg transition-colors">
                             <Plus size={14} /> Add Timeline
                         </button>
                     </div>
-
                     {formData.scheduleFragments.map((fragment, index) => (
-                        <div key={index} className="p-4 border rounded-2xl bg-gray-50/50 relative">
-                            <button
-                                className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-                                onClick={() => removeScheduleFragment(index)}
-                            >
-                                <X size={16} />
-                            </button>
-                            <div className="grid grid-cols-1 gap-3">
-                                <input
-                                    className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    placeholder="Time (e.g., 10:00 AM)"
-                                    value={fragment.time}
-                                    onChange={(e) => updateScheduleFragment(index, "time", e.target.value)}
-                                />
-                                <input
-                                    className="w-full px-3 py-2 border rounded-lg text-sm font-bold"
-                                    placeholder="Activity Title"
-                                    value={fragment.activity}
-                                    onChange={(e) => updateScheduleFragment(index, "activity", e.target.value)}
-                                />
-                                <input
-                                    className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    placeholder="Short Description"
-                                    value={fragment.description}
-                                    onChange={(e) => updateScheduleFragment(index, "description", e.target.value)}
-                                />
-                            </div>
+                        <div key={index} className="p-4 border border-sky-100 rounded-2xl bg-white mb-3 shadow-sm relative">
+                            <button type="button" className="absolute top-3 right-3 text-sky-300 hover:text-red-500" onClick={() => removeScheduleFragment(index)}><X size={16} /></button>
+                            <input className="w-full px-3 py-2 mb-2 border border-sky-100 rounded-lg text-sm" placeholder="Time" value={fragment.time} onChange={(e) => updateScheduleFragment(index, "time", e.target.value)} />
+                            <input className="w-full px-3 py-2 border border-sky-100 rounded-lg text-sm font-semibold text-sky-900" placeholder="Activity Title" value={fragment.activity} onChange={(e) => updateScheduleFragment(index, "activity", e.target.value)} />
                         </div>
                     ))}
                 </div>
 
-                {/* Images Section */}
-                <div className="space-y-3 pt-2">
-                    <div className="flex items-center justify-between border-b pb-2">
-                        <label className="text-sm font-extrabold text-gray-800">Gallery Links</label>
-                        <button
-                            type="button"
-                            onClick={addImage}
-                            className="flex items-center gap-1 text-xs font-bold text-teal-600 hover:bg-teal-50 px-2 py-1 rounded-lg"
-                        >
-                            <Plus size={14} /> Add Image Link
-                        </button>
-                    </div>
-
-                    {formData.images.map((image, index) => (
-                        <div key={index} className="p-4 border rounded-2xl bg-gray-50/50 relative">
-                            <button
-                                className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-                                onClick={() => removeImage(index)}
-                            >
-                                <X size={16} />
+                {/* Gallery */}
+                <div className="pt-2">
+                    <div className="flex items-center justify-between border-b border-sky-100 pb-2 mb-4">
+                        <label className="text-sm font-extrabold text-sky-900">
+                            Gallery <span className="text-sky-400 font-normal">({formData.images.length}/4)</span>
+                        </label>
+                        {formData.images.length < 4 && (
+                            <button type="button" onClick={addImage} className="flex items-center gap-1 text-xs font-bold text-sky-600 hover:bg-sky-100 px-3 py-1.5 rounded-lg transition-colors">
+                                <Plus size={14} /> Add Image
                             </button>
-                            <div className="space-y-3">
-                                <input
-                                    className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    placeholder="Image URL"
-                                    value={image.url}
-                                    onChange={(e) => updateImage(index, "url", e.target.value)}
-                                />
-                                <input
-                                    className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    placeholder="Caption"
-                                    value={image.caption}
-                                    onChange={(e) => updateImage(index, "caption", e.target.value)}
-                                />
-                            </div>
+                        )}
+                    </div>
+                    {formData.images.map((image, index) => (
+                        <div key={index} className="p-4 border border-sky-100 rounded-2xl bg-white mb-3 shadow-sm relative">
+                            <button type="button" className="absolute top-3 right-3 text-sky-300 hover:text-red-500" onClick={() => removeImage(index)}><X size={16} /></button>
+                            <label className="flex items-center gap-2 px-3 py-2 border border-sky-100 rounded-lg bg-sky-50 cursor-pointer hover:bg-sky-100 text-sm font-medium text-sky-700 w-full transition-colors">
+                                <Upload size={16} />
+                                {image.file ? image.file.name : "Select Image"}
+                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(index, e.target.files[0])} />
+                            </label>
+                            {image.previewUrl && <img src={image.previewUrl} alt="Preview" className="mt-3 h-20 w-20 object-cover rounded-lg border-2 border-sky-200" />}
+                            <input className="w-full mt-2 px-3 py-2 border border-sky-100 rounded-lg text-sm" placeholder="Caption" value={image.caption} onChange={(e) => updateImageField(index, "caption", e.target.value)} />
                         </div>
                     ))}
                 </div>
             </div>
 
-            <div className="flex gap-3 pt-6">
-                <button
-                    className="flex-1 bg-teal-600 text-white font-bold py-3 rounded-xl hover:bg-teal-700 shadow-lg shadow-teal-100 transition-all"
-                    onClick={() => {
-                        console.log("Submitting blog:", formData)
-                        onClose()
-                    }}
-                >
+            {/* Footer Buttons */}
+            <div className="flex gap-3 pt-6 border-t border-sky-100">
+                <button type="button" className="flex-1 bg-sky-600 text-white font-bold py-3 rounded-xl hover:bg-sky-700 shadow-lg shadow-sky-200 transition-all" onClick={handlePublish}>
                     Publish Blog
                 </button>
-                <button
-                    className="px-6 py-3 border border-gray-200 text-gray-500 font-bold rounded-xl hover:bg-gray-50"
-                    onClick={onClose}
-                >
+                <button type="button" className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all" onClick={onClose}>
                     Cancel
                 </button>
             </div>
         </div>
-    )
+    );
 }
 
 export default BlogForm;
