@@ -10,7 +10,7 @@ import { useEffect } from "react";
 // import recommenderSignature from "../assets/recommender_sig.png";
 // import approverSignature from "../assets/approver_sig.png";
 
-import innovation from "../assets/innovation.png";
+// import innovation from "../assets/innovation.png";
 
 
 import BlogForm from './BlogForm';
@@ -60,27 +60,6 @@ export default function ProfilePage() {
     const [selectedReq, setSelectedReq] = useState(null); 
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false); 
-
-    const myBlogs = [
-        {
-            id: "1",
-            title: " Annual Innovation Hub Event",
-            publishedDate: "Oct 12, 2025",
-            description: "A thrilling experience managing the largest sports event of the year...",
-            image: innovation, // Sample Image
-            category: "Mini Auditorium"
-        },
-        {
-            id: "2",
-            title: "Music Night Harmony Recap",
-            publishedDate: "Nov 05, 2025",
-            description: "New safety measures and floor maintenance tips for our basketball players...",
-            image: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=400",
-            category: "Basketball Ground"
-        }
-    ];
-
-
     const [signaturePreview, setSignaturePreview] = useState(profile.signature || null);
 
     const handleTabChange = (tabName) => {
@@ -141,7 +120,7 @@ export default function ProfilePage() {
         fetchProfile();
     }, []);
 
-
+    // const userId = localStorage.getItem("userId");
     const [allEvents, setAllEvents] = useState([]); 
     const [eventCategory, setEventCategory] = useState("all");
 
@@ -167,7 +146,7 @@ export default function ProfilePage() {
         return event.category === eventCategory;
     });
 
-    console.log("All Events:", allEvents);
+    // console.log("All Events:", allEvents);
 
     if (!profile) {
         return (
@@ -260,7 +239,6 @@ export default function ProfilePage() {
                     ) : (
                         <div className="py-8">
                             <MyBlogs
-                                myBlogs={myBlogs}
                                 navigate={navigate}
                             />
                         </div>

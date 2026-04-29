@@ -119,4 +119,73 @@ const getPublishedBlogs = async (req, res) => {
     }
 };
 
-module.exports = { createEventBlog, getPublishedBlogs };
+const getUserPublishedBlogs = async (req, res) => {
+    const { userId } = req.params; 
+
+    // Updated SQL to filter specifically by user_id
+    const sql = `
+        SELECT 
+            eb.*, 
+            ebc.*, 
+            s.name AS spot_name 
+        FROM event_blog eb
+        LEFT JOIN event_blog_content ebc ON eb.blog_id = ebc.blog_id
+        LEFT JOIN events e ON eb.event_id = e.id
+        LEFT JOIN bookings b ON e.booking_id = b.booking_id
+        LEFT JOIN spots s ON b.spot_id = s.spot_id
+        WHERE b.user_id = ? AND eb.blog_status = 'published'
+        ORDER BY eb.published_at DESC
+    `;
+
+    try {
+        const [rows] = await db.query(sql, [userId]);
+        const blogsMap = new Map();
+
+        rows.forEach(row => {
+            // If this blog hasn't been added to the map yet, initialize it
+            if (!blogsMap.has(row.blog_id)) {
+                blogsMap.set(row.blog_id, {
+                    blog_id: row.blog_id,
+                    event_id: row.event_id,
+                    blog_title: row.blog_title,
+                    summary: row.summary,
+                    story_details: row.story_details,
+                    author_name: row.author_name,
+                    blog_status: row.blog_status,
+                    submitted_at: row.submitted_at,
+                    published_at: row.published_at,
+                    cover_image: row.cover_image,
+                    spot_name: row.spot_name || "Unknown Location", 
+                    schedules: [],
+                    images: []
+                });
+            }
+
+            const currentBlog = blogsMap.get(row.blog_id);
+
+            // Push content into respective arrays based on content_type
+            if (row.content_type === 'schedule') {
+                currentBlog.schedules.push({
+                    time: row.activity_time,
+                    activity: row.activity_title,
+                    description: row.activity_description 
+                });
+            } else if (row.content_type === 'image') {
+                currentBlog.images.push({
+                    image_path: row.image_path, 
+                    image_caption: row.image_caption
+                });
+            }
+        });
+
+        // Convert Map back to a simple Array and send as response
+        const results = Array.from(blogsMap.values());
+        res.status(200).json(results);
+
+    } catch (err) {
+        console.error("Error fetching user blogs:", err);
+        res.status(500).json({ error: "Failed to fetch blogs for this user" });
+    }
+};
+
+module.exports = { createEventBlog, getPublishedBlogs, getUserPublishedBlogs };
