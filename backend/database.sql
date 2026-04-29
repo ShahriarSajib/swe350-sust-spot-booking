@@ -130,10 +130,16 @@ CREATE TABLE event_blog (
     blog_title VARCHAR(150) NOT NULL,
     summary TEXT,
     story_details TEXT,
-    tags VARCHAR(150),
+
+    blog_status ENUM('pending','published','rejected') DEFAULT 'pending',
+    submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cover_image VARCHAR(255),
 
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
+ALTER TABLE event_blog 
+ADD published_at DATETIME NULL AFTER submitted_at;
+
 CREATE TABLE event_blog_content (
     id INT AUTO_INCREMENT PRIMARY KEY,
 

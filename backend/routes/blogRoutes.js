@@ -32,4 +32,6 @@ router.post('/create', upload.fields([
     { name: 'galleryImages', maxCount: 4 }
 ]), blogController.createEventBlog);
 
+router.get('/all', blogController.getPublishedBlogs);
+
 module.exports = router;

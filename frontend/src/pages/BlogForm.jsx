@@ -130,19 +130,6 @@ function BlogForm({ event, onClose }) {
 
     return (
         <div className="space-y-6  p-4 bg-white relative">
-
-            {/* HEADER BAR WITH EXIT BUTTON
-            <div className="flex items-center justify-between border-b pb-3 sticky top-0 bg-white z-10">
-                <h4 className="font-bold text-xl text-sky-900">Create Event Blog</h4>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="p-1 rounded-full text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-all"
-                >
-                    <X size={24} />
-                </button>
-            </div> */}
-
             {/* Event Info Grid */}
             <div className="grid grid-cols-2 gap-4 p-5 bg-sky-50 rounded-2xl border border-sky-100">
                 {[
@@ -220,6 +207,7 @@ function BlogForm({ event, onClose }) {
                             <button type="button" className="absolute top-3 right-3 text-sky-300 hover:text-red-500" onClick={() => removeScheduleFragment(index)}><X size={16} /></button>
                             <input className="w-full px-3 py-2 mb-2 border border-sky-100 rounded-lg text-sm" placeholder="Time" value={fragment.time} onChange={(e) => updateScheduleFragment(index, "time", e.target.value)} />
                             <input className="w-full px-3 py-2 border border-sky-100 rounded-lg text-sm font-semibold text-sky-900" placeholder="Activity Title" value={fragment.activity} onChange={(e) => updateScheduleFragment(index, "activity", e.target.value)} />
+                            <textarea className="w-full px-3 py-2 mt-2 border border-sky-100 rounded-lg text-sm" placeholder="Activity Description" value={fragment.description} onChange={(e) => updateScheduleFragment(index, "description", e.target.value)} rows={3} />
                         </div>
                     ))}
                 </div>
