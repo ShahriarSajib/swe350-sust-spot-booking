@@ -22,19 +22,19 @@ const Header = ({ onLogout, onOpenNotif, role }) => {
         {
           <nav className="hidden md:flex gap-7 text-white font-medium items-center">
             {/* Change Link to a Button for the Modal trigger */}
-            <button 
-            onClick={onOpenNotif} 
-            className="hover:underline flex items-center gap-1"
-          >
-            Notifications
-            <span className="bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full">3</span>
-          </button>
+            <button
+              onClick={onOpenNotif}
+              className="hover:underline flex items-center gap-1"
+            >
+              Notifications
+              <span className="bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full">3</span>
+            </button>
 
             {role === 'user' && (
-            <Link to="/profile" className="hover:underline">
-              Profile
-            </Link>
-          )}
+              <Link to="/profile" className="hover:underline">
+                Profile
+              </Link>
+            )}
           </nav>
         }
 

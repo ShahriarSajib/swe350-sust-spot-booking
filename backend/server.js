@@ -10,6 +10,7 @@ const spotRoutes = require('./routes/spotRoutes');
 const availabilityRoutes = require('./routes/availabilityCalenderRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // DB (now env is already loaded ✅)
 require('./config/db');
@@ -29,6 +30,7 @@ app.use(cors({
 app.use(express.json());
 
 // Static files
+app.use("/uploads", express.static("uploads"));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ================= ROUTES =================
@@ -38,6 +40,9 @@ app.use('/api/spots', spotRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/events', eventRoutes);
+
+//admin
+app.use("/api/admin", adminRoutes);
 
 // ================= 404 HANDLER =================
 
@@ -64,3 +69,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+

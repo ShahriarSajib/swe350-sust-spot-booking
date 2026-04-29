@@ -1,4 +1,4 @@
-const db = require('../db');
+const db = require('../config/db');
 
 const createBooking = (data, callback) => {
     // insert into bookings table

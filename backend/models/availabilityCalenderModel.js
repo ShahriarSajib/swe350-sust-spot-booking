@@ -1,4 +1,4 @@
-const db = require('../db'); 
+const db = require('../config/db'); 
 
 const getBookingsBySpotId = (spotId, callback) => {
     const query = `SELECT start_date, end_date, session, booking_status FROM bookings WHERE spot_id = ?`;

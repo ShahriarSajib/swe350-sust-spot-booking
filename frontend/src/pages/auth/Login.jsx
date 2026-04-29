@@ -14,18 +14,24 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:5000/api/users/login", {
+      const url =
+        loginType === "admin"
+          ? "http://localhost:5000/api/admin/login"
+          : "http://localhost:5000/api/users/login";
+
+      const res = await axios.post(url, {
         email,
         password,
       });
 
       alert("Login Successful!");
-      console.log(res.data);
 
-      localStorage.setItem("userId", res.data.user.id);
-      localStorage.setItem("userName", res.data.user.full_name || "");
-      localStorage.setItem("userContact", res.data.user.contact_number || "");
-      localStorage.setItem("userType", res.data.user.user_type || "user");
+      if (loginType === "admin") {
+        localStorage.setItem("adminToken", res.data.token);
+        localStorage.setItem("adminId", res.data.admin.approver_id);
+      } else {
+        localStorage.setItem("userId", res.data.user.id);
+      }
 
       onLogin(loginType);
     } catch (err) {
@@ -184,22 +190,20 @@ const Login = ({ onLogin }) => {
                 <div className="flex items-center justify-center gap-3">
                   <div
                     onClick={() => setLoginType("user")}
-                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${
-                      loginType === "user"
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === "user"
                         ? "border-blue-600 text-blue-600 bg-blue-50"
                         : "border-slate-200 text-slate-400 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     login as User
                   </div>
                   <div className="h-1 w-1 bg-slate-200 rounded-full"></div>
                   <div
                     onClick={() => setLoginType("admin")}
-                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${
-                      loginType === "admin"
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === "admin"
                         ? "border-blue-600 text-blue-600 bg-blue-50"
                         : "border-slate-200 text-slate-400 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     login as Admin
                   </div>
