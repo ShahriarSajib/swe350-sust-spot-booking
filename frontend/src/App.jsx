@@ -247,6 +247,7 @@ import UserNotifications from "./pages/UserNotifications"; // Import the user ve
 import FieldsAdminDashboard from "./pages/FieldsAdminDashboard";
 
 import ScrollToTop from "./ScrollToTop";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   const [authRole, setAuthRole] = useState(null);
