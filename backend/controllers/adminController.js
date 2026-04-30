@@ -10,16 +10,26 @@ const JWT_SECRET = process.env.JWT_SECRET || "SECRET_KEY";
 const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     if (!email || !password)
       return res.status(400).json({ message: "Email and password are required" });
 
     const admin = await Admin.findAdminByEmail(email);
-    if (!admin) return res.status(404).json({ message: "Admin not found" });
+    if (!admin)
+      return res.status(404).json({ message: "Admin not found" });
 
-    const match = await bcrypt.compare(password, admin.password);
-    if (!match) return res.status(400).json({ message: "Invalid password" });
+    // ⚠️ Plain text password comparison (NOT SECURE, but your request)
+    if (password !== admin.password)
+      return res.status(400).json({ message: "Invalid password" });
 
-    const token = jwt.sign({ id: admin.approver_id }, JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign(
+      {
+        id: admin.approver_id,
+        role: "approver"
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.json({
       token,
@@ -30,12 +40,12 @@ const loginAdmin = async (req, res) => {
         approver_designation: admin.approver_designation,
       },
     });
+
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 const logoutAdmin = async (req, res) => {
   res.json({ message: "Logged out successfully" });
 };
