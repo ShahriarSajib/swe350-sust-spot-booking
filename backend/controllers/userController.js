@@ -77,3 +77,44 @@ exports.updateUserProfile = async (req, res) => {
     });
   }
 };
+exports.forgotPassword = async (req, res) => {
+  try {
+    await userService.forgotPassword(req.body.email);
+
+    res.status(200).json({
+      message: "Password reset link sent to email"
+    });
+  } catch (err) {
+    res.status(400).json({
+      message: err.message
+    });
+  }
+};
+exports.resetPassword = async (req, res) => {
+  try {
+    await userService.resetPassword(req.params.token, req.body.password);
+
+    res.status(200).json({
+      message: "Password reset successful"
+    });
+  } catch (err) {
+    res.status(400).json({
+      message: err.message
+    });
+  }
+};
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await userService.changePassword(
+      userId,
+      req.body.currentPassword,
+      req.body.newPassword
+    );
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};

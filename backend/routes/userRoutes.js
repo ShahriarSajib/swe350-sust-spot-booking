@@ -6,7 +6,10 @@ const {
   loginUser,
   verifyEmail,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  forgotPassword,
+  resetPassword,
+  changePassword
 } = require('../controllers/userController');
 
 
@@ -31,5 +34,7 @@ router.get('/verify/:token', verifyEmail);
 // ================= PROTECTED ROUTES =================
 router.get('/profile/:id', verifyToken, getUserProfile);
 router.put('/profile/:id', verifyToken, uploadFields, updateUserProfile);
-
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password/:token', resetPassword);
+router.post('/change-password', verifyToken, changePassword);
 module.exports = router;

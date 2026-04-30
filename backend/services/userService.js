@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sendMail } = require('../utils/mailer');
 const db = require('../config/db');
-
+const tokenModel = require('../models/tokenModel');
 exports.registerUser = async (data, file) => {
   const { fullName, userType, department, email, contactNumber, password } = data;
 
@@ -159,4 +159,78 @@ exports.updateUserProfile = async (id, body, files) => {
   await userModel.updateUser(id, updateData);
 
   return await userModel.findUserById(id);
+};
+exports.forgotPassword = async (email) => {
+  const user = await userModel.findUserByEmail(email);
+
+  if (!user) return true;
+
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  // remove old tokens
+  await db.query(
+    "DELETE FROM tokens WHERE user_id = ? AND type = ?",
+    [user.id, "password_reset"]
+  );
+
+  await tokenModel.createToken(user.id, token, "password_reset", expiresAt);
+
+  const resetLink = `http://localhost:5173/reset-password/${token}`;
+
+  await sendMail({
+    to: email,
+    subject: "Reset Your Password",
+    html: `
+      <h3>Password Reset Request</h3>
+      <p>Click the link below:</p>
+      <a href="${resetLink}">${resetLink}</a>
+      <p>Expires in 1 hour</p>
+    `
+  });
+
+  return true;
+};
+exports.resetPassword = async (token, newPassword) => {
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error("Password must be at least 6 characters");
+  }
+
+  const tokenData = await tokenModel.findToken(token, "password_reset");
+
+  if (!tokenData) throw new Error("Invalid token");
+
+  if (new Date(tokenData.expires_at) < new Date()) {
+    await tokenModel.deleteToken(tokenData.id);
+    throw new Error("Token expired");
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await db.query(
+    "UPDATE users SET password = ? WHERE id = ?",
+    [hashedPassword, tokenData.user_id]
+  );
+
+  await tokenModel.deleteToken(tokenData.id);
+
+  return true;
+};
+exports.changePassword = async (userId, currentPassword, newPassword) => {
+  const user = await userModel.findUserById(userId);
+
+  if (!user) throw new Error("User not found");
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+  if (!isMatch) throw new Error("Current password is wrong");
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await db.query(
+    "UPDATE users SET password = ? WHERE id = ?",
+    [hashedPassword, userId]
+  );
+
+  return true;
 };

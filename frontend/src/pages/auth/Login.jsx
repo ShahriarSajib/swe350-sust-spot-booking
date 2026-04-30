@@ -45,13 +45,20 @@ const Login = ({ onLogin }) => {
     }
   };
 
-  const handleResetSubmit = (e) => {
+  const handleResetSubmit = async (e) => {
     e.preventDefault();
-    // Logic for password reset goes here
-    alert("Reset link sent to your email!");
-    setIsForgotMode(false);
-  };
 
+    try {
+      await axios.post("http://localhost:5000/api/users/forgot-password", {
+        email,
+      });
+
+      alert("Reset link sent to your email!");
+      setIsForgotMode(false);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to send reset link");
+    }
+  };
   return (
     <div className="min-h-screen flex font-sans bg-slate-100">
       <AnimatedSpotShowcase />
@@ -139,6 +146,8 @@ const Login = ({ onLogin }) => {
                 <input
                   type="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 transition-all font-medium"
                   placeholder="enter your registered email"
                 />
@@ -196,20 +205,22 @@ const Login = ({ onLogin }) => {
                 <div className="flex items-center justify-center gap-3">
                   <div
                     onClick={() => setLoginType("user")}
-                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === "user"
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${
+                      loginType === "user"
                         ? "border-blue-600 text-blue-600 bg-blue-50"
                         : "border-slate-200 text-slate-400 hover:border-slate-300"
-                      }`}
+                    }`}
                   >
                     login as User
                   </div>
                   <div className="h-1 w-1 bg-slate-200 rounded-full"></div>
                   <div
                     onClick={() => setLoginType("admin")}
-                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${loginType === "admin"
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer border transition-all ${
+                      loginType === "admin"
                         ? "border-blue-600 text-blue-600 bg-blue-50"
                         : "border-slate-200 text-slate-400 hover:border-slate-300"
-                      }`}
+                    }`}
                   >
                     login as Admin
                   </div>

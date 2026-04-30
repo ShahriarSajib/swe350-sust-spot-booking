@@ -4,7 +4,6 @@
 // import PreferredSpotSection from "./components/sections/PreferredSpotSection";
 // import UpcomingEventsSection from "./components/sections/UpcomingEventsSection";
 
-
 // function App() {
 //   return (
 //     <>
@@ -14,7 +13,6 @@
 //       <UpcomingEventsSection/>
 //       <FeaturedEventsSection/>
 
-      
 //     </>
 //   );
 // }
@@ -33,9 +31,6 @@
 //         {/* Default route */}
 //         <Route path="/" element={<Navigate to="/login" />} />
 
-
-
-
 //         {/* Auth routes */}
 //         <Route path="/login" element={<Login />} />
 //         <Route path="/register" element={<Register />} />
@@ -50,14 +45,12 @@
 
 // export default App;
 
-
 // import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 // import Header from "./components/Header/Header";
 // import AnimeSection from "./components/sections/AnimeSection";
 // import FeaturedEventsSection from "./components/sections/FeaturedEventsSection";
 // import PreferredSpotSection from "./components/sections/PreferredSpotSection";
 // import UpcomingEventsSection from "./components/sections/UpcomingEventsSection";
-
 
 // import FeaturedEventsBlog from "./pages/FeaturedEventsBlog";
 // import BlogDetail from "./pages/BlogDetail";
@@ -71,7 +64,7 @@
 //   return (
 //     <Router>
 //       <Header />
-      
+
 //       <Routes>
 //         <Route path="/" element={
 //           <>
@@ -82,7 +75,6 @@
 //           </>
 //         } />
 
-        
 //         <Route path="/featured-events" element={<FeaturedEventsBlog />} />
 //         <Route path="/blog/:id" element={<BlogDetail />} />
 //         <Route path="/central-auditorium" element={<SpotDetail />} />
@@ -92,15 +84,13 @@
 //         <Route path="/basketball-ground" element={<SpotDetail />} /> */}
 //         <Route path="/profile" element={<Profile />} />
 
-
 //       </Routes>
-      
+
 //     </Router>
 //   );
 // }
 
 // export default App;
-
 
 // import SpotDetail from './pages/SpotDetails';
 
@@ -108,10 +98,7 @@
 //   return <SpotDetail />;
 // }
 
-// export default App; 
-
-
-
+// export default App;
 
 // import Profile from './pages/ProfilePage';
 
@@ -127,7 +114,7 @@
 //   return <AdminDashboard />;
 // }
 
-// export default App; 
+// export default App;
 
 // import { BrowserRouter } from "react-router-dom"; // ১. এটি ইম্পোর্ট করুন
 // import AdminDashboard from './pages/AdminDashboard';
@@ -143,7 +130,6 @@
 
 // export default App;
 
-
 // import { BrowserRouter } from "react-router-dom"; // ১. এটি ইম্পোর্ট করুন
 // import FieldsAdminDashboard from './pages/FieldsAdminDashboard';
 
@@ -157,9 +143,6 @@
 // }
 
 // export default App;
-
-
-
 
 // import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 // import { useState } from "react";
@@ -176,9 +159,8 @@
 // import Register from "./pages/auth/Register";
 // import Profile from './pages/ProfilePage';
 // import SpotDetail from './pages/SpotDetails';
-// import FeaturedEventsBlog from "./pages/FeaturedEventsBlog";    
+// import FeaturedEventsBlog from "./pages/FeaturedEventsBlog";
 // import BlogDetail from "./pages/BlogDetail";
-
 
 // function App() {
 
@@ -195,7 +177,7 @@
 //             <Route path="/register" element={<Register />} />
 //           </>
 //         ) : (
-          
+
 //           <>
 //             <Route path="/" element={
 //               <>
@@ -221,33 +203,32 @@
 
 // export default App;
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 
 // Components & Sections
 import Header from "./components/Header/Header";
 import AnimeSection from "./components/sections/AnimeSection";
+import FeaturedEventsSection from "./components/sections/FeaturedEventsSection";
 import PreferredSpotSection from "./components/sections/PreferredSpotSection";
 import UpcomingEventsSection from "./components/sections/UpcomingEventsSection";
-import FeaturedEventsSection from "./components/sections/FeaturedEventsSection";
 
 // Pages
+import AdminNotifications from "./pages/AdminNotifications";
+import ExternalRegister from "./pages/auth/ExternalRegister";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import ExternalRegister from "./pages/auth/ExternalRegister";
-import Profile from './pages/ProfilePage';
-import SpotDetail from './pages/SpotDetails';
-import FeaturedEventsBlog from "./pages/FeaturedEventsBlog";    
+import ResetPassword from "./pages/auth/ResetPassword";
 import BlogDetail from "./pages/BlogDetail";
-import AdminNotifications from "./pages/AdminNotifications";
+import FeaturedEventsBlog from "./pages/FeaturedEventsBlog";
+import Profile from "./pages/ProfilePage";
+import SpotDetail from "./pages/SpotDetails";
 import UserNotifications from "./pages/UserNotifications"; // Import the user version
 
 // New: Add your Admin Dashboard component
 import FieldsAdminDashboard from "./pages/FieldsAdminDashboard";
 
 import ScrollToTop from "./ScrollToTop";
-import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   const [authRole, setAuthRole] = useState(null);
@@ -256,7 +237,7 @@ function App() {
   // URL-based notification logic
   const isNotifOpen = searchParams.get("showNotif") === "true";
 
-    const openNotif = () => {
+  const openNotif = () => {
     setSearchParams({ showNotif: "true" }, { replace: false });
   };
 
@@ -265,29 +246,27 @@ function App() {
     setSearchParams({}, { replace: false });
   };
 
-
   return (
     <>
-
-    <ScrollToTop />
+      <ScrollToTop />
       {/* 1. Global Notification Modals */}
-      {isNotifOpen && authRole === 'user' && (
+      {isNotifOpen && authRole === "user" && (
         <UserNotifications isOpen={true} onClose={closeNotif} />
       )}
-      
-      {isNotifOpen && authRole === 'admin' && (
+
+      {isNotifOpen && authRole === "admin" && (
         <AdminNotifications isOpen={true} onClose={closeNotif} />
       )}
 
       {/* 2. Header (passing the new openNotif function) */}
-      {authRole === 'user' && (
-        <Header 
-          role={authRole} 
-          onLogout={() =>{ 
+      {authRole === "user" && (
+        <Header
+          role={authRole}
+          onLogout={() => {
             localStorage.clear();
             setAuthRole(null);
-          } }
-          onOpenNotif={openNotif} 
+          }}
+          onOpenNotif={openNotif}
         />
       )}
 
@@ -295,26 +274,33 @@ function App() {
       <Routes>
         {!authRole ? (
           <>
-            <Route path="/login" element={<Login onLogin={(role) => setAuthRole(role)} />} />
+            <Route
+              path="/login"
+              element={<Login onLogin={(role) => setAuthRole(role)} />}
+            />
             <Route path="/register" element={<Register />} />
             <Route path="/external-booking" element={<ExternalRegister />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="*" element={<Navigate to="/login" />} />
           </>
-        ) : authRole === 'admin' ? (
+        ) : authRole === "admin" ? (
           <>
             <Route path="/admin-dashboard" element={<FieldsAdminDashboard />} />
             <Route path="*" element={<Navigate to="/admin-dashboard" />} />
           </>
         ) : (
           <>
-            <Route path="/" element={
-              <>
-                <AnimeSection />
-                <PreferredSpotSection />
-                <UpcomingEventsSection />
-                <FeaturedEventsSection />
-              </>
-            } />
+            <Route
+              path="/"
+              element={
+                <>
+                  <AnimeSection />
+                  <PreferredSpotSection />
+                  <UpcomingEventsSection />
+                  <FeaturedEventsSection />
+                </>
+              }
+            />
             <Route path="/profile" element={<Profile />} />
             <Route path="/spot/:id" element={<SpotDetail />} />
             <Route path="/featured-events" element={<FeaturedEventsBlog />} />
