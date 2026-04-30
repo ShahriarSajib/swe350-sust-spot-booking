@@ -1,31 +1,50 @@
 const db = require('../config/db');
 
 const Spot = {
-    create: (data, callback) => {
-        // এখানে display_image এখন শুধু একটা VARCHAR (ফাইলের নাম)
+    create: async (data) => {
         const sql = "INSERT INTO spots (name, description, location, display_image, approval_copy_recipient) VALUES (?, ?, ?, ?, ?)";
-        db.query(sql, [data.name, data.description, data.location, data.display_image, data.approval_copy_recipient], callback);
+        try {
+            const [result] = await db.query(sql, [data.name, data.description, data.location, data.display_image, data.approval_copy_recipient]);
+            return result;
+        } catch (err) {
+            throw err;
+        }
     },
 
-    addRules: (spotId, rules, callback) => {
+    addRules: async (spotId, rules) => {
         const sql = "INSERT INTO spot_rules (spot_id, rules) VALUES ?";
         const values = rules.map(rule => [spotId, rule]);
-        db.query(sql, [values], callback);
+        try {
+            const [result] = await db.query(sql, [values]);
+            return result;
+        } catch (err) {
+            throw err;
+        }
     },
 
-    getAllSpots: (callback) => {
+    getAllSpots: async () => {
         const sql = "SELECT * FROM spots";
-        db.query(sql, callback);
+        try {
+            const [rows] = await db.query(sql);
+            return rows;
+        } catch (err) {
+            throw err;
+        }
     },
-    getSpotDetails: (id, callback) => {
-   
-    const sql = `
-        SELECT spot_id, name, description, location, display_image, approval_copy_recipient, rules , image1, image2, image3
-        FROM spots 
-        WHERE spot_id = ?
-    `;
-    db.query(sql, [id], callback);
-}
+
+    getSpotDetails: async (id) => {
+        const sql = `
+            SELECT spot_id, name, description, location, display_image, approval_copy_recipient, rules, image1, image2, image3
+            FROM spots 
+            WHERE spot_id = ?
+        `;
+        try {
+            const [rows] = await db.query(sql, [id]);
+            return rows;
+        } catch (err) {
+            throw err;
+        }
+    }
 };
 
 module.exports = Spot;

@@ -17,7 +17,7 @@ export default function EventCard({ event, eventCategory, onSeeDetails, onApprov
                 </div>
                 <div className="space-y-2.5 text-sm font-semibold text-gray-600">
                     <div className="flex items-center gap-3"><Users size={16} className="text-sky-500/70" /><span className="text-gray-400 text-[10px] w-20">ORGANIZER:</span> {event.organizer}</div>
-                    <div className="flex items-center gap-3"><MapPin size={16} className="text-sky-500/70" /><span className="text-gray-400 text-[10px] w-20">LOCATION:</span> {event.name}</div>
+                    <div className="flex items-center gap-3"><MapPin size={16} className="text-sky-500/70" /><span className="text-gray-400 text-[10px] w-20">LOCATION:</span> {event.spot_name}</div>
                     <div className="flex items-center gap-3">
                         <Calendar size={16} className="text-sky-500/70" />
                         <span className="text-gray-400 text-[10px] w-20">DATE:</span>
@@ -43,8 +43,8 @@ export default function EventCard({ event, eventCategory, onSeeDetails, onApprov
                     <>
                         <button onClick={() => onWriteBlog(event)} className="flex items-center justify-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold w-28"><PenLine size={12} /> Write Blog</button>
 
-                        <button
-                            onClick={() => onFeedback(event.id)} // এখানে মেইন পেজের ফাংশন কল হবে
+                        <button 
+                            onClick={() => onFeedback(event.id)} 
                             className="bg-white text-gray-700 border border-gray-200 px-2 py-1.5 rounded-md text-[10px] font-bold hover:bg-gray-800 hover:text-white transition-all w-28"
                         >
                             Write Feedback
@@ -55,7 +55,7 @@ export default function EventCard({ event, eventCategory, onSeeDetails, onApprov
                             <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
                                 <div
                                     className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-                                    onClick={() => onFeedback(null)} // ক্লোজ করার জন্য
+                                    onClick={() => onFeedback(null)} 
                                 ></div>
                                 <div className="relative w-full max-w-sm p-6 bg-white border border-sky-100 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
                                     <h4 className="text-sm font-black text-sky-900 mb-4 flex items-center gap-2">

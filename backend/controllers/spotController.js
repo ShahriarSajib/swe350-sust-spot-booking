@@ -1,77 +1,50 @@
 const Spot = require('../models/spotModel');
 
-exports.addNewSpot = (req, res) => {
-    const { name, description, location, approval_copy_recipient, rules } = req.body;
-    
-    // Multer আপলোড করার পর ফাইলের নামটা এখানে পাওয়া যাবে
-    const display_image = req.file ? req.file.filename : null;
+exports.addNewSpot = async (req, res) => {
+    try {
+        const { name, description, location, approval_copy_recipient, rules } = req.body;
+        const display_image = req.file ? req.file.filename : null;
 
-    Spot.create({ name, description, location, display_image, approval_copy_recipient }, (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-
+        // Create the spot
+        const result = await Spot.create({ name, description, location, display_image, approval_copy_recipient });
         const spotId = result.insertId;
 
-        // Postman থেকে rules পাঠানোর সময় JSON স্ট্রিং হিসেবে পাঠাতে হয়, তাই parse করতে হতে পারে
+        // Parse rules
         let rulesArray = rules;
         if (typeof rules === 'string') {
             try {
                 rulesArray = JSON.parse(rules);
             } catch (e) {
-                rulesArray = [rules]; // যদি সিঙ্গেল স্ট্রিং হয়
+                rulesArray = [rules];
             }
         }
 
+        // Add rules if they exist
         if (rulesArray && rulesArray.length > 0) {
-            Spot.addRules(spotId, rulesArray, (err2) => {
-                if (err2) return res.status(500).json({ error: err2.message });
-                res.status(200).json({ message: "Spot and rules added successfully!", spotId });
-            });
-        } else {
-            res.status(200).json({ message: "Spot added without rules!" });
-        }
-    });
-};
-
-exports.onlyAddRules = (req, res) => {
-    const { spot_id, rules } = req.body;
-
-    let rulesArray = rules;
-    if (typeof rules === 'string') {
-        try {
-            rulesArray = JSON.parse(rules);
-        } catch (e) {
-            rulesArray = [rules];
-        }
-    }
-
-    if (!spot_id || !rulesArray || rulesArray.length === 0) {
-        return res.status(400).json({ error: "Spot ID and rules are required!" });
-    }
-
-    Spot.addRules(spot_id, rulesArray, (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.status(200).json({ message: "Rules added successfully to the spot!" });
-    });
-};
-
-exports.getSpotById = (req, res) => {
-    const spotId = req.params.id;
-
-    Spot.getSpotDetails(spotId, (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+            await Spot.addRules(spotId, rulesArray);
+            return res.status(200).json({ message: "Spot and rules added successfully!", spotId });
+        } 
         
+        res.status(200).json({ message: "Spot added without rules!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getSpotById = async (req, res) => {
+    try {
+        const spotId = req.params.id;
+        const results = await Spot.getSpotDetails(spotId);
+
         if (results.length === 0) {
             return res.status(404).json({ message: "Spot not found!" });
         }
 
         const spot = results[0];
-
-        // '||' সেপারেটর দিয়ে রুলসগুলোকে আলাদা করে অ্যারে বানানো হচ্ছে
         const rulesArray = spot.rules ? spot.rules.split('||') : [];
 
-        // রেসপন্স থেকে 'approval_copy_recipient' বাদ দেওয়া হয়েছে
         res.status(200).json({
-            id: spot.id,
+            id: spot.spot_id, // Adjusted to match your SQL column name
             name: spot.name,
             description: spot.description,
             location: spot.location,
@@ -81,5 +54,34 @@ exports.getSpotById = (req, res) => {
             image3: spot.image3,
             rules: rulesArray
         });
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+exports.onlyAddRules = async (req, res) => {
+    try {
+        const { spot_id, rules } = req.body;
+
+        if (!spot_id || !rules) {
+            return res.status(400).json({ error: "Spot ID and rules are required!" });
+        }
+
+        // Logic to parse rules if they come as a string or array
+        let rulesArray = rules;
+        if (typeof rules === 'string') {
+            try {
+                rulesArray = JSON.parse(rules);
+            } catch (e) {
+                rulesArray = [rules];
+            }
+        }
+
+        // Call the model method (which we already updated to be async)
+        await Spot.addRules(spot_id, rulesArray);
+
+        res.status(200).json({ message: "Rules added successfully to the spot!" });
+    } catch (err) {
+        console.error("Error adding rules:", err);
+        res.status(500).json({ error: err.message });
+    }
 };

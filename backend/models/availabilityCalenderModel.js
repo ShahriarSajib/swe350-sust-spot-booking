@@ -1,15 +1,14 @@
 const db = require('../config/db'); 
 
-const getBookingsBySpotId = (spotId, callback) => {
+const getBookingsBySpotId = async (spotId) => {
     const query = `SELECT start_date, end_date, session, booking_status FROM bookings WHERE spot_id = ?`;
     
-    //  callback 
-    db.query(query, [spotId], (err, rows) => {
-        if (err) {
-            return callback(err, null);
-        }
-        callback(null, rows);
-    });
+    try {
+        const [rows] = await db.query(query, [spotId]);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
 };
 
 module.exports = { getBookingsBySpotId };

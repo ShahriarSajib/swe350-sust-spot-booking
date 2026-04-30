@@ -1,6 +1,5 @@
 const bookingModel = require('../models/availabilityCalenderModel');
 
-
 const getDatesInRange = (startDate, endDate) => {
     const dates = [];
     let curr = new Date(startDate);
@@ -15,15 +14,12 @@ const getDatesInRange = (startDate, endDate) => {
     return dates;
 };
 
-const getSpotAvailability = (req, res) => {
+const getSpotAvailability = async (req, res) => {
     const { spotId } = req.params;
 
-    
-    bookingModel.getBookingsBySpotId(spotId, (err, bookings) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ message: "Server Error" });
-        }
+    try {
+        // Await the promise from the model
+        const bookings = await bookingModel.getBookingsBySpotId(spotId);
 
         const onlyDay = [];
         const onlyNight = [];
@@ -49,14 +45,18 @@ const getSpotAvailability = (req, res) => {
             });
         });
 
-        res.json({
+        res.status(200).json({
             onlyDay,
             onlyNight,
             fullBooked,
             pending,
             partial: [...onlyDay, ...onlyNight]
         });
-    });
+
+    } catch (err) {
+        console.error("Availability Error:", err);
+        return res.status(500).json({ message: "Server Error" });
+    }
 };
 
 module.exports = { getSpotAvailability };
