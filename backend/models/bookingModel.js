@@ -54,7 +54,8 @@ const getUserBookings = async (userId) => {
             DATE_FORMAT(b.end_date, '%Y-%m-%d') as end_date,
             r.recommender_designation,
             u.full_name as recommender_name,
-            u.signature as recommender_signature
+            u.signature as recommender_signature,
+            u.email as recommender_email
         FROM bookings b
         JOIN spots s ON b.spot_id = s.spot_id
        

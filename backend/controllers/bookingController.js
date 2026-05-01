@@ -56,6 +56,7 @@ exports.getUserEvents = async (req, res) => {
                 recommender: {
                     name: event.recommender_name,
                     designation: event.recommender_designation,
+                    email: event.recommender_email,
                     signature: event.recommender_signature
                 }
             };
