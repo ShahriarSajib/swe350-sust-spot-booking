@@ -36,7 +36,7 @@ CREATE TABLE spots (
     image1 VARCHAR(255),
     image2 VARCHAR(255),
     image3 VARCHAR(255),
-    spot_rules TEXT,
+    rules TEXT,
     capacity INT DEFAULT NULL,
     max_booking INT DEFAULT NULL
 );
