@@ -146,7 +146,7 @@ export default function ProfilePage() {
         return event.category === eventCategory;
     });
 
-    //  console.log("All Events:", allEvents);
+      console.log("All Events:", allEvents);
 
     if (!profile) {
         return (
