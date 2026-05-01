@@ -1,35 +1,35 @@
 const Spot = require('../models/spotModel');
 
-exports.addNewSpot = async (req, res) => {
-    try {
-        const { name, description, location, approval_copy_recipient, rules } = req.body;
-        const display_image = req.file ? req.file.filename : null;
+// exports.addNewSpot = async (req, res) => {
+//     try {
+//         const { name, description, location, approval_copy_recipient, rules } = req.body;
+//         const display_image = req.file ? req.file.filename : null;
 
-        // Create the spot
-        const result = await Spot.create({ name, description, location, display_image, approval_copy_recipient });
-        const spotId = result.insertId;
+//         // Create the spot
+//         const result = await Spot.create({ name, description, location, display_image, approval_copy_recipient });
+//         const spotId = result.insertId;
 
-        // Parse rules
-        let rulesArray = rules;
-        if (typeof rules === 'string') {
-            try {
-                rulesArray = JSON.parse(rules);
-            } catch (e) {
-                rulesArray = [rules];
-            }
-        }
+//         // Parse rules
+//         let rulesArray = rules;
+//         if (typeof rules === 'string') {
+//             try {
+//                 rulesArray = JSON.parse(rules);
+//             } catch (e) {
+//                 rulesArray = [rules];
+//             }
+//         }
 
-        // Add rules if they exist
-        if (rulesArray && rulesArray.length > 0) {
-            await Spot.addRules(spotId, rulesArray);
-            return res.status(200).json({ message: "Spot and rules added successfully!", spotId });
-        } 
+//         // Add rules if they exist
+//         if (rulesArray && rulesArray.length > 0) {
+//             await Spot.addRules(spotId, rulesArray);
+//             return res.status(200).json({ message: "Spot and rules added successfully!", spotId });
+//         } 
         
-        res.status(200).json({ message: "Spot added without rules!" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
+//         res.status(200).json({ message: "Spot added without rules!" });
+//     } catch (err) {
+//         res.status(500).json({ error: err.message });
+//     }
+// };
 
 exports.getSpotById = async (req, res) => {
     try {
@@ -49,7 +49,7 @@ exports.getSpotById = async (req, res) => {
             name: spot.name,
             description: spot.description,
             location: spot.location,
-            display_image: spot.display_image,
+            display_image: spot.image1,
             image1: spot.image1,
             image2: spot.image2,
             image3: spot.image3,

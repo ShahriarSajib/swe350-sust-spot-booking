@@ -103,10 +103,18 @@ const updateProfile = async (req, res) => {
 
 const updateSignature = async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-    const filePath = req.file.path;
-    await Admin.updateSignature(req.admin.id, filePath);
-    res.json({ message: "Signature updated", path: filePath });
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const fileName = req.file.filename; // ✅ FIXED
+
+    await Admin.updateSignature(req.admin.id, fileName);
+
+    res.json({
+      message: "Signature updated",
+      filename: fileName,
+    });
   } catch (err) {
     console.error("Update signature error:", err);
     res.status(500).json({ message: "Server error" });
@@ -397,17 +405,17 @@ const getSingleSpot = async (req, res) => {
 
 const createSpot = async (req, res) => {
   try {
-    const { name, description, location, spot_rules, capacity, max_booking } = req.body;
+    const { name, description, location, rules, capacity, max_booking } = req.body;
     if (!name) return res.status(400).json({ message: "Spot name is required" });
 
-    const image1 = req.files?.["image1"]?.[0]?.path || null;
-    const image2 = req.files?.["image2"]?.[0]?.path || null;
-    const image3 = req.files?.["image3"]?.[0]?.path || null;
+    const image1 = req.files?.["image1"]?.[0]?.filename || null;
+const image2 = req.files?.["image2"]?.[0]?.filename || null;
+const image3 = req.files?.["image3"]?.[0]?.filename || null;
 
     const [result] = await db.query(
-      `INSERT INTO spots (name, description, location, image1, image2, image3, spot_rules, capacity, max_booking)
+      `INSERT INTO spots (name, description, location, image1, image2, image3, rules, capacity, max_booking)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, description || null, location || null, image1, image2, image3, spot_rules || null, capacity || null, max_booking || null]
+      [name, description || null, location || null, image1, image2, image3, rules || null, capacity || null, max_booking || null]
     );
 
     res.status(201).json({ message: "Spot created", spot_id: result.insertId });
@@ -419,34 +427,48 @@ const createSpot = async (req, res) => {
 
 const updateSpot = async (req, res) => {
   try {
-    const { name, description, location, spot_rules, capacity, max_booking } = req.body;
+    const { name, description, location, rules, capacity, max_booking } = req.body;
     const spotId = req.params.id;
 
-    // Check if spot exists
-    const [existing] = await db.query("SELECT spot_id FROM spots WHERE spot_id = ?", [spotId]);
-    if (!existing[0]) return res.status(404).json({ message: "Spot not found" });
+    const [existing] = await db.query(
+      "SELECT spot_id FROM spots WHERE spot_id = ?",
+      [spotId]
+    );
 
-    // Build dynamic update query for images (only update if new file uploaded)
+    if (!existing[0]) {
+      return res.status(404).json({ message: "Spot not found" });
+    }
+
     let imageUpdates = "";
-    const params = [name, description || null, location || null, spot_rules || null, capacity || null, max_booking || null];
+    const params = [
+      name,
+      description || null,
+      location || null,
+      rules || null,
+      capacity || null,
+      max_booking || null,
+    ];
 
     if (req.files?.["image1"]?.[0]) {
       imageUpdates += ", image1 = ?";
-      params.push(req.files["image1"][0].path);
+      params.push(req.files["image1"][0].filename); // ✅ FIXED
     }
+
     if (req.files?.["image2"]?.[0]) {
       imageUpdates += ", image2 = ?";
-      params.push(req.files["image2"][0].path);
+      params.push(req.files["image2"][0].filename); // ✅ FIXED
     }
+
     if (req.files?.["image3"]?.[0]) {
       imageUpdates += ", image3 = ?";
-      params.push(req.files["image3"][0].path);
+      params.push(req.files["image3"][0].filename); // ✅ FIXED
     }
 
     params.push(spotId);
 
     await db.query(
-      `UPDATE spots SET name = ?, description = ?, location = ?, spot_rules = ?, capacity = ?, max_booking = ?${imageUpdates}
+      `UPDATE spots 
+       SET name = ?, description = ?, location = ?, rules = ?, capacity = ?, max_booking = ?${imageUpdates}
        WHERE spot_id = ?`,
       params
     );
@@ -457,7 +479,6 @@ const updateSpot = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 const deleteSpot = async (req, res) => {
   try {
     const [existing] = await db.query("SELECT spot_id FROM spots WHERE spot_id = ?", [req.params.id]);
