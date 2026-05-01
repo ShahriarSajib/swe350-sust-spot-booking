@@ -1,46 +1,128 @@
-import sustLogo from '../../assets/sust_logo.png'; // 1. Import the image
+import React from 'react';
 import { Link } from "react-router-dom";
+import { Bell, User } from "lucide-react";
+import sustLogo from '../../assets/sust_logo.png';
 
-const Header = ({ onLogout, onOpenNotif, role }) => {
+const Header = ({ onLogout, onOpenNotif, role, unreadCount = 0 }) => {
   return (
-    <header className="sticky top-0 z-50 bg-sky-400 shadow-lg">
-      <div className="flex items-center justify-between px-6 py-3 min-h-[70px]">
-
-        {/* Left Section */}
-        <div className="flex items-center gap-3">
-          <img
-            src={sustLogo} // 2. Use the variable here instead of a string
-            alt="SUST Logo"
-            className="w-9 h-9"
-          />
-          <span className="text-white font-bold text-lg">
-            SUST Spot Booking
-          </span>
+    <header
+      style={{
+        background: "#38bdf8", 
+        height: "64px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "0 28px",
+        position: "sticky",
+        top: 0,
+        zIndex: 50, // Fixed: camelCase
+        boxShadow: "0 2px 12px rgba(14,165,233,0.3)",
+      }}
+    >
+      {/* Left Section: Logo & Brand */}
+      <Link to="/" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none" }}>
+        <div
+          style={{
+            width: "38px",
+            height: "38px",
+            borderRadius: "10px",
+            background: "rgba(255,255,255,0.2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <img src={sustLogo} alt="SUST" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
         </div>
+        <span style={{ color: "white", fontWeight: 700, fontSize: "18px", letterSpacing: "-0.01em" }}>
+          SUST Spot Booking
+        </span>
+      </Link>
 
-        {/* Center Navigation (hidden on small screens) */}
-        {
-          <nav className="hidden md:flex gap-7 text-white font-medium items-center">
-            {/* Change Link to a Button for the Modal trigger */}
-            <button
-              onClick={onOpenNotif}
-              className="hover:underline flex items-center gap-1"
+      {/* Right Section: Actions */}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        
+        {/* Profile Link (Visible only for users) */}
+        {role === 'user' && (
+          <Link
+            to="/profile"
+            className="hidden md:flex" // Hides text on mobile, keeps link logic
+            style={{
+              color: "white",
+              fontSize: "14px",
+              fontWeight: 600,
+              alignItems: "center",
+              gap: "6px",
+              textDecoration: "none",
+              padding: "8px 12px",
+              borderRadius: "10px",
+              background: "rgba(255,255,255,0.1)",
+              transition: "0.2s"
+            }}
+          >
+            <User size={18} />
+            <span>Profile</span>
+          </Link>
+        )}
+
+        {/* Notification Bell */}
+        <button
+          onClick={onOpenNotif}
+          style={{
+            position: "relative",
+            background: "rgba(255,255,255,0.15)",
+            border: "none",
+            borderRadius: "10px",
+            padding: "8px 16px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            color: "white",
+            fontWeight: 700,
+            fontSize: "14px",
+          }}
+        >
+          <Bell size={18} />
+          <span className="hidden sm:inline">Notifications</span>
+          {unreadCount > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: "-5px",
+                right: "-5px",
+                background: "#ef4444",
+                color: "white",
+                borderRadius: "50%",
+                width: "20px",
+                height: "20px",
+                fontSize: "11px",
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+              }}
             >
-              Notifications
-              <span className="bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full">3</span>
-            </button>
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </button>
 
-            {role === 'user' && (
-              <Link to="/profile" className="hover:underline">
-                Profile
-              </Link>
-            )}
-          </nav>
-        }
-
+        {/* Logout Button */}
         <button
           onClick={onLogout}
-          className="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition-all"
+          style={{
+            background: "white",
+            color: "#0284c7",
+            border: "none",
+            borderRadius: "10px",
+            padding: "8px 20px",
+            cursor: "pointer",
+            fontWeight: 700,
+            fontSize: "14px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
         >
           Logout
         </button>
