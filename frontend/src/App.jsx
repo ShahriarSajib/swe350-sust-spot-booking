@@ -214,7 +214,7 @@ import PreferredSpotSection from "./components/sections/PreferredSpotSection";
 import UpcomingEventsSection from "./components/sections/UpcomingEventsSection";
 
 // Pages
-import AdminNotifications from "./pages/AdminNotifications";
+//import AdminNotifications from "./pages/AdminNotifications";
 import ExternalRegister from "./pages/auth/ExternalRegister";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -254,9 +254,9 @@ function App() {
         <UserNotifications isOpen={true} onClose={closeNotif} />
       )}
 
-      {isNotifOpen && authRole === "admin" && (
+      {/* {isNotifOpen && authRole === "admin" && (
         <AdminNotifications isOpen={true} onClose={closeNotif} />
-      )}
+      )} */}
 
       {/* 2. Header (passing the new openNotif function) */}
       {authRole === "user" && (
