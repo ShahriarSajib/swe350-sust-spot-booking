@@ -275,7 +275,7 @@ function App() {
 
       {/* 3. Routing Logic */}
       <Routes>
-         <Route path="/info/:type" element={<InfoPage />} />
+        <Route path="/info/:type" element={<InfoPage />} />
         {!authRole ? (
           <>
             <Route
@@ -299,7 +299,9 @@ function App() {
               element={
                 <>
                   <AnimeSection />
-                  <PreferredSpotSection />
+                  <div id="preferred-spots">
+                    <PreferredSpotSection />
+                  </div>
                   <UpcomingEventsSection />
                   <FeaturedEventsSection />
                 </>
@@ -310,7 +312,7 @@ function App() {
             <Route path="/featured-events" element={<FeaturedEventsBlog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="*" element={<Navigate to="/" />} />
-            
+
           </>
         )}
       </Routes>
