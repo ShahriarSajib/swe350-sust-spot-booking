@@ -195,14 +195,21 @@ const getAllBookings = async (req, res) => {
     const { status, spot_id, start_date, end_date } = req.query;
 
     let query = `
-      SELECT b.booking_id, b.booking_status, b.timestamp, b.start_date, b.end_date,
-             b.session, b.title AS event_title,
-             u.full_name, s.name AS spot_name
-      FROM bookings b
-      JOIN users u ON b.user_id = u.id
-      JOIN spots s ON b.spot_id = s.spot_id
-      WHERE 1=1
-    `;
+  SELECT 
+    b.booking_id, b.booking_status, b.timestamp, b.start_date, b.end_date,
+    b.session, b.title AS event_title, b.start_time, b.end_time, b.description,
+    u.full_name, u.department AS dept, u.contact_number,
+    s.name AS spot_name,
+    ru.full_name             AS recommender_name,
+    rec.recommender_designation AS recommender_post,
+    ru.department            AS recommender_dept
+  FROM bookings b
+  JOIN  users u   ON b.user_id      = u.id
+  JOIN  spots s   ON b.spot_id      = s.spot_id
+  LEFT JOIN recommendations rec ON b.booking_id = rec.booking_id
+  LEFT JOIN users ru              ON rec.recommender_user_id = ru.id
+  WHERE 1=1
+`;
     const params = [];
 
     if (status && status !== "all") {
