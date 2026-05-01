@@ -26,7 +26,7 @@ const EventDetailsModal = ({ isOpen, event, onClose }) => {
                     <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
                         <p className="text-[10px] font-bold text-gray-400 uppercase">Recommender</p>
                         <p className="font-bold">{event.recommender.name}</p>
-                        <p className="text-sm text-blue-600">{event.recommender.post}</p>
+                        <p className="text-sm text-blue-600">{event.recommender.designation}</p>
                         {event.recommender.signature && (
                             <img src={event.recommender.signature} className="h-10 mt-2" alt="Signature" />
                         )}

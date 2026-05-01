@@ -46,22 +46,31 @@ const createBooking = async (data) => {
 
 const getUserBookings = async (userId) => {
     const sql = `
-        SELECT b.*, s.name as spot_name, 
-        DATE_FORMAT(b.start_date, '%Y-%m-%d') as start_date,
-        DATE_FORMAT(b.end_date, '%Y-%m-%d') as end_date
+        SELECT 
+            b.*, 
+            b.title,
+            s.name as spot_name, 
+            DATE_FORMAT(b.start_date, '%Y-%m-%d') as start_date,
+            DATE_FORMAT(b.end_date, '%Y-%m-%d') as end_date,
+            r.recommender_designation,
+            u.full_name as recommender_name,
+            u.signature as recommender_signature
         FROM bookings b
         JOIN spots s ON b.spot_id = s.spot_id
+       
+        LEFT JOIN recommendations r ON b.booking_id = r.booking_id
+        
+        LEFT JOIN users u ON r.recommender_user_id = u.id
         WHERE b.user_id = ?
         ORDER BY b.start_date DESC
     `;
-
     try {
-        // Use await and destructure the rows
         const [rows] = await db.query(sql, [userId]);
         return rows;
     } catch (err) {
-        throw err; // Send error up to the controller
+        throw err;
     }
 };
+ 
 module.exports = { createBooking, getUserBookings };
 
