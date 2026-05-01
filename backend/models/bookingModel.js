@@ -95,6 +95,17 @@ const getUserBookings = async (userId) => {
         throw err;
     }
 };
+const updateStatusToCancelled= async (bookingId) => {
+        // We use 'cancelled' as the status string
+        const sql = "UPDATE bookings SET booking_status = 'cancelled' WHERE booking_id = ?";
+        try {
+            const [result] = await db.query(sql, [bookingId]);
+            return result;
+        } catch (error) {
+            console.error("Model Error (Cancel):", error);
+            throw error;
+        }
+    }
  
-module.exports = { createBooking, getUserBookings };
+module.exports = { createBooking, getUserBookings, updateStatusToCancelled };
 

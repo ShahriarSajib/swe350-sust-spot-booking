@@ -2,6 +2,7 @@ import { Calendar, MapPin, PenLine, Users } from "lucide-react";
 import React from "react";
 import { useState } from "react";
 import FeedbackModal from "./FeedbackModal";
+import axios from "axios";
 
 export default function EventCard({
     event,
@@ -26,6 +27,33 @@ export default function EventCard({
         setSelectedBookingId(bookingId);
         setIsFeedbackOpen(true);
     };
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [message, setMessage] = useState("");
+    const cancelType = event.category === "pending" ? "Request" : "Booking";
+    const handleCancelSubmit = async () => {
+        setIsProcessing(true);
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            const res = await axios.patch(
+                `http://localhost:5000/api/bookings/cancel/${event.booking_id}`
+            );
+
+            if (res.data.success) {
+                setMessage(`${cancelType} cancelled successfully`);
+                setIsProcessing(false);
+                setIsCancelling(false);
+            }
+        } catch (err) {
+            alert("Failed to cancel: " + (err.response?.data?.message || err.message));
+
+            // ✅ RESET on error too
+            setIsProcessing(false);
+        }
+    };
+
     return (
         <div className="group bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row justify-between items-start gap-4">
             <div className="space-y-3 w-full">
@@ -73,56 +101,89 @@ export default function EventCard({
             </div>
 
             <div className="flex flex-col gap-2 shrink-0 self-center">
+                {message && (
+                    <div className="text-green-600 text-[11px] font-bold text-center bg-green-50 border border-green-100 px-2 py-1 rounded">
+                        {message}
+                    </div>
+                )}
+
                 {/* ================= NORMAL EVENTS ================= */}
                 {eventCategory !== "recommendations" && (
                     <>
-                        {(event.category === "upcoming" ||
-                            event.category === "pending") && (
-                                <>
-                                    <button
-                                        onClick={() => onSeeDetails(event)}
-                                        className="bg-sky-50 text-sky-600 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-sky-600 hover:text-white transition-all w-28"
-                                    >
-                                        See Details
-                                    </button>
-
-                                    {event.category === "upcoming" && (
-                                        <button
-                                            onClick={() => onApprovalCopy(event)}
-                                            className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-emerald-600 hover:text-white transition-all w-28"
-                                        >
-                                            Approval Copy
+                        {(event.category === "upcoming" || event.category === "pending") && (
+                            <>
+                                {!isCancelling ? (
+                                    <>
+                                        <button onClick={() => onSeeDetails(event)} className="bg-sky-50 text-sky-600 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-sky-600 hover:text-white transition-all w-28">
+                                            See Details
                                         </button>
-                                    )}
-
-                                    <button className="bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all w-28">
-                                        Cancel Request
-                                    </button>
-                                </>
-                            )}
+                                        {event.category === "upcoming" && (
+                                            <button onClick={() => onApprovalCopy(event)} className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-emerald-600 hover:text-white transition-all w-28">
+                                                Approval Copy
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => setIsCancelling(true)}
+                                            className="bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all w-28"
+                                        >
+                                            Cancel {cancelType}
+                                        </button>
+                                    </>
+                                ) : (
+                                    /* ================= CONFIRMATION UI ================= */
+                                    <div className="flex flex-col justify-center items-center gap-2 w-56 h-32 bg-red-50 p-4 rounded-xl border border-red-100 shadow-sm transition-all animate-in fade-in zoom-in-95 duration-200">
+                                        {isProcessing ? (
+                                            <div className="flex flex-col items-center gap-3">
+                                                {/* Spinner */}
+                                                <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                                                <p className="text-[11px] font-bold text-red-600 animate-pulse">
+                                                    Cancelling {cancelType.toLowerCase()}...
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <p className="text-[20px] font-bold text-red-600 text-center leading-tight">
+                                                    Are you sure you want to cancel this {cancelType.toLowerCase()}?
+                                                </p>
+                                                <div className="flex gap-2 mt-2 w-full">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCancelSubmit();
+                                                        }}
+                                                        className="flex-1 bg-red-600 text-white text-[10px] font-bold py-2.5 rounded-md hover:bg-red-700 active:scale-95 transition-all"
+                                                    >
+                                                        Yes, Cancel
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setIsCancelling(false);
+                                                        }}
+                                                        className="flex-1 bg-white text-gray-600 border border-gray-200 text-[10px] font-bold py-2.5 rounded-md hover:bg-gray-50 active:scale-95 transition-all"
+                                                    >
+                                                        No, Keep it
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
 
                         {event.category === "past" && (
                             <>
-                                <button
-                                    onClick={() => onWriteBlog(event)}
-                                    className="flex items-center justify-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold w-28"
-                                >
+                                <button onClick={() => onWriteBlog(event)} className="flex items-center justify-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold w-28">
                                     <PenLine size={12} /> Write Blog
                                 </button>
-
-                                <button
-                                    onClick={() => handleFeedbackClick(event.booking_id)} // Pass the booking ID
-                                    className="bg-white text-gray-700 border border-gray-200 px-2 py-1.5 rounded-md text-[10px] font-bold hover:bg-gray-800 hover:text-white transition-all w-28"
-                                >
+                                <button onClick={() => handleFeedbackClick(event.booking_id)} className="bg-white text-gray-700 border border-gray-200 px-2 py-1.5 rounded-md text-[10px] font-bold hover:bg-gray-800 hover:text-white transition-all w-28">
                                     Write Feedback
                                 </button>
-
-                                {/* Add the Modal component at the bottom */}
                                 {isFeedbackOpen && (
-                                    <FeedbackModal
-                                        bookingId={selectedBookingId}
-                                        onClose={() => setIsFeedbackOpen(false)}
-                                    />
+                                    <FeedbackModal bookingId={selectedBookingId} onClose={() => setIsFeedbackOpen(false)} />
                                 )}
                             </>
                         )}

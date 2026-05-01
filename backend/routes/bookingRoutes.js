@@ -7,5 +7,6 @@ const { verifyToken } = require('../middlewares/authMiddleware');
 
 router.post('/confirm', bookingController.confirmBooking);
 router.get('/user-events/:id', verifyToken, bookingController.getUserEvents);
+router.patch('/cancel/:bookingId', bookingController.cancelBooking);
 
 module.exports = router;

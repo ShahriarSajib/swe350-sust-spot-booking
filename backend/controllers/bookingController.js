@@ -69,3 +69,28 @@ exports.getUserEvents = async (req, res) => {
         return res.status(500).json({ message: "Database error: " + err.message });
     }
 };
+
+exports.cancelBooking = async (req, res) => {
+    const { bookingId } = req.params; // Or req.body depending on your route setup
+
+    try {
+        const result = await bookingModel.updateStatusToCancelled(bookingId);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "No booking found with that ID" 
+            });
+        }
+
+        return res.status(200).json({ 
+            success: true, 
+            message: "Successfully cancelled" 
+        });
+    } catch (err) {
+        return res.status(500).json({ 
+            success: false, 
+            message: "Internal server error" 
+        });
+    }
+};
