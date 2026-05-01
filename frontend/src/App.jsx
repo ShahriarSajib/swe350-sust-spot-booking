@@ -214,7 +214,7 @@ import PreferredSpotSection from "./components/sections/PreferredSpotSection";
 import UpcomingEventsSection from "./components/sections/UpcomingEventsSection";
 
 // Pages
-import AdminNotifications from "./pages/AdminNotifications";
+//import AdminNotifications from "./pages/AdminNotifications";
 import ExternalRegister from "./pages/auth/ExternalRegister";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
