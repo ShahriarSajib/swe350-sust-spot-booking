@@ -1,49 +1,72 @@
 const db = require('../config/db');
 
 const createBooking = async (data) => {
-    // 1. Insert into bookings table
-    const bookingQuery = `
-        INSERT INTO bookings 
-        (user_id, spot_id, organizer, start_date, end_date, session, title, description, spot_name, start_time, end_time, is_recommended) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
-    `;
-
-    const bookingValues = [
-        data.userId, data.spotId, data.organizer, 
-        data.startDate, data.endDate, data.session, data.title, 
-        data.description, data.spotName, data.startTime, data.endTime
-    ];
-
     try {
-        const [result] = await db.query(bookingQuery, bookingValues);
-        const newBookingId = result.insertId;
-
-        // 2. Handle Recommender logic
+        // 1. Validate recommender FIRST (important fix)
         const recommenderEmail = (data.recommenderEmail || "").trim();
+
         if (!recommenderEmail) {
             throw new Error("Recommender email not provided");
         }
 
-        const [userRows] = await db.query(`SELECT id FROM users WHERE email = ?`, [recommenderEmail]);
-        
+        const [userRows] = await db.query(
+            `SELECT id FROM users WHERE email = ?`,
+            [recommenderEmail]
+        );
+
         if (userRows.length === 0) {
             throw new Error("Recommender not found");
         }
 
         const recommenderUserId = userRows[0].id;
 
-        // 3. Insert into recommendations table
-        const recQuery = `INSERT INTO recommendations (booking_id, recommender_user_id, recommender_designation) VALUES (?, ?, ?)`;
-        await db.query(recQuery, [newBookingId, recommenderUserId, data.recommenderDesignation]);
+        // 2. Insert into bookings table ONLY after validation
+        const bookingQuery = `
+            INSERT INTO bookings 
+            (user_id, spot_id, organizer, start_date, end_date, session, title, description, spot_name, start_time, end_time, is_recommended) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+        `;
 
-        return { bookingId: newBookingId, message: "Booking and Recommendation saved" };
+        const bookingValues = [
+            data.userId,
+            data.spotId,
+            data.organizer,
+            data.startDate,
+            data.endDate,
+            data.session,
+            data.title,
+            data.description,
+            data.spotName,
+            data.startTime,
+            data.endTime
+        ];
+
+        const [result] = await db.query(bookingQuery, bookingValues);
+        const newBookingId = result.insertId;
+
+        // 3. Insert into recommendations table
+        const recQuery = `
+            INSERT INTO recommendations 
+            (booking_id, recommender_user_id, recommender_designation) 
+            VALUES (?, ?, ?)
+        `;
+
+        await db.query(recQuery, [
+            newBookingId,
+            recommenderUserId,
+            data.recommenderDesignation
+        ]);
+
+        return {
+            bookingId: newBookingId,
+            message: "Booking and Recommendation saved"
+        };
+
     } catch (error) {
-        // Log the error and pass it up
         console.error("Error in createBooking model:", error);
-        throw error; 
+        throw error;
     }
 };
-
 const getUserBookings = async (userId) => {
     const sql = `
         SELECT 
