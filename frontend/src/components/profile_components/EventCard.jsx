@@ -7,11 +7,14 @@ export default function EventCard({
   onApprovalCopy,
   onWriteBlog,
   onFeedback,
-  activeFeedbackId,
-  text,
-  setText,
+  onRecommend,
 }) {
   console.log("events: ", event);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const eventDate = new Date(event.start_date);
+  const isPast = eventDate < today;
   return (
     <div className="group bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row justify-between items-start gap-4">
       <div className="space-y-3 w-full">
@@ -59,7 +62,56 @@ export default function EventCard({
       </div>
 
       <div className="flex flex-col gap-2 shrink-0 self-center">
-        {(event.category === "upcoming" || event.category === "pending") && (
+        {/* ================= NORMAL EVENTS ================= */}
+        {eventCategory !== "recommendations" && (
+          <>
+            {(event.category === "upcoming" ||
+              event.category === "pending") && (
+              <>
+                <button
+                  onClick={() => onSeeDetails(event)}
+                  className="bg-sky-50 text-sky-600 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-sky-600 hover:text-white transition-all w-28"
+                >
+                  See Details
+                </button>
+
+                {event.category === "upcoming" && (
+                  <button
+                    onClick={() => onApprovalCopy(event)}
+                    className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-emerald-600 hover:text-white transition-all w-28"
+                  >
+                    Approval Copy
+                  </button>
+                )}
+
+                <button className="bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all w-28">
+                  Cancel Request
+                </button>
+              </>
+            )}
+
+            {event.category === "past" && (
+              <>
+                <button
+                  onClick={() => onWriteBlog(event)}
+                  className="flex items-center justify-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold w-28"
+                >
+                  <PenLine size={12} /> Write Blog
+                </button>
+
+                <button
+                  onClick={() => onFeedback(event.id)}
+                  className="bg-white text-gray-700 border border-gray-200 px-2 py-1.5 rounded-md text-[10px] font-bold hover:bg-gray-800 hover:text-white transition-all w-28"
+                >
+                  Write Feedback
+                </button>
+              </>
+            )}
+          </>
+        )}
+
+        {/* ================= RECOMMENDATION MODE ================= */}
+        {eventCategory === "recommendations" && (
           <>
             <button
               onClick={() => onSeeDetails(event)}
@@ -67,74 +119,29 @@ export default function EventCard({
             >
               See Details
             </button>
-            {event.category === "upcoming" && (
+
+            {/* 🟢 CASE 1: Upcoming & not recommended */}
+            {!isPast && event.is_recommended === 0 && (
               <button
-                onClick={() => onApprovalCopy(event)}
+                onClick={() => onRecommend(event.booking_id)}
                 className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-emerald-600 hover:text-white transition-all w-28"
               >
-                Approval Copy
+                Recommend
               </button>
             )}
-            <button className="bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all w-28">
-              Cancel Request
-            </button>
-          </>
-        )}
-        {event.category === "past" && (
-          <>
-            <button
-              onClick={() => onWriteBlog(event)}
-              className="flex items-center justify-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold w-28"
-            >
-              <PenLine size={12} /> Write Blog
-            </button>
 
-            <button
-              onClick={() => onFeedback(event.id)}
-              className="bg-white text-gray-700 border border-gray-200 px-2 py-1.5 rounded-md text-[10px] font-bold hover:bg-gray-800 hover:text-white transition-all w-28"
-            >
-              Write Feedback
-            </button>
+            {/* 🟢 CASE 2: Already recommended */}
+            {event.is_recommended === 1 && (
+              <span className="text-[10px] font-bold text-green-600 text-center">
+                ✅ Recommended
+              </span>
+            )}
 
-            {/* Feedback Modal (Conditional Rendering) */}
-            {activeFeedbackId === event.id && (
-              <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-                <div
-                  className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-                  onClick={() => onFeedback(null)}
-                ></div>
-                <div className="relative w-full max-w-sm p-6 bg-white border border-sky-100 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
-                  <h4 className="text-sm font-black text-sky-900 mb-4 flex items-center gap-2">
-                    <PenLine size={16} /> Write Feedback
-                  </h4>
-                  <textarea
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder={`Tell us about your experience...`}
-                    className="w-full p-4 text-sm border border-slate-100 rounded-2xl focus:ring-2 focus:ring-sky-500 bg-slate-50 mb-4"
-                    rows="4"
-                    autoFocus
-                  />
-                  <div className="flex justify-end gap-3">
-                    <button
-                      onClick={() => onFeedback(null)}
-                      className="px-4 py-2 text-xs text-slate-400 font-bold uppercase"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log("Feedback Submitted:", text);
-                        onFeedback(null);
-                        setText("");
-                      }}
-                      className="bg-sky-600 text-white text-xs px-6 py-2.5 rounded-xl font-bold uppercase"
-                    >
-                      Submit
-                    </button>
-                  </div>
-                </div>
-              </div>
+            {/* 🔴 CASE 3: Past & not recommended */}
+            {isPast && event.is_recommended === 0 && (
+              <span className="text-[10px] font-bold text-red-500 text-center">
+                ❌ Not Recommended
+              </span>
             )}
           </>
         )}

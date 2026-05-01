@@ -1,5 +1,5 @@
+const db = require('../config/db');
 const recommendationModel = require('../models/recommendationModel');
-
 exports.getUserRecommendations = async (req, res) => {
     const userId = req.params.id;
 
@@ -25,7 +25,15 @@ exports.getUserRecommendations = async (req, res) => {
             return {
                 ...item,
                 title: item.title,
-                category
+                category: category,
+
+                // ✅ SAME STRUCTURE AS getUserEvents
+                recommender: {
+                    name: item.recommender_name,
+                    designation: item.recommender_designation,
+                    email: item.recommender_email,
+                    signature: item.recommender_signature
+                }
             };
         });
 
@@ -38,7 +46,6 @@ exports.getUserRecommendations = async (req, res) => {
         });
     }
 };
-
 exports.markAsRecommended = async (req, res) => {
     const bookingId = req.params.bookingId;
 
