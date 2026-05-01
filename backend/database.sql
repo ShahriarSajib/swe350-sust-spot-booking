@@ -131,6 +131,7 @@ CREATE TABLE event_blog (
     tags VARCHAR(150),
     blog_status ENUM('pending','published','rejected') DEFAULT 'pending',
     submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    published_at DATETIME DEFAULT NULL,
     cover_image VARCHAR(255),
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
