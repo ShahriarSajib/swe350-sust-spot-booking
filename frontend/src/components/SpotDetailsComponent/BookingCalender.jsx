@@ -95,6 +95,9 @@ export default function BookingCalendar({
     const rangeStatus = getDetailedRangeStatus();
 
     console.log("isFull:", isFull, "isPending:", isPending, "isOnlyDay:", isOnlyDay, "isOnlyNight:", isOnlyNight, "isAvailable:", isAvailable);
+    console.log(
+        "booking data",bookingData
+    )
 
 
 

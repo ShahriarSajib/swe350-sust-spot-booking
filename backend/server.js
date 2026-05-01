@@ -12,6 +12,8 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const blogRoutes = require('./routes/blogRoutes');
+const recommendationRoutes = require('./routes/recommendationRoutes');
+
 
 // DB (now env is already loaded ✅)
 require('./config/db');
@@ -42,7 +44,7 @@ app.use('/api/availability', availabilityRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/blog', blogRoutes);
-
+app.use('/api/recommendations', recommendationRoutes);
 //admin
 app.use("/api/admin", adminRoutes);
 

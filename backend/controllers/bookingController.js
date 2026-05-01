@@ -6,10 +6,10 @@ exports.confirmBooking = async (req, res) => {
     try {
         // Await the entire multi-step process from the model
         const result = await bookingModel.createBooking(bookingData);
-        
-        res.status(201).json({ 
-            message: "Booking request submitted successfully!", 
-            data: result 
+
+        res.status(201).json({
+            message: "Booking request submitted successfully!",
+            data: result
         });
     } catch (err) {
         console.error("Booking Controller Error:", err.message);
@@ -32,9 +32,9 @@ exports.getUserEvents = async (req, res) => {
     try {
         // Await the promise from the model
         const bookings = await bookingModel.getUserBookings(userId);
-        
+
         const today = new Date();
-        today.setHours(0, 0, 0, 0); 
+        today.setHours(0, 0, 0, 0);
 
         const categorizedEvents = bookings.map(event => {
             const startDate = new Date(event.start_date);
@@ -46,13 +46,19 @@ exports.getUserEvents = async (req, res) => {
             } else if (event.booking_status === 'approved') {
                 category = startDate >= today ? "upcoming" : "past";
             } else {
-                category = event.booking_status; 
+                category = event.booking_status;
             }
 
             return {
                 ...event,
-                title: event.event_name, // Map event_name to title if needed for frontend
-                category: category 
+                title: event.title, // Map event_name to title if needed for frontend
+                category: category,
+                recommender: {
+                    name: event.recommender_name,
+                    designation: event.recommender_designation,
+                    email: event.recommender_email,
+                    signature: event.recommender_signature
+                }
             };
         });
 

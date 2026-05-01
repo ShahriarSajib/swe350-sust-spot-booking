@@ -3,6 +3,11 @@ import React from 'react';
 const EventDetailsModal = ({ isOpen, event, onClose }) => {
     if (!isOpen || !event) return null;
 
+    console.log("Event Details Modal Opened with Event:", event);
+    console.log("Event Category:", event.category);
+    console.log("Event Recommender:", event.recommender);
+
+
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
@@ -11,7 +16,7 @@ const EventDetailsModal = ({ isOpen, event, onClose }) => {
                 <div className="grid grid-cols-2 gap-4 text-sm md:text-base">
                     <p><strong>Title:</strong> {event.title}</p>
                     <p><strong>Organizer:</strong> {event.organizer}</p>
-                    <p><strong>Location:</strong> {event.name}</p>
+                    <p><strong>Location:</strong> {event.spot_name}</p>
                     <p><strong>Date:</strong> {event.start_date}
                             {event.end_date && event.end_date !== event.start_date ? ` to ${event.end_date}` : ""}</p>
                     <p><strong>Session:</strong> {event.session}</p>
@@ -21,7 +26,8 @@ const EventDetailsModal = ({ isOpen, event, onClose }) => {
                     <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
                         <p className="text-[10px] font-bold text-gray-400 uppercase">Recommender</p>
                         <p className="font-bold">{event.recommender.name}</p>
-                        <p className="text-sm text-blue-600">{event.recommender.post}</p>
+                        <p className="text-sm text-blue-600">{event.recommender.designation}</p>
+                        <p className="text-sm text-blue-600">{event.recommender.email}</p>
                         {event.recommender.signature && (
                             <img src={event.recommender.signature} className="h-10 mt-2" alt="Signature" />
                         )}
