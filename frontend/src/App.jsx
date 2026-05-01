@@ -208,13 +208,14 @@ import { Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 
 // Components & Sections
 import Header from "./components/Header/Header";
+import Footer from "./components/Footer/Footer";
 import AnimeSection from "./components/sections/AnimeSection";
 import FeaturedEventsSection from "./components/sections/FeaturedEventsSection";
 import PreferredSpotSection from "./components/sections/PreferredSpotSection";
 import UpcomingEventsSection from "./components/sections/UpcomingEventsSection";
 
 // Pages
-import AdminNotifications from "./pages/AdminNotifications";
+// import AdminNotifications from "./pages/AdminNotifications";
 import ExternalRegister from "./pages/auth/ExternalRegister";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -224,7 +225,7 @@ import FeaturedEventsBlog from "./pages/FeaturedEventsBlog";
 import Profile from "./pages/ProfilePage";
 import SpotDetail from "./pages/SpotDetails";
 import UserNotifications from "./pages/UserNotifications"; // Import the user version
-
+import InfoPage from "./pages/InfoPage";
 // New: Add your Admin Dashboard component
 import FieldsAdminDashboard from "./pages/FieldsAdminDashboard";
 
@@ -246,6 +247,7 @@ function App() {
     setSearchParams({}, { replace: false });
   };
 
+
   return (
     <>
       <ScrollToTop />
@@ -254,9 +256,9 @@ function App() {
         <UserNotifications isOpen={true} onClose={closeNotif} />
       )}
 
-      {isNotifOpen && authRole === "admin" && (
+      {/* {isNotifOpen && authRole === "admin" && (
         <AdminNotifications isOpen={true} onClose={closeNotif} />
-      )}
+      )} */}
 
       {/* 2. Header (passing the new openNotif function) */}
       {authRole === "user" && (
@@ -272,6 +274,7 @@ function App() {
 
       {/* 3. Routing Logic */}
       <Routes>
+         <Route path="/info/:type" element={<InfoPage />} />
         {!authRole ? (
           <>
             <Route
@@ -306,9 +309,11 @@ function App() {
             <Route path="/featured-events" element={<FeaturedEventsBlog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="*" element={<Navigate to="/" />} />
+            
           </>
         )}
       </Routes>
+      {authRole === "user" && <Footer />}
     </>
   );
 }
