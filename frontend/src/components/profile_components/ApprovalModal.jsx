@@ -10,7 +10,9 @@ const PdfRow = ({ label, value }) => (
     </div>
 );
 
-export default function ApprovalModal({ selectedReq, setIsPreviewOpen }) {
+export default function ApprovalModal({ selectedReq, setIsPreviewOpen,userProfile }) {
+    console.log("Selected Request for PDF:", selectedReq);
+    console.log("User Profile in PDF Modal:", userProfile);
 
     const handleDownloadPdf = () => {
         const input = document.getElementById('pdf-content');
@@ -53,7 +55,7 @@ export default function ApprovalModal({ selectedReq, setIsPreviewOpen }) {
                                 <h2 className="bg-slate-100 px-3 py-1 text-[11px] font-black uppercase mb-4 inline-block">01. Event Details</h2>
                                 <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-sm ml-2">
                                     <PdfRow label="Title" value={selectedReq.title} />
-                                    <PdfRow label="Spot" value={selectedReq.name} />
+                                    <PdfRow label="Spot" value={selectedReq.spot_name} />
                                     <PdfRow label="Date" value={selectedReq.end_date ? `${selectedReq.start_date} to ${selectedReq.end_date}` : selectedReq.start_date} />
                                     <PdfRow label="Session" value={selectedReq.session} />
                                     <PdfRow label="Organizer" value={selectedReq.organizer} />
@@ -67,13 +69,13 @@ export default function ApprovalModal({ selectedReq, setIsPreviewOpen }) {
                                 <div className="space-y-4">
                                     <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Applicant Details</h3>
                                     <div className="text-xs space-y-1">
-                                        <p className="font-bold">{selectedReq.applicant?.name || 'N/A'}</p>
-                                        <p>{selectedReq.applicant?.dept || 'N/A'}</p>
-                                        <p className="text-slate-500 italic">{selectedReq.applicant?.designation}</p>
-                                        <p className="pt-2">Contact: {selectedReq.applicant?.contact}</p>
+                                        <p className="font-bold">{userProfile?.name || 'N/A'}</p>
+                                        {/* <p>{selectedReq.applicant?.department || 'N/A'}</p> */}
+                                        <p className="text-slate-500 italic">{userProfile?.department || 'N/A'}</p>
+                                        <p className="pt-2">Contact: {userProfile?.contact || 'N/A'}</p>
                                     </div>
                                     <div className="h-12 w-24 bg-gray-50 flex items-center justify-center border border-dashed rounded italic text-[10px] text-gray-400">
-                                        <img src={selectedReq.applicant?.signature} alt="sig" />
+                                        <img src={userProfile?.signature} alt="sig" />
                                         {/* Applicant Signature */}
                                     </div>
                                 </div>

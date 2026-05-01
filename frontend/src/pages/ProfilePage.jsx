@@ -57,13 +57,13 @@ export default function ProfilePage() {
 
     const [activeFeedbackId, setActiveFeedbackId] = useState(null);
 
-    const [selectedReq, setSelectedReq] = useState(null); 
+    const [selectedReq, setSelectedReq] = useState(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-    const [isDetailsOpen, setIsDetailsOpen] = useState(false); 
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [signaturePreview, setSignaturePreview] = useState(profile.signature || null);
 
     const handleTabChange = (tabName) => {
-        window.location.hash = tabName; 
+        window.location.hash = tabName;
         setSelectedTab(tabName);
     };
     useEffect(() => {
@@ -72,7 +72,7 @@ export default function ProfilePage() {
             if (hash) {
                 setSelectedTab(hash);
             } else {
-                setSelectedTab('events'); 
+                setSelectedTab('events');
             }
         };
 
@@ -121,7 +121,7 @@ export default function ProfilePage() {
     }, []);
 
     // const userId = localStorage.getItem("userId");
-    const [allEvents, setAllEvents] = useState([]); 
+    const [allEvents, setAllEvents] = useState([]);
     const [eventCategory, setEventCategory] = useState("all");
 
     useEffect(() => {
@@ -146,7 +146,7 @@ export default function ProfilePage() {
         return event.category === eventCategory;
     });
 
-      console.log("All Events:", allEvents);
+    console.log("All Events:", allEvents);
 
     if (!profile) {
         return (
@@ -257,6 +257,12 @@ export default function ProfilePage() {
                 <ApprovalModal
                     selectedReq={selectedReq}
                     setIsPreviewOpen={setIsPreviewOpen}
+                    userProfile={{
+                        name: profile.name,
+                        department: profile.department,
+                        contact: profile.contact,
+                        signature: profile.signature
+                    }}
                 />
             )}
         </div>
