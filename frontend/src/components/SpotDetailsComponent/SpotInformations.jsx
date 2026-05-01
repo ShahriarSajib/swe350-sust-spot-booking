@@ -24,18 +24,17 @@ export default function SpotHeader({ spot, setShowGallery }) {
 
         <div className="flex gap-3">
           <MapPin className="text-[#0052cc] mt-1" />
+
           <div className="flex flex-col items-start">
             <p className="font-bold">Location</p>
-            <p className="text-sm text-gray-500 mb-2">{spot.location}</p>
             <button
-              onClick={() => window.open(spot.mapUrl, "_blank")}
+              onClick={() => window.open(spot.location, "_blank")}
               className="inline-flex items-center gap-2 text-xs font-bold text-[#0052cc] bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl border border-blue-100 transition-all"
             >
               See location in Google Map
             </button>
           </div>
         </div>
-
         <h3 className="font-bold flex gap-2 items-center pt-4">
           <BookOpen size={20} className="text-[#0052cc]" /> Usage Rules
         </h3>
