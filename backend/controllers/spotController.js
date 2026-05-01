@@ -34,6 +34,7 @@ exports.addNewSpot = async (req, res) => {
 exports.getSpotById = async (req, res) => {
     try {
         const spotId = req.params.id;
+        console.log("spot_id request:", req.params.id)
         const results = await Spot.getSpotDetails(spotId);
 
         if (results.length === 0) {

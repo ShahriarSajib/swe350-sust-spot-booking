@@ -2,6 +2,7 @@ import React from 'react';
 import axios from 'axios';
 
 export default function BookingForm({ bookingData, setBookingData, personalDetails, bookingType }) {
+    // console.log(    "booking data",bookingData)
     const handleChange = (e) => {
         const { name, value } = e.target;
         setBookingData(prev => ({
