@@ -1,14 +1,17 @@
 const db = require('../config/db');
+const notificationService = require("../services/notificationService");
+
+const { sendEmail } = require("../services/emailService");
 
 const createBooking = async (data) => {
     try {
-        // 1. Validate recommender FIRST (important fix)
         const recommenderEmail = (data.recommenderEmail || "").trim();
 
         if (!recommenderEmail) {
             throw new Error("Recommender email not provided");
         }
 
+        // 🔍 Get recommender ID
         const [userRows] = await db.query(
             `SELECT id FROM users WHERE email = ?`,
             [recommenderEmail]
@@ -20,7 +23,7 @@ const createBooking = async (data) => {
 
         const recommenderUserId = userRows[0].id;
 
-        // 2. Insert into bookings table ONLY after validation
+        // 📝 Insert booking
         const bookingQuery = `
             INSERT INTO bookings 
             (user_id, spot_id, organizer, start_date, end_date, session, title, description, spot_name, start_time, end_time, is_recommended) 
@@ -44,18 +47,66 @@ const createBooking = async (data) => {
         const [result] = await db.query(bookingQuery, bookingValues);
         const newBookingId = result.insertId;
 
-        // 3. Insert into recommendations table
-        const recQuery = `
+        // 📝 Insert recommendation
+        await db.query(`
             INSERT INTO recommendations 
             (booking_id, recommender_user_id, recommender_designation) 
             VALUES (?, ?, ?)
-        `;
-
-        await db.query(recQuery, [
+        `, [
             newBookingId,
             recommenderUserId,
             data.recommenderDesignation
         ]);
+
+        // ================================
+        // 🔔 NOTIFICATIONS START HERE
+        // ================================
+
+        // 1️⃣ Notify USER (booking created)
+        await notificationService.createNotification({
+            user_id: data.userId,
+            booking_id: newBookingId,
+            title: "Booking Submitted",
+            message: `Your booking for ${data.spotName} has been submitted successfully and is waiting for recommendation.`
+        });
+
+        // 2️⃣ Notify RECOMMENDER
+        await notificationService.createNotification({
+            recommender_id: recommenderUserId,
+            booking_id: newBookingId,
+            title: "Recommendation Required",
+            message: `A booking request for ${data.spotName} needs your recommendation.`
+        });
+
+        // ================================
+        // 📧 EMAILS START HERE (NEW)
+        // ================================
+
+        // 🔹 Get user email
+        const [[user]] = await db.query(
+            `SELECT email FROM users WHERE id = ?`,
+            [data.userId]
+        );
+
+        // 🔹 Get recommender email
+        const [[recommender]] = await db.query(
+            `SELECT email FROM users WHERE id = ?`,
+            [recommenderUserId]
+        );
+
+        // 🔹 Send email to USER
+        sendEmail({
+            to: user.email,
+            subject: "Booking Submitted",
+            text: `Your booking for ${data.spotName} has been submitted successfully and is waiting for recommendation.`,
+        });
+
+        // 🔹 Send email to RECOMMENDER
+        sendEmail({
+            to: recommender.email,
+            subject: "Recommendation Required",
+            text: `A booking request for ${data.spotName} needs your recommendation.`,
+        });
 
         return {
             bookingId: newBookingId,

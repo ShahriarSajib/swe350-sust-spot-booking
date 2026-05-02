@@ -1,13 +1,46 @@
-import React from 'react';
-import { Link } from "react-router-dom";
+import axios from "axios";
 import { Bell, User } from "lucide-react";
-import sustLogo from '../../assets/sust_logo.png';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import sustLogo from "../../assets/sust_logo.png";
 
-const Header = ({ onLogout, onOpenNotif, role, unreadCount = 0 }) => {
+const Header = ({ onLogout, onOpenNotif, role }) => {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // 🔹 Fetch unread count
+  const fetchUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem("token"); // adjust if needed
+
+      const res = await axios.get(
+        "http://localhost:5000/api/notifications/unread-count",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setUnreadCount(res.data.count || 0);
+    } catch (err) {
+      console.error("Unread count error:", err);
+    }
+  };
+
+  // 🔹 Load on mount + poll
+  useEffect(() => {
+    fetchUnreadCount();
+
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+    }, 15000); // refresh every 15s
+
+    return () => clearInterval(interval);
+  }, []);
   return (
     <header
       style={{
-        background: "#38bdf8", 
+        background: "#38bdf8",
         height: "64px",
         display: "flex",
         alignItems: "center",
@@ -20,7 +53,15 @@ const Header = ({ onLogout, onOpenNotif, role, unreadCount = 0 }) => {
       }}
     >
       {/* Left Section: Logo & Brand */}
-      <Link to="/" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none" }}>
+      <Link
+        to="/"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          textDecoration: "none",
+        }}
+      >
         <div
           style={{
             width: "38px",
@@ -32,18 +73,28 @@ const Header = ({ onLogout, onOpenNotif, role, unreadCount = 0 }) => {
             justifyContent: "center",
           }}
         >
-          <img src={sustLogo} alt="SUST" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
+          <img
+            src={sustLogo}
+            alt="SUST"
+            style={{ width: "32px", height: "32px", objectFit: "contain" }}
+          />
         </div>
-        <span style={{ color: "white", fontWeight: 700, fontSize: "18px", letterSpacing: "-0.01em" }}>
+        <span
+          style={{
+            color: "white",
+            fontWeight: 700,
+            fontSize: "18px",
+            letterSpacing: "-0.01em",
+          }}
+        >
           SUST Spot Booking
         </span>
       </Link>
 
       {/* Right Section: Actions */}
       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-        
         {/* Profile Link (Visible only for users) */}
-        {role === 'user' && (
+        {role === "user" && (
           <Link
             to="/profile"
             className="hidden md:flex" // Hides text on mobile, keeps link logic
@@ -57,7 +108,7 @@ const Header = ({ onLogout, onOpenNotif, role, unreadCount = 0 }) => {
               padding: "8px 12px",
               borderRadius: "10px",
               background: "rgba(255,255,255,0.1)",
-              transition: "0.2s"
+              transition: "0.2s",
             }}
           >
             <User size={18} />
@@ -101,7 +152,7 @@ const Header = ({ onLogout, onOpenNotif, role, unreadCount = 0 }) => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+                boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
               }}
             >
               {unreadCount > 9 ? "9+" : unreadCount}
