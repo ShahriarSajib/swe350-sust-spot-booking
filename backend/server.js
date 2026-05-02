@@ -13,7 +13,8 @@ const eventRoutes = require('./routes/eventRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const recommendationRoutes = require('./routes/recommendationRoutes');
-
+const notificationRoutes = require("./routes/notificationRoutes");
+const adminNotificationRoutes = require("./routes/adminNotificationRoutes");
 
 // DB (now env is already loaded ✅)
 require('./config/db');
@@ -47,7 +48,8 @@ app.use('/api/blog', blogRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 //admin
 app.use("/api/admin", adminRoutes);
-
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin/notifications", adminNotificationRoutes);
 // ================= 404 HANDLER =================
 
 app.use((req, res) => {

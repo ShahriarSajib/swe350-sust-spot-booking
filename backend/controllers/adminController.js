@@ -2,8 +2,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
 const Admin = require("../models/adminModel");
-
+const notificationService = require("../services/notificationService");
 const JWT_SECRET = process.env.JWT_SECRET || "SECRET_KEY";
+const { sendEmail } = require("../services/emailService");
 
 // ── AUTH ─────────────────────────────────────────────────────────────────────
 
@@ -352,14 +353,16 @@ const getAdminBookingHistory = async (req, res) => {
   }
 };
 
+
+
 const approveBooking = async (req, res) => {
   const bookingId = req.params.id;
   const adminId = req.admin.id;
 
   try {
-    // 🔹 1. Get booking + approval order
+    // 🔹 1. Get booking + approval order + user info
     const [rows] = await db.query(
-      `SELECT b.current_approval_point, b.spot_id,
+      `SELECT b.current_approval_point, b.spot_id, b.user_id, b.spot_name,
               s.approval_order
        FROM bookings b
        JOIN spots s ON b.spot_id = s.spot_id
@@ -390,7 +393,7 @@ const approveBooking = async (req, res) => {
 
     const currentStep = booking.current_approval_point;
 
-    // 🔹 3. SECURITY CHECK (very important 🚨)
+    // 🔹 3. SECURITY CHECK
     if (order[currentStep] !== adminId) {
       return res.status(403).json({ message: "Not authorized for this step" });
     }
@@ -416,11 +419,13 @@ const approveBooking = async (req, res) => {
       );
     }
 
-    // 🔹 5. Move to next step OR final approve
+    // 🔹 5. Move forward
     const nextStep = currentStep + 1;
 
     if (nextStep >= order.length) {
+      // =========================================
       // ✅ FINAL APPROVAL
+      // =========================================
       await db.query(
         `UPDATE bookings 
          SET booking_status = 'approved', current_approval_point = ?
@@ -428,7 +433,7 @@ const approveBooking = async (req, res) => {
         [nextStep, bookingId],
       );
 
-      // insert into availability_calendar (only once)
+      // insert into availability_calendar
       const [calExisting] = await db.query(
         "SELECT booking_id FROM availability_calendar WHERE booking_id = ?",
         [bookingId],
@@ -443,9 +448,34 @@ const approveBooking = async (req, res) => {
         );
       }
 
+      // 🔔 NOTIFY USER (FINAL APPROVAL)
+      await notificationService.createNotification({
+        user_id: booking.user_id,
+        booking_id: bookingId,
+        title: "Booking Approved",
+        message: `Your booking for ${booking.spot_name} has been fully approved.`,
+      });
+
+      // =========================
+      // 📧 EMAIL USER (NEW)
+      // =========================
+      const [[user]] = await db.query(
+        `SELECT email FROM users WHERE id = ?`,
+        [booking.user_id]
+      );
+
+      sendEmail({
+        to: user.email,
+        subject: "Booking Approved",
+        text: `Your booking for ${booking.spot_name} has been fully approved.`,
+      });
+
       return res.json({ message: "Booking fully approved" });
+
     } else {
-      // 🔁 MOVE TO NEXT APPROVER
+      // =========================================
+      // 🔁 NEXT APPROVER
+      // =========================================
       await db.query(
         `UPDATE bookings 
          SET current_approval_point = ?
@@ -453,48 +483,124 @@ const approveBooking = async (req, res) => {
         [nextStep, bookingId],
       );
 
+      const nextApproverId = order[nextStep];
+
+      // 🔔 NOTIFY NEXT APPROVER
+      await notificationService.createNotification({
+        approver_id: nextApproverId,
+        booking_id: bookingId,
+        title: "Approval Required",
+        message: `A booking request for ${booking.spot_name} requires your approval.`,
+      });
+
+      // =========================
+      // 📧 EMAIL NEXT APPROVER (NEW)
+      // =========================
+      const [[approver]] = await db.query(
+        `SELECT approver_email FROM approver WHERE approver_id = ?`,
+        [nextApproverId]
+      );
+
+      sendEmail({
+        to: approver.approver_email,
+        subject: "Approval Required",
+        text: `A booking request for ${booking.spot_name} requires your approval.`,
+      });
+
       return res.json({ message: "Forwarded to next approver" });
     }
+
   } catch (err) {
     console.error("Approve error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+const emailService = require("../services/emailService");
 const rejectBooking = async (req, res) => {
   try {
     const { reason } = req.body;
     const bookingId = req.params.id;
     const adminId = req.admin.id;
 
-    await db.query(
-      `UPDATE bookings SET booking_status = 'rejected' WHERE booking_id = ?`,
-      [bookingId],
+    // 🔹 1. Get booking + user email BEFORE updating
+    const [bookingRows] = await db.query(
+      `SELECT b.user_id, b.spot_name, u.email 
+       FROM bookings b
+       JOIN users u ON b.user_id = u.id
+       WHERE b.booking_id = ?`,
+      [bookingId]
     );
 
+    if (bookingRows.length === 0) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    const { user_id, spot_name, email } = bookingRows[0];
+
+    // 🔹 2. Update booking status
+    await db.query(
+      `UPDATE bookings 
+       SET booking_status = 'rejected' 
+       WHERE booking_id = ?`,
+      [bookingId]
+    );
+
+    // 🔹 3. Save approval log
     const [existing] = await db.query(
       "SELECT booking_id FROM approval WHERE booking_id = ?",
-      [bookingId],
+      [bookingId]
     );
 
     if (existing.length > 0) {
       await db.query(
-        `UPDATE approval SET approver_id = ?, approvers_remarks = ?, decision_time = NOW() WHERE booking_id = ?`,
-        [adminId, reason || null, bookingId],
+        `UPDATE approval 
+         SET approver_id = ?, approvers_remarks = ?, decision_time = NOW() 
+         WHERE booking_id = ?`,
+        [adminId, reason || null, bookingId]
       );
     } else {
       await db.query(
-        `INSERT INTO approval (booking_id, approver_id, approvers_remarks, decision_time) VALUES (?, ?, ?, NOW())`,
-        [bookingId, adminId, reason || null],
+        `INSERT INTO approval 
+         (booking_id, approver_id, approvers_remarks, decision_time) 
+         VALUES (?, ?, ?, NOW())`,
+        [bookingId, adminId, reason || null]
       );
     }
 
+    // ===============================
+    // 🔔 DATABASE NOTIFICATION
+    // ===============================
+    await notificationService.createNotification({
+      user_id,
+      booking_id: bookingId,
+      title: "Booking Rejected",
+      message: reason
+        ? `Your booking for ${spot_name} was rejected. Reason: ${reason}`
+        : `Your booking for ${spot_name} was rejected.`,
+    });
+
+    // ===============================
+    // 📧 EMAIL NOTIFICATION
+    // ===============================
+    if (email) {
+      await emailService.sendEmail({
+        to: email,
+        subject: "Booking Rejected",
+        text: reason
+          ? `Your booking for ${spot_name} has been rejected.\nReason: ${reason}`
+          : `Your booking for ${spot_name} has been rejected.`,
+      });
+    }
+
+    console.log("✅ Rejection notification + email sent");
+
     res.json({ message: "Booking rejected" });
+
   } catch (err) {
     console.error("Reject error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 // Admin self-reserve
 const reserveSpotByAdmin = async (req, res) => {
   try {
@@ -1023,7 +1129,7 @@ module.exports = {
   deleteBlog,
   getFeedbacks,
   getReport,
-  getNotifications,
-  markAllNotificationsRead,
+  //getNotifications,
+  //markAllNotificationsRead,
   checkSpotAvailability,
 };

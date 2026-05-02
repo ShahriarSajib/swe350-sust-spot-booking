@@ -30,8 +30,8 @@ const {
   deleteBlog,
   getFeedbacks,
   getReport,
-  getNotifications,
-  markAllNotificationsRead,
+  //getNotifications,
+  //markAllNotificationsRead,
   checkSpotAvailability,
 } = require("../controllers/adminController");
 console.log("✅ adminRoutes loaded");
@@ -89,8 +89,8 @@ router.get("/feedbacks", getFeedbacks);
 router.get("/report", getReport);
 
 // Notifications
-router.get("/notifications", getNotifications);
-router.put("/notifications/read-all", markAllNotificationsRead);
+//router.get("/notifications", getNotifications);
+//router.put("/notifications/read-all", markAllNotificationsRead);
  
 // Spot availability check
 router.get("/spots/:id/availability", checkSpotAvailability);
