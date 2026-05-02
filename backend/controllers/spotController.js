@@ -53,7 +53,8 @@ exports.getSpotById = async (req, res) => {
             image1: spot.image1,
             image2: spot.image2,
             image3: spot.image3,
-            rules: rulesArray
+            rules: rulesArray,
+            max_booking: spot.max_booking 
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -84,5 +85,52 @@ exports.onlyAddRules = async (req, res) => {
     } catch (err) {
         console.error("Error adding rules:", err);
         res.status(500).json({ error: err.message });
+    }
+};
+
+// In your Spot Controller
+// Change 'spotModel' to 'Spot' to match your require statement
+exports.getSpotDetailsByName = async (req, res) => {
+    const { name } = req.params;
+
+    try {
+        // Use Spot (capital S) as defined at the top of your file
+        const results = await Spot.getSpotByName(name);
+
+        // Since getSpotByName returns rows[0] in the model we discussed, 
+        // we check if it exists.
+        if (!results) {
+            return res.status(404).json({ 
+                success: false, 
+                message: `Spot with name '${name}' not found` 
+            });
+        }
+
+        const spot = results;
+
+        // Apply the same rules-parsing logic as your ID-based function
+        const rulesArray = spot.rules ? spot.rules.split('||') : [];
+
+        res.status(200).json({
+            success: true,
+            data: {
+                id: spot.spot_id,
+                name: spot.name,
+                description: spot.description,
+                location: spot.location,
+                max_booking: spot.max_booking, // Added the field you wanted!
+                display_image: spot.image1,
+                image1: spot.image1,
+                image2: spot.image2,
+                image3: spot.image3,
+                rules: rulesArray
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            success: false, 
+            message: "Server Error", 
+            error: err.message 
+        });
     }
 };

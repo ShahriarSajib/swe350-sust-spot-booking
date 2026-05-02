@@ -2,6 +2,8 @@ import { useState } from "react";
 import animeImg from "../../assets/anime.png";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
+import axios from "axios";
+import { useEffect } from "react";
 
 const AnimeSection = () => {
     const navigate = useNavigate();
@@ -15,6 +17,29 @@ const AnimeSection = () => {
     const [searchDate, setSearchDate] = useState("");
     const [searchEndDate, setSearchEndDate] = useState("");
     const [searchSession, setSearchSession] = useState("Day");
+    // NEW: States to store fetched spot data
+    const [spotData, setSpotData] = useState({ id: null, max_booking: 0 });
+
+    const [validationError, setValidationError] = useState("");
+    // NEW: Fetch spot details whenever the selected name changes
+    useEffect(() => {
+        const fetchSpotId = async () => {
+            try {
+                // Use encodeURIComponent for names with spaces
+                const response = await axios.get(`http://localhost:5000/api/spots/details/${encodeURIComponent(selectedSpot)}`);
+                if (response.data.success) {
+                    setSpotData({
+                        id: response.data.data.id,
+                        max_booking: response.data.data.max_booking
+                    });
+                }
+            } catch (err) {
+                console.error("Error fetching spot details:", err);
+            }
+        };
+
+        fetchSpotId();
+    }, [selectedSpot]);
 
     // Dynamic spots logic
     const spots = category === "auditorium"
@@ -32,14 +57,18 @@ const AnimeSection = () => {
 
     // Navigation Handler
     const handleNavigation = () => {
-        // Only navigate if at least the start date is selected
+
+        // Clear previous errors first
+        setValidationError("");
+
         if (!searchDate) {
-            alert("Please select a date first");
+            setValidationError("Please select a date first");
             return;
         }
+        // Only navigate if at least the start date is selected
         if (isLimitExceeded) return;
 
-        navigate("/spot/1", {
+        navigate(`/spot/${spotData.id}`, {
             state: {
                 selectedSpot: selectedSpot,
                 date: searchDate,          // String "YYYY-MM-DD"
@@ -49,6 +78,8 @@ const AnimeSection = () => {
             }
         });
     };
+    console.log("Selected Spot:", selectedSpot);
+
 
     return (
         <section className="w-full font-sans">
@@ -85,18 +116,37 @@ const AnimeSection = () => {
 
                                 <div className="flex gap-8 items-center text-slate-600 font-semibold text-sm">
                                     <label className="flex items-center gap-2 cursor-pointer hover:text-blue-700 transition-colors">
-                                        <input type="radio" name="days" checked={!isMultiple} onChange={() => setIsMultiple(false)} className="w-4 h-4 accent-green-600" />
+                                        <input
+                                            type="radio"
+                                            name="days"
+                                            checked={!isMultiple}
+                                            onChange={() => setIsMultiple(false)}
+                                            className="w-4 h-4 accent-green-600"
+                                        />
                                         Single Day
                                     </label>
                                     <label className="flex items-center gap-2 cursor-pointer hover:text-blue-700 transition-colors">
-                                        <input type="radio" name="days" checked={isMultiple} onChange={() => setIsMultiple(true)} className="w-4 h-4 accent-green-600" />
-                                        Multiple Days (Max 5 days)
+                                        <input
+                                            type="radio"
+                                            name="days"
+                                            checked={isMultiple}
+                                            onChange={() => setIsMultiple(true)}
+                                            className="w-4 h-4 accent-green-600"
+                                        />
+                                        {/* Dynamic Label based on backend data */}
+                                        Multiple Days (Max {spotData.max_booking || 5} days)
                                     </label>
                                 </div>
+                                {validationError && (
+                                    <p className="text-red-500 text-sm font-bold animate-bounce">
+                                        ⚠️ {validationError}
+                                    </p>
+                                )}
+
                                 {/* ERROR MESSAGE DISPLAY */}
                                 {isLimitExceeded && (
-                                    <span className="text-red-500 text-[15px] font-bold uppercase mt-2 ">
-                                        ⚠️ Max 5 days allowed (Selected: {dayDifference} days)
+                                    <span className="text-red-500 text-[15px] font-bold uppercase mt-2">
+                                        ⚠️ Max {spotData.max_booking} days allowed (Selected: {dayDifference} days)
                                     </span>
                                 )}
                             </div>

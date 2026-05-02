@@ -34,13 +34,26 @@ const Spot = {
 
     getSpotDetails: async (id) => {
         const sql = `
-            SELECT spot_id, name, description, location, rules, image1, image2, image3
+            SELECT spot_id, name, description, location, rules, image1, image2, image3, max_booking
             FROM spots 
             WHERE spot_id = ?
         `;
         try {
             const [rows] = await db.query(sql, [id]);
             return rows;
+        } catch (err) {
+            throw err;
+        }
+    },
+    getSpotByName: async (name) => {
+        const sql = `
+            SELECT spot_id, name, description, location, rules, image1, image2, image3, max_booking
+            FROM spots 
+            WHERE name = ?
+        `;
+        try {
+            const [rows] = await db.query(sql, [name]);
+            return rows[0]; // Returns the single spot object
         } catch (err) {
             throw err;
         }

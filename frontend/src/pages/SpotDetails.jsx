@@ -294,6 +294,7 @@ export default function SpotDetails() {
             personalDetails={personalDetails}
             bookingData={bookingData}
             isConflict={isSessionConflict()}
+            max_booking={spot?.max_booking}
           />
         </div>
       </div>

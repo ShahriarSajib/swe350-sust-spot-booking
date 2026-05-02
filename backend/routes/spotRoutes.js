@@ -20,5 +20,6 @@ const upload = multer({ storage: storage });
 //router.post('/add', upload.single('display_image'), spotController.addNewSpot);
 router.post('/add-rules', spotController.onlyAddRules);
 router.get('/:id', spotController.getSpotById);
+router.get("/details/:name", spotController.getSpotDetailsByName);
 
 module.exports = router;

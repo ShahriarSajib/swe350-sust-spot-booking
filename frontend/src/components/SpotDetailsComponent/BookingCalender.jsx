@@ -1,6 +1,6 @@
 import React from 'react';
 import { DayPicker } from "react-day-picker";
-import { Calendar as CalendarIcon ,X} from "lucide-react";
+import { Calendar as CalendarIcon, X } from "lucide-react";
 // import { isSameDay, parseISO } from "date-fns";
 import BookingForm from "./BookingForm";
 
@@ -28,10 +28,11 @@ export default function BookingCalendar({
     showForm,
     personalDetails,
     bookingData,
-        isConflict
+    isConflict,
+    max_booking
 }) {
 
-
+    console.log("max booking prop:", max_booking);
     const status = getStatus(selectedDate);
     const isFull = status === "full";
     const isPending = status === "pending";
@@ -39,7 +40,7 @@ export default function BookingCalendar({
     const isOnlyNight = status === "onlyNight";
     const isAvailable = status === "available";
 
-   
+
 
     const getDetailedRangeStatus = () => {
         if (bookingType === "single") {
@@ -68,12 +69,12 @@ export default function BookingCalendar({
         }
 
         const fullBookedDates = datesInRange.filter(d => d.status === "full");
-        const onlyDayDates = datesInRange.filter(d => d.status === "onlyDay"); 
-        const onlyNightDates = datesInRange.filter(d => d.status === "onlyNight"); 
+        const onlyDayDates = datesInRange.filter(d => d.status === "onlyDay");
+        const onlyNightDates = datesInRange.filter(d => d.status === "onlyNight");
         const hasFullBooked = fullBookedDates.length > 0;
         const hasMixedConflict = onlyDayDates.length > 0 && onlyNightDates.length > 0;
 
-        
+
         const canSelectDay = !hasFullBooked && onlyDayDates.length === 0;
         const canSelectNight = !hasFullBooked && onlyNightDates.length === 0;
         const canSelectFullDay = !hasFullBooked && onlyDayDates.length === 0 && onlyNightDates.length === 0;
@@ -90,13 +91,13 @@ export default function BookingCalendar({
         };
     };
 
-    
+
 
     const rangeStatus = getDetailedRangeStatus();
 
     console.log("isFull:", isFull, "isPending:", isPending, "isOnlyDay:", isOnlyDay, "isOnlyNight:", isOnlyNight, "isAvailable:", isAvailable);
     console.log(
-        "booking data",bookingData
+        "booking data", bookingData
     )
 
 
@@ -124,8 +125,8 @@ export default function BookingCalendar({
                 </div>
             )}
             {bookingType === "multiple" && (
-                <div className="mb-4 bg-purple-50 text-purple-700 p-3 rounded-lg text-sm">
-                    📆 Please select a date range (Maximum 5 days)
+                <div className="mb-4 bg-purple-50 text-purple-700 p-3 rounded-lg text-sm font-semibold">
+                    📆 Please select a date range (Max {max_booking !== undefined ? max_booking : 5} days)
                 </div>
             )}
 
