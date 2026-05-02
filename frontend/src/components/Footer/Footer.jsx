@@ -43,9 +43,9 @@ const Footer = () => {
                     <h3 className="text-white font-bold mb-4 text-lg">Quick Links</h3>
                     <ul className="space-y-2 text-sm">
                         <li>
-                            <a href="/#preferred-spots" className="text-sky-50 hover:text-white hover:underline transition-colors">
+                            <Link to="/preferred-spots" className="text-sky-50 hover:text-white hover:underline transition-colors">
                                 Explore Spots
-                            </a>
+                            </Link>
                         </li>
                         <li>
                             <Link to="/profile" className="text-sky-50 hover:text-white hover:underline transition-colors">
