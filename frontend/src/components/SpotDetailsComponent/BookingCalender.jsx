@@ -168,8 +168,8 @@ export default function BookingCalendar({
                         setDateError("");
                         if (value?.from && value?.to) {
                             const diff = Math.round((value.to - value.from) / (1000 * 60 * 60 * 24)) + 1;
-                            if (diff > 5) {
-                                setDateError(`⚠️ You selected ${diff} days. Maximum 5 days allowed.`);
+                            if (diff > (max_booking !== undefined ? max_booking : 5)) {
+                                setDateError(`⚠️ You selected ${diff} days. Maximum ${max_booking !== undefined ? max_booking : 5} days allowed.`);
                                 setDateRange({ from: value.from, to: null });
                                 return;
                             }

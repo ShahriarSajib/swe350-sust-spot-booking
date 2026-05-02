@@ -52,7 +52,7 @@ const AnimeSection = () => {
         ? (new Date(searchEndDate) - new Date(searchDate)) / (1000 * 60 * 60 * 24) + 1
         : 0;
 
-    const isLimitExceeded = isMultiple && dayDifference > 5;
+    const isLimitExceeded = isMultiple && dayDifference > (spotData.max_booking || 5);
     // const isDateInvalid = isMultiple && dayDifference <= 0 && searchEndDate !== "";
 
     // Navigation Handler
