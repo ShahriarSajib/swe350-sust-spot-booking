@@ -300,7 +300,7 @@ const BlogModeration = () => {
                       display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
                       background: "var(--accent)", border: "none", color: "white",
                     }}>
-                      <Eye size={12} /> View Full Blog
+                      <Eye size={12} /> View
                     </button>
                     {blogStatus === "pending" ? (
                       <>
@@ -425,7 +425,7 @@ const BlogModeration = () => {
                 </div>
 
                 {/* ── Tags ── */}
-                {selectedBlog.tags?.length > 0 && (
+                {/* {selectedBlog.tags?.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center", marginBottom: 24 }}>
                     <Tag size={13} color="var(--text3)" />
                     {selectedBlog.tags.map((tag) => (
@@ -436,7 +436,7 @@ const BlogModeration = () => {
                       }}>{tag}</span>
                     ))}
                   </div>
-                )}
+                )} */}
 
                 {/* ── Internal nav tabs ── */}
                 {modalTabs.length > 1 && (
@@ -474,11 +474,11 @@ const BlogModeration = () => {
                     )}
 
                     {/* Quick stats row */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 24 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 24 }}>
                       {[
                         { label: "Schedule items", value: scheduleItems.length, icon: <Clock size={16} /> },
                         { label: "Photos",         value: photoItems.length,    icon: <ImageIcon size={16} /> },
-                        { label: "Tags",           value: selectedBlog.tags?.length || 0, icon: <Tag size={16} /> },
+                       // { label: "Tags",           value: selectedBlog.tags?.length || 0, icon: <Tag size={16} /> },
                       ].map(({ label, value, icon }) => (
                         <div key={label} style={{
                           background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12,

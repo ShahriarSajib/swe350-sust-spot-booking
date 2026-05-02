@@ -813,7 +813,7 @@ const getSingleBlog = async (req, res) => {
     const [blogs] = await db.query(
       `SELECT eb.blog_id, eb.blog_title, eb.summary, eb.story_details,
               eb.blog_status, eb.submitted_at, eb.published_at,
-              eb.cover_image, eb.tags,
+              eb.cover_image,
               u.full_name AS author,
               s.name AS spot_name,
               bk.start_date AS event_date
