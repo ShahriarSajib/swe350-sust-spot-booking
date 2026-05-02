@@ -298,9 +298,9 @@ function App() {
               element={
                 <>
                   <AnimeSection />
-                  <div id="preferred-spots">
+                  
                     <PreferredSpotSection />
-                  </div>
+                  
                   <UpcomingEventsSection />
                   <FeaturedEventsSection />
                 </>
@@ -309,6 +309,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/spot/:id" element={<SpotDetail />} />
             <Route path="/featured-events" element={<FeaturedEventsBlog />} />
+            <Route path="/preferred-spots" element={<PreferredSpotSection />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="*" element={<Navigate to="/" />} />
 
