@@ -11,6 +11,7 @@ const {
   updateProfile,
   updateSignature,
   dashboard,
+  getAdminBookingHistory,
   getAllBookings,
   getSingleBooking,
   approveBooking,
@@ -33,6 +34,7 @@ const {
   markAllNotificationsRead,
   checkSpotAvailability,
 } = require("../controllers/adminController");
+console.log("✅ adminRoutes loaded");
 
 // ── PUBLIC (no auth needed) ───────────────────────────────────────────────────
 router.post("/login", loginAdmin);
@@ -53,11 +55,15 @@ router.put("/profile/signature", uploadSignature, updateSignature);
 router.get("/dashboard", dashboard);
 
 // Bookings
+router.get("/bookings/history", getAdminBookingHistory);
 router.get("/bookings", getAllBookings);
 router.get("/bookings/:id", getSingleBooking);
 router.post("/bookings/:id/approve", approveBooking);
 router.post("/bookings/:id/reject", rejectBooking);
-router.post("/bookings/reserve", reserveSpotByAdmin);
+router.post("/bookings/reserve", (req, res, next) => {
+  console.log("✅ reserve route HIT");
+  next();
+}, reserveSpotByAdmin);
 
 // Spots
 router.get("/spots", getSpots);

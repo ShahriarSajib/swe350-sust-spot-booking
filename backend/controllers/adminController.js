@@ -12,11 +12,12 @@ const loginAdmin = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password)
-      return res.status(400).json({ message: "Email and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
 
     const admin = await Admin.findAdminByEmail(email);
-    if (!admin)
-      return res.status(404).json({ message: "Admin not found" });
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
 
     // ⚠️ Plain text password comparison (NOT SECURE, but your request)
     if (password !== admin.password)
@@ -25,10 +26,10 @@ const loginAdmin = async (req, res) => {
     const token = jwt.sign(
       {
         id: admin.approver_id,
-        role: "approver"
+        role: "approver",
       },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     res.json({
@@ -40,7 +41,6 @@ const loginAdmin = async (req, res) => {
         approver_designation: admin.approver_designation,
       },
     });
-
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error" });
@@ -58,12 +58,13 @@ const changePassword = async (req, res) => {
 
     const [rows] = await db.query(
       "SELECT password FROM approver WHERE approver_id = ?",
-      [req.admin.id]
+      [req.admin.id],
     );
     if (!rows[0]) return res.status(404).json({ message: "Admin not found" });
 
     const match = await bcrypt.compare(oldPassword, rows[0].password);
-    if (!match) return res.status(400).json({ message: "Old password incorrect" });
+    if (!match)
+      return res.status(400).json({ message: "Old password incorrect" });
 
     const hashed = await bcrypt.hash(newPassword, 10);
     await db.query("UPDATE approver SET password = ? WHERE approver_id = ?", [
@@ -135,7 +136,7 @@ const dashboard = async (req, res) => {
     `);
 
     const [[spotsRow]] = await db.query(
-      "SELECT COUNT(*) AS total_spots FROM spots"
+      "SELECT COUNT(*) AS total_spots FROM spots",
     );
 
     const [recent] = await db.query(`
@@ -193,33 +194,41 @@ const dashboard = async (req, res) => {
 const getAllBookings = async (req, res) => {
   try {
     const { status, spot_id, start_date, end_date } = req.query;
+    const adminId = req.admin.id; // logged-in approver
 
     let query = `
-  SELECT 
-    b.booking_id, b.booking_status, b.timestamp, b.start_date, b.end_date,
-    b.session, b.title AS event_title, b.start_time, b.end_time, b.description,
-    u.full_name, u.department AS dept, u.contact_number,
-    s.name AS spot_name,
-    ru.full_name             AS recommender_name,
-    rec.recommender_designation AS recommender_post,
-    ru.department            AS recommender_dept
-  FROM bookings b
-  JOIN  users u   ON b.user_id      = u.id
-  JOIN  spots s   ON b.spot_id      = s.spot_id
-  LEFT JOIN recommendations rec ON b.booking_id = rec.booking_id
-  LEFT JOIN users ru              ON rec.recommender_user_id = ru.id
-  WHERE 1=1
-`;
+      SELECT 
+        b.booking_id, b.booking_status, b.timestamp, b.start_date, b.end_date,
+        b.session, b.title AS event_title, b.start_time, b.end_time, b.description,
+        b.current_approval_point,
+        u.full_name, u.department AS dept, u.contact_number,
+        s.name AS spot_name,
+        s.approval_order,
+        ru.full_name AS recommender_name,
+        rec.recommender_designation AS recommender_post,
+        ru.department AS recommender_dept,
+        ru.email as recommender_email
+      FROM bookings b
+      JOIN users u ON b.user_id = u.id
+      JOIN spots s ON b.spot_id = s.spot_id
+      LEFT JOIN recommendations rec ON b.booking_id = rec.booking_id
+      LEFT JOIN users ru ON rec.recommender_user_id = ru.id
+      WHERE 1=1 AND b.is_recommended = 1
+    `;
+
     const params = [];
 
+    // Optional filters (keep your existing ones)
     if (status && status !== "all") {
       query += " AND b.booking_status = ?";
       params.push(status);
     }
+
     if (spot_id) {
       query += " AND b.spot_id = ?";
       params.push(spot_id);
     }
+
     if (start_date && end_date) {
       query += " AND b.start_date BETWEEN ? AND ?";
       params.push(start_date, end_date);
@@ -228,7 +237,35 @@ const getAllBookings = async (req, res) => {
     query += " ORDER BY b.timestamp DESC";
 
     const [rows] = await db.query(query, params);
-    res.json(rows);
+
+    // 🔥 FILTER based on approval flow
+   const filtered = rows.filter((b) => {
+  if (!b.approval_order) return false;
+  if (b.current_approval_point == null) return false;
+
+  let order;
+
+  try {
+    order =
+      typeof b.approval_order === "string"
+        ? JSON.parse(b.approval_order)
+        : b.approval_order;
+  } catch {
+    return false;
+  }
+
+  if (!Array.isArray(order)) return false;
+
+  order = order.map(Number);
+
+  if (b.current_approval_point >= order.length) return false;
+
+  const currentApprover = order[b.current_approval_point];
+
+  return Number(currentApprover) === Number(adminId);
+});
+
+    res.json(filtered);
   } catch (err) {
     console.error("Get bookings error:", err);
     res.status(500).json({ message: "Server error" });
@@ -248,12 +285,69 @@ const getSingleBooking = async (req, res) => {
        LEFT JOIN recommendations r ON b.booking_id = r.booking_id
        LEFT JOIN users rec_user ON r.recommender_user_id = rec_user.id
        WHERE b.booking_id = ?`,
-      [req.params.id]
+      [req.params.id],
     );
     if (!rows[0]) return res.status(404).json({ message: "Booking not found" });
     res.json(rows[0]);
   } catch (err) {
     console.error("Get booking error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+const getAdminBookingHistory = async (req, res) => {
+  try {
+    const adminId = req.admin.id;
+
+    let query = `
+      SELECT 
+        b.booking_id,
+        b.booking_status,
+        b.timestamp,
+        b.start_date,
+        b.end_date,
+        b.session,
+        b.title AS event_title,
+        b.start_time,
+        b.end_time,
+        b.description,
+        b.current_approval_point,
+
+        u.full_name,
+        u.department AS dept,
+        u.contact_number,
+
+        s.name AS spot_name,
+        s.approval_order,
+
+        ru.full_name AS recommender_name,
+        rec.recommender_designation AS recommender_post,
+        ru.department AS recommender_dept,
+
+        ap.approver_id
+
+      FROM bookings b
+      JOIN users u ON b.user_id = u.id
+      JOIN spots s ON b.spot_id = s.spot_id
+      LEFT JOIN recommendations rec ON b.booking_id = rec.booking_id
+      LEFT JOIN users ru ON rec.recommender_user_id = ru.id
+      LEFT JOIN approval ap ON b.booking_id = ap.booking_id
+
+      WHERE b.is_recommended = 1
+      AND(
+
+        ap.approver_id = ?
+        OR JSON_CONTAINS(s.approval_order, CAST(? AS JSON), '$')
+      )
+    `;
+
+    const params = [adminId, adminId];
+
+    query += " ORDER BY b.timestamp DESC";
+
+    const [rows] = await db.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error("History error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -263,47 +357,109 @@ const approveBooking = async (req, res) => {
   const adminId = req.admin.id;
 
   try {
+    // 🔹 1. Get booking + approval order
+    const [rows] = await db.query(
+      `SELECT b.current_approval_point, b.spot_id,
+              s.approval_order
+       FROM bookings b
+       JOIN spots s ON b.spot_id = s.spot_id
+       WHERE b.booking_id = ?`,
+      [bookingId],
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    const booking = rows[0];
+
+    // 🔹 2. Parse approval order
+    let order;
+    try {
+      order =
+        typeof booking.approval_order === "string"
+          ? JSON.parse(booking.approval_order)
+          : booking.approval_order;
+    } catch {
+      return res.status(400).json({ message: "Invalid approval order" });
+    }
+
+    if (!Array.isArray(order) || order.length === 0) {
+      return res.status(400).json({ message: "No approval flow set" });
+    }
+
+    const currentStep = booking.current_approval_point;
+
+    // 🔹 3. SECURITY CHECK (very important 🚨)
+    if (order[currentStep] !== adminId) {
+      return res.status(403).json({ message: "Not authorized for this step" });
+    }
+
+    // 🔹 4. Save approval record
     const [existing] = await db.query(
-      "SELECT booking_id FROM approval WHERE booking_id = ?",
-      [bookingId]
+      "SELECT booking_id FROM approval WHERE booking_id = ? AND approver_id = ?",
+      [bookingId, adminId],
     );
 
     if (existing.length > 0) {
       await db.query(
-        `UPDATE approval SET approver_id = ?, decision_time = NOW(), approvers_remarks = NULL WHERE booking_id = ?`,
-        [adminId, bookingId]
+        `UPDATE approval 
+         SET decision_time = NOW(), approvers_remarks = NULL 
+         WHERE booking_id = ? AND approver_id = ?`,
+        [bookingId, adminId],
       );
     } else {
       await db.query(
-        `INSERT INTO approval (booking_id, approver_id, decision_time) VALUES (?, ?, NOW())`,
-        [bookingId, adminId]
+        `INSERT INTO approval (booking_id, approver_id, decision_time) 
+         VALUES (?, ?, NOW())`,
+        [bookingId, adminId],
       );
     }
 
-    await db.query(
-      `UPDATE bookings SET booking_status = 'approved' WHERE booking_id = ?`,
-      [bookingId]
-    );
+    // 🔹 5. Move to next step OR final approve
+    const nextStep = currentStep + 1;
 
-    const [calExisting] = await db.query(
-      "SELECT booking_id FROM availability_calendar WHERE booking_id = ?",
-      [bookingId]
-    );
-    if (calExisting.length === 0) {
+    if (nextStep >= order.length) {
+      // ✅ FINAL APPROVAL
       await db.query(
-        `INSERT INTO availability_calendar (booking_id, spot_id, start_date, end_date)
-         SELECT booking_id, spot_id, start_date, end_date FROM bookings WHERE booking_id = ?`,
-        [bookingId]
+        `UPDATE bookings 
+         SET booking_status = 'approved', current_approval_point = ?
+         WHERE booking_id = ?`,
+        [nextStep, bookingId],
       );
-    }
 
-    res.json({ message: "Booking approved" });
+      // insert into availability_calendar (only once)
+      const [calExisting] = await db.query(
+        "SELECT booking_id FROM availability_calendar WHERE booking_id = ?",
+        [bookingId],
+      );
+
+      if (calExisting.length === 0) {
+        await db.query(
+          `INSERT INTO availability_calendar (booking_id, spot_id, start_date, end_date)
+           SELECT booking_id, spot_id, start_date, end_date 
+           FROM bookings WHERE booking_id = ?`,
+          [bookingId],
+        );
+      }
+
+      return res.json({ message: "Booking fully approved" });
+    } else {
+      // 🔁 MOVE TO NEXT APPROVER
+      await db.query(
+        `UPDATE bookings 
+         SET current_approval_point = ?
+         WHERE booking_id = ?`,
+        [nextStep, bookingId],
+      );
+
+      return res.json({ message: "Forwarded to next approver" });
+    }
   } catch (err) {
     console.error("Approve error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 const rejectBooking = async (req, res) => {
   try {
     const { reason } = req.body;
@@ -312,23 +468,23 @@ const rejectBooking = async (req, res) => {
 
     await db.query(
       `UPDATE bookings SET booking_status = 'rejected' WHERE booking_id = ?`,
-      [bookingId]
+      [bookingId],
     );
 
     const [existing] = await db.query(
       "SELECT booking_id FROM approval WHERE booking_id = ?",
-      [bookingId]
+      [bookingId],
     );
 
     if (existing.length > 0) {
       await db.query(
         `UPDATE approval SET approver_id = ?, approvers_remarks = ?, decision_time = NOW() WHERE booking_id = ?`,
-        [adminId, reason || null, bookingId]
+        [adminId, reason || null, bookingId],
       );
     } else {
       await db.query(
         `INSERT INTO approval (booking_id, approver_id, approvers_remarks, decision_time) VALUES (?, ?, ?, NOW())`,
-        [bookingId, adminId, reason || null]
+        [bookingId, adminId, reason || null],
       );
     }
 
@@ -342,27 +498,79 @@ const rejectBooking = async (req, res) => {
 // Admin self-reserve
 const reserveSpotByAdmin = async (req, res) => {
   try {
-    const { spot_id, start_date, end_date, session, title, description, start_time, end_time } = req.body;
+    const adminId = req.admin?.id;
 
-    if (!spot_id || !start_date || !session)
-      return res.status(400).json({ message: "spot_id, start_date and session are required" });
+    if (!adminId) {
+      return res.status(401).json({
+        message: "Unauthorized: admin id missing",
+      });
+    }
 
-    // Cancel conflicting approved bookings for that spot+date
+    const {
+      spot_id,
+      start_date,
+      end_date,
+      session,
+      title,
+      description,
+      start_time,
+      end_time,
+    } = req.body;
+
+    if (!spot_id || !start_date || !session) {
+      return res.status(400).json({
+        message: "spot_id, start_date and session are required",
+      });
+    }
+
+    // ✅ 1. Get admin email from approver table
+    const [approverRows] = await db.query(
+      `SELECT approver_email FROM approver WHERE approver_id = ?`,
+      [adminId]
+    );
+
+    if (approverRows.length === 0) {
+      return res.status(404).json({
+        message: "Admin not found in approver table",
+      });
+    }
+
+    const adminEmail = approverRows[0].approver_email;
+    console.log("✅ Admin email:", adminEmail);
+
+    // ✅ 2. Get user_id from users table using email
+    const [userRows] = await db.query(
+      `SELECT id FROM users WHERE email = ?`,
+      [adminEmail]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({
+        message: "Admin not found in users table",
+      });
+    }
+
+    const adminUserId = userRows[0].id;
+    console.log("✅ Admin user_id:", adminUserId);
+
+    // ✅ 3. Cancel conflicting bookings
     await db.query(
-      `UPDATE bookings SET booking_status = 'cancelled'
-       WHERE spot_id = ? AND booking_status = 'approved'
-         AND start_date <= ? AND (end_date IS NULL OR end_date >= ?)`,
+      `UPDATE bookings 
+       SET booking_status = 'cancelled'
+       WHERE spot_id = ? 
+         AND booking_status = 'approved'
+         AND start_date <= ? 
+         AND (end_date IS NULL OR end_date >= ?)`,
       [spot_id, end_date || start_date, start_date]
     );
 
-    const ADMIN_USER_ID = 7;
-
+    // ✅ 4. Insert booking
     const [result] = await db.query(
       `INSERT INTO bookings
-    (user_id, spot_id, booking_status, title, start_date, end_date, session, description, start_time, end_time)
-    VALUES (?, ?, 'approved', ?, ?, ?, ?, ?, ?, ?)`,
+      (user_id, spot_id, booking_status, title, start_date, end_date, session, description, start_time, end_time)
+      VALUES (?, ?, 'approved', ?, ?, ?, ?, ?, ?, ?)`,
       [
-        ADMIN_USER_ID,
+        adminUserId,
         spot_id,
         title || "Admin Reserved",
         start_date,
@@ -370,29 +578,62 @@ const reserveSpotByAdmin = async (req, res) => {
         session,
         description || "",
         start_time || null,
-        end_time || null
+        end_time || null,
       ]
     );
 
     const bookingId = result.insertId;
+
+    // ✅ 5. Insert into availability calendar
     await db.query(
-      `INSERT INTO availability_calendar (booking_id, spot_id, start_date, end_date) VALUES (?, ?, ?, ?)`,
+      `INSERT INTO availability_calendar (booking_id, spot_id, start_date, end_date)
+       VALUES (?, ?, ?, ?)`,
       [bookingId, spot_id, start_date, end_date || null]
     );
 
-    res.json({ message: "Spot reserved by admin", bookingId });
+    res.json({
+      message: "Spot reserved by admin",
+      bookingId,
+    });
+
   } catch (err) {
-    console.error("Reserve spot error:", err);
+    console.error("❌ Reserve spot error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 // ── SPOT MANAGEMENT ───────────────────────────────────────────────────────────
 
 const getSpots = async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM spots ORDER BY spot_id ASC");
-    res.json(rows);
+    const adminId = req.admin.id;
+
+    const [rows] = await db.query(
+      "SELECT * FROM spots ORDER BY spot_id ASC"
+    );
+
+    const filtered = rows.filter((spot) => {
+      if (!spot.approval_order) return false;
+
+      let order;
+
+      try {
+        order =
+          typeof spot.approval_order === "string"
+            ? JSON.parse(spot.approval_order)
+            : spot.approval_order;
+      } catch {
+        return false;
+      }
+
+      if (!Array.isArray(order)) return false;
+
+      // ensure numbers
+      order = order.map(Number);
+
+      return order.includes(Number(adminId));
+    });
+
+    res.json(filtered);
   } catch (err) {
     console.error("Get spots error:", err);
     res.status(500).json({ message: "Server error" });
@@ -401,7 +642,9 @@ const getSpots = async (req, res) => {
 
 const getSingleSpot = async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM spots WHERE spot_id = ?", [req.params.id]);
+    const [rows] = await db.query("SELECT * FROM spots WHERE spot_id = ?", [
+      req.params.id,
+    ]);
     if (!rows[0]) return res.status(404).json({ message: "Spot not found" });
     res.json(rows[0]);
   } catch (err) {
@@ -412,17 +655,29 @@ const getSingleSpot = async (req, res) => {
 
 const createSpot = async (req, res) => {
   try {
-    const { name, description, location, rules, capacity, max_booking } = req.body;
-    if (!name) return res.status(400).json({ message: "Spot name is required" });
+    const { name, description, location, rules, capacity, max_booking } =
+      req.body;
+    if (!name)
+      return res.status(400).json({ message: "Spot name is required" });
 
     const image1 = req.files?.["image1"]?.[0]?.filename || null;
-const image2 = req.files?.["image2"]?.[0]?.filename || null;
-const image3 = req.files?.["image3"]?.[0]?.filename || null;
+    const image2 = req.files?.["image2"]?.[0]?.filename || null;
+    const image3 = req.files?.["image3"]?.[0]?.filename || null;
 
     const [result] = await db.query(
       `INSERT INTO spots (name, description, location, image1, image2, image3, rules, capacity, max_booking)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, description || null, location || null, image1, image2, image3, rules || null, capacity || null, max_booking || null]
+      [
+        name,
+        description || null,
+        location || null,
+        image1,
+        image2,
+        image3,
+        rules || null,
+        capacity || null,
+        max_booking || null,
+      ],
     );
 
     res.status(201).json({ message: "Spot created", spot_id: result.insertId });
@@ -434,12 +689,13 @@ const image3 = req.files?.["image3"]?.[0]?.filename || null;
 
 const updateSpot = async (req, res) => {
   try {
-    const { name, description, location, rules, capacity, max_booking } = req.body;
+    const { name, description, location, rules, capacity, max_booking } =
+      req.body;
     const spotId = req.params.id;
 
     const [existing] = await db.query(
       "SELECT spot_id FROM spots WHERE spot_id = ?",
-      [spotId]
+      [spotId],
     );
 
     if (!existing[0]) {
@@ -477,7 +733,7 @@ const updateSpot = async (req, res) => {
       `UPDATE spots 
        SET name = ?, description = ?, location = ?, rules = ?, capacity = ?, max_booking = ?${imageUpdates}
        WHERE spot_id = ?`,
-      params
+      params,
     );
 
     res.json({ message: "Spot updated" });
@@ -488,8 +744,12 @@ const updateSpot = async (req, res) => {
 };
 const deleteSpot = async (req, res) => {
   try {
-    const [existing] = await db.query("SELECT spot_id FROM spots WHERE spot_id = ?", [req.params.id]);
-    if (!existing[0]) return res.status(404).json({ message: "Spot not found" });
+    const [existing] = await db.query(
+      "SELECT spot_id FROM spots WHERE spot_id = ?",
+      [req.params.id],
+    );
+    if (!existing[0])
+      return res.status(404).json({ message: "Spot not found" });
 
     await db.query("DELETE FROM spots WHERE spot_id = ?", [req.params.id]);
     res.json({ message: "Spot deleted" });
@@ -505,7 +765,7 @@ const getSpotRecipients = async (req, res) => {
   try {
     const [rows] = await db.query(
       "SELECT * FROM approval_copy_recipients WHERE spot_id = ? ORDER BY id ASC",
-      [req.params.id]
+      [req.params.id],
     );
     res.json(rows);
   } catch (err) {
@@ -519,7 +779,9 @@ const updateSpotRecipients = async (req, res) => {
     const { recipients } = req.body;
     const spotId = req.params.id;
 
-    await db.query("DELETE FROM approval_copy_recipients WHERE spot_id = ?", [spotId]);
+    await db.query("DELETE FROM approval_copy_recipients WHERE spot_id = ?", [
+      spotId,
+    ]);
 
     if (recipients && recipients.length > 0) {
       const values = recipients
@@ -529,7 +791,7 @@ const updateSpotRecipients = async (req, res) => {
       if (values.length > 0) {
         await db.query(
           "INSERT INTO approval_copy_recipients (spot_id, recipient_email, recipient_designation) VALUES ?",
-          [values]
+          [values],
         );
       }
     }
@@ -566,7 +828,7 @@ const getBlogs = async (req, res) => {
        JOIN spots s ON bk.spot_id = s.spot_id
        ${whereClause}
        ORDER BY eb.submitted_at DESC`,
-      params
+      params,
     );
 
     res.json(blogs);
@@ -578,7 +840,10 @@ const getBlogs = async (req, res) => {
 
 const publishBlog = async (req, res) => {
   try {
-    await db.query("UPDATE event_blog SET blog_status = 'published' WHERE blog_id = ?", [req.params.id]);
+    await db.query(
+      "UPDATE event_blog SET blog_status = 'published' WHERE blog_id = ?",
+      [req.params.id],
+    );
     res.json({ message: "Blog published" });
   } catch (err) {
     console.error("Publish blog error:", err);
@@ -588,7 +853,10 @@ const publishBlog = async (req, res) => {
 
 const rejectBlog = async (req, res) => {
   try {
-    await db.query("UPDATE event_blog SET blog_status = 'rejected' WHERE blog_id = ?", [req.params.id]);
+    await db.query(
+      "UPDATE event_blog SET blog_status = 'rejected' WHERE blog_id = ?",
+      [req.params.id],
+    );
     res.json({ message: "Blog rejected" });
   } catch (err) {
     console.error("Reject blog error:", err);
@@ -634,7 +902,8 @@ const getFeedbacks = async (req, res) => {
 const getReport = async (req, res) => {
   try {
     const { start, end } = req.query;
-    if (!start || !end) return res.status(400).json({ message: "start and end dates required" });
+    if (!start || !end)
+      return res.status(400).json({ message: "start and end dates required" });
 
     const [rows] = await db.query(
       `SELECT b.*, u.full_name, s.name AS spot_name
@@ -643,7 +912,7 @@ const getReport = async (req, res) => {
        JOIN spots s ON b.spot_id = s.spot_id
        WHERE b.start_date BETWEEN ? AND ?
        ORDER BY b.start_date ASC`,
-      [start, end]
+      [start, end],
     );
     res.json(rows);
   } catch (err) {
@@ -694,11 +963,12 @@ const markAllNotificationsRead = async (req, res) => {
 // AVAILABILITY CHECK (for conflict detection in Reserve panel)
 const checkSpotAvailability = async (req, res) => {
   try {
-    const { id } = req.params;       // spot_id
-    const { date } = req.query;      // YYYY-MM-DD
+    const { id } = req.params; // spot_id
+    const { date } = req.query; // YYYY-MM-DD
     if (!date) return res.json({ conflict: false });
 
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
       SELECT b.booking_id, b.session, b.title, u.full_name AS organizer,
              b.booking_status
       FROM bookings b
@@ -707,7 +977,9 @@ const checkSpotAvailability = async (req, res) => {
         AND b.booking_status IN ('approved','pending')
         AND b.start_date <= ?
         AND (b.end_date IS NULL OR b.end_date >= ?)
-    `, [id, date, date]);
+    `,
+      [id, date, date],
+    );
 
     if (rows.length > 0) {
       const b = rows[0];
@@ -734,6 +1006,7 @@ module.exports = {
   dashboard,
   getAllBookings,
   getSingleBooking,
+  getAdminBookingHistory,
   approveBooking,
   rejectBooking,
   reserveSpotByAdmin,
