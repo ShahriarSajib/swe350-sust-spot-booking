@@ -805,6 +805,46 @@ const updateSpotRecipients = async (req, res) => {
 
 // ── BLOG MODERATION ───────────────────────────────────────────────────────────
 
+const getSingleBlog = async (req, res) => {
+  try {
+    const blogId = req.params.id;
+ 
+    // 1. Main blog row
+    const [blogs] = await db.query(
+      `SELECT eb.blog_id, eb.blog_title, eb.summary, eb.story_details,
+              eb.blog_status, eb.submitted_at, eb.published_at,
+              eb.cover_image, eb.tags,
+              u.full_name AS author,
+              s.name AS spot_name,
+              bk.start_date AS event_date
+       FROM event_blog eb
+       JOIN events ev ON eb.event_id = ev.id
+       JOIN bookings bk ON ev.booking_id = bk.booking_id
+       JOIN users u ON bk.user_id = u.id
+       JOIN spots s ON bk.spot_id = s.spot_id
+       WHERE eb.blog_id = ?`,
+      [blogId]
+    );
+ 
+    if (!blogs[0]) return res.status(404).json({ message: "Blog not found" });
+ 
+    // 2. Content blocks (schedule + images)
+    const [content] = await db.query(
+      `SELECT content_type, activity_time, activity_title,
+              activity_description, image_path, image_caption
+       FROM event_blog_content
+       WHERE blog_id = ?
+       ORDER BY id ASC`,
+      [blogId]
+    );
+ 
+    res.json({ ...blogs[0], content });
+  } catch (err) {
+    console.error("Get single blog error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const getBlogs = async (req, res) => {
   try {
     const { status } = req.query;
@@ -1017,6 +1057,7 @@ module.exports = {
   deleteSpot,
   getSpotRecipients,
   updateSpotRecipients,
+  getSingleBlog,
   getBlogs,
   publishBlog,
   rejectBlog,

@@ -24,6 +24,7 @@ const {
   deleteSpot,
   getSpotRecipients,
   updateSpotRecipients,
+  getSingleBlog,
   getBlogs,
   publishBlog,
   rejectBlog,
@@ -77,6 +78,7 @@ router.get("/spots/:id/recipients", getSpotRecipients);
 router.put("/spots/:id/recipients", updateSpotRecipients);
 
 // Blog Moderation
+router.get("/blogs/:id", adminAuth, getSingleBlog);
 router.get("/blogs", getBlogs);
 router.post("/blogs/:id/publish", publishBlog);
 router.post("/blogs/:id/reject", rejectBlog);
