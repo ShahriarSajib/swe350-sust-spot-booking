@@ -8,6 +8,8 @@ import { useEffect } from "react";
 const AnimeSection = () => {
     const navigate = useNavigate();
 
+    const userType = localStorage.getItem("userType");
+
     // UI Toggle States
     const [category, setCategory] = useState("auditorium");
     const [isMultiple, setIsMultiple] = useState(false);
@@ -43,8 +45,8 @@ const AnimeSection = () => {
 
     // Dynamic spots logic
     const spots = category === "auditorium"
-        ? ["Central Auditorium", "Mini Auditorium"]
-        : ["Central Field", "Handball Ground", "Basketball Ground"];
+        ? (userType === "external" ? ["Central Auditorium"] : ["Central Auditorium", "Mini Auditorium"])
+        : (userType === "external" ? [] : ["Central Field", "Handball Ground", "Basketball Ground"]);
 
 
     // Calculate the difference in days
@@ -60,6 +62,17 @@ const AnimeSection = () => {
 
         // Clear previous errors first
         setValidationError("");
+
+        // NEW: External user restriction check
+        if (userType === "external" && selectedSpot !== "Central Auditorium") {
+            setValidationError("External users are only allowed to book the Central Auditorium.");
+            return;
+        }
+
+        if (!searchDate) {
+            setValidationError("Please select a date first");
+            return;
+        }
 
         if (!searchDate) {
             setValidationError("Please select a date first");
@@ -106,11 +119,18 @@ const AnimeSection = () => {
                                     <button
                                         onClick={() => { setCategory("auditorium"); setSelectedSpot("Central Auditorium"); }}
                                         className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${category === 'auditorium' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-500 hover:text-blue-700'}`}
-                                    >Auditorium</button>
+                                    >
+                                        Auditorium
+                                    </button>
+
                                     <button
+                                        disabled={userType === "external"} // Disable button for external
                                         onClick={() => { setCategory("field"); setSelectedSpot("Central Field"); }}
-                                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${category === 'field' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-500 hover:text-blue-700'}`}
-                                    >Field</button>
+                                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${category === 'field' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-500 hover:text-blue-700'
+                                            } ${userType === "external" ? 'opacity-50 cursor-not-allowed' : ''}`} // Add styling
+                                    >
+                                        Field
+                                    </button>
                                 </div>
 
 
@@ -143,12 +163,22 @@ const AnimeSection = () => {
                                     </p>
                                 )}
 
+                                {/* Error message area */}
+                                <div className="min-h-[20px]"> {/* Fixed height prevents layout jump */}
+                                    {(validationError || (userType === "external" && category === "field")) && (
+                                        <p className="text-red-500 text-sm font-bold animate-pulse">
+                                            ⚠️ {validationError || "Fields are not available for external bookings."}
+                                        </p>
+                                    )}
+                                </div>
+
                                 {/* ERROR MESSAGE DISPLAY */}
                                 {isLimitExceeded && (
                                     <span className="text-red-500 text-[15px] font-bold uppercase mt-2">
                                         ⚠️ Max {spotData.max_booking} days allowed (Selected: {dayDifference} days)
                                     </span>
                                 )}
+
                             </div>
 
                             {/* Input Grid */}

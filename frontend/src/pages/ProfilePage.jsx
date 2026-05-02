@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 // import innovation from "../assets/innovation.png";
 
 import ApprovalModal from "../components/profile_components/ApprovalModal";
+import ExternalApprovalModal from "../components/profile_components/ExternalApprovalModal";
 import EventCard from "../components/profile_components/EventCard";
 import EventDetailsModal from "../components/profile_components/EventDetailsModal";
 import EventFilters from "../components/profile_components/EventFilters";
@@ -349,16 +350,29 @@ export default function ProfilePage() {
       )}
 
       {isPreviewOpen && selectedReq && (
-        <ApprovalModal
-          selectedReq={selectedReq}
-          setIsPreviewOpen={setIsPreviewOpen}
-          userProfile={{
-            name: profile.name,
-            department: profile.department,
-            contact: profile.contact,
-            signature: profile.signature,
-          }}
-        />
+        localStorage.getItem("userType") === "external" ? (
+          <ExternalApprovalModal
+            selectedReq={selectedReq}
+            setIsPreviewOpen={setIsPreviewOpen}
+            userProfile={{
+              name: profile.name,
+              department: profile.department,
+              contact: profile.contact,
+              signature: profile.signature,
+            }}
+          />
+        ) : (
+          <ApprovalModal
+            selectedReq={selectedReq}
+            setIsPreviewOpen={setIsPreviewOpen}
+            userProfile={{
+              name: profile.name,
+              department: profile.department,
+              contact: profile.contact,
+              signature: profile.signature,
+            }}
+          />
+        )
       )}
     </div>
   );
