@@ -1,4 +1,5 @@
-import { Bell, Layers } from "lucide-react";
+import { Bell } from "lucide-react";
+import sustLogo from '../../../assets/sust_logo_2.png';
 
 /**
  * AdminHeader
@@ -28,17 +29,21 @@ const AdminHeader = ({ unreadCount, onBellClick }) => {
       }}
     >
       {/* Brand */}
-      <div className="flex items-center gap-3">
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none" }}>
         <div
           style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: "rgba(0,0,0,0.2)",
-            display: "flex", alignItems: "center", justifyContent: "center",
+            width: "38px",
+            height: "38px",
+            borderRadius: "10px",
+            background: "rgba(255,255,255,0.2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          <Layers size={18} color="white" />
+          <img src={sustLogo} alt="SUST" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
         </div>
-        <span style={{ color: "white", fontWeight: 700, fontSize: 16, letterSpacing: "-0.01em" }}>
+        <span style={{ color: "white", fontWeight: 700, fontSize: "18px", letterSpacing: "-0.01em" }}>
           SUST Spot Booking
         </span>
       </div>
