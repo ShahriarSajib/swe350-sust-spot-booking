@@ -127,66 +127,139 @@ const updateSignature = async (req, res) => {
 
 const dashboard = async (req, res) => {
   try {
-    const [[stats]] = await db.query(`
+    const adminId = req.admin.id;
+
+    // reusable access condition
+    const accessCondition = `
+      (
+        EXISTS (
+          SELECT 1 
+          FROM approval ap
+          WHERE ap.booking_id = b.booking_id
+          AND ap.approver_id = ?
+        )
+        OR JSON_CONTAINS(s.approval_order, CAST(? AS JSON), '$')
+      )
+    `;
+
+    // ================== STATS ==================
+    const [[stats]] = await db.query(
+      `
       SELECT 
         COUNT(*) AS total,
-        SUM(booking_status = 'pending') AS pending,
-        SUM(booking_status = 'approved') AS approved,
-        SUM(booking_status = 'rejected') AS rejected
-      FROM bookings
-    `);
-
-    const [[spotsRow]] = await db.query(
-      "SELECT COUNT(*) AS total_spots FROM spots",
+        SUM(b.booking_status = 'pending') AS pending,
+        SUM(b.booking_status = 'approved') AS approved,
+        SUM(b.booking_status = 'rejected') AS rejected
+      FROM bookings b
+      JOIN spots s ON b.spot_id = s.spot_id
+      WHERE ${accessCondition}
+      `,
+      [adminId, adminId]
     );
 
-    const [recent] = await db.query(`
-      SELECT b.booking_id, b.booking_status, b.timestamp,
-             b.title AS event_title, DATE_FORMAT(b.start_date, '%Y-%m-%d') AS start_date,
-             u.full_name, s.name AS spot_name
+    // ================== SPOTS COUNT ==================
+    const [[spotsRow]] = await db.query(
+      `
+      SELECT COUNT(*) AS total_spots
+      FROM spots s
+      WHERE JSON_CONTAINS(s.approval_order, CAST(? AS JSON), '$')
+      `,
+      [adminId]
+    );
+
+    // ================== RECENT BOOKINGS ==================
+    const [recent] = await db.query(
+      `
+      SELECT 
+        b.booking_id,
+        b.booking_status,
+        b.timestamp,
+        b.title AS event_title,
+        DATE_FORMAT(b.start_date, '%Y-%m-%d') AS start_date,
+        u.full_name,
+        s.name AS spot_name
       FROM bookings b
       JOIN users u ON b.user_id = u.id
       JOIN spots s ON b.spot_id = s.spot_id
+      WHERE ${accessCondition}
       ORDER BY b.timestamp DESC
       LIMIT 5
-    `);
+      `,
+      [adminId, adminId]
+    );
 
-    const [pending] = await db.query(`
+    // ================== PENDING BOOKINGS ==================
+    const [pending] = await db.query(
+      `
       SELECT
-        b.booking_id, b.title AS event_title,
+        b.booking_id,
+        b.title AS event_title,
         DATE_FORMAT(b.start_date, '%Y-%m-%d') AS start_date,
         DATE_FORMAT(b.end_date, '%Y-%m-%d') AS end_date,
-        b.session, b.description, b.start_time, b.end_time,
-        b.timestamp, b.organizer,
-        u.full_name, u.department AS dept, u.email AS user_email,
+        b.session,
+        b.description,
+        b.start_time,
+        b.end_time,
+        b.timestamp,
+
+        u.full_name,
+        u.department AS dept,
+        u.email AS user_email,
         u.contact_number,
+
         s.name AS spot_name,
+
         rec_user.full_name AS recommender_name,
         rec_user.department AS recommender_dept,
         r.recommender_designation AS recommender_post
+
       FROM bookings b
       JOIN users u ON b.user_id = u.id
       JOIN spots s ON b.spot_id = s.spot_id
       LEFT JOIN recommendations r ON b.booking_id = r.booking_id
       LEFT JOIN users rec_user ON r.recommender_user_id = rec_user.id
-      WHERE b.booking_status = 'pending'
-      ORDER BY b.timestamp DESC
-    `);
 
-    const [upcoming] = await db.query(`
-      SELECT b.booking_id, b.title AS event_title, DATE_FORMAT(b.start_date, '%Y-%m-%d') AS start_date,
-             DATE_FORMAT(b.end_date, '%Y-%m-%d') AS end_date,
-             s.name AS spot_name
+      WHERE b.booking_status = 'pending'
+        AND ${accessCondition}
+
+      ORDER BY b.timestamp DESC
+      `,
+      [adminId, adminId]
+    );
+
+    // ================== UPCOMING EVENTS ==================
+    const [upcoming] = await db.query(
+      `
+      SELECT 
+        b.booking_id,
+        b.title AS event_title,
+        DATE_FORMAT(b.start_date, '%Y-%m-%d') AS start_date,
+        DATE_FORMAT(b.end_date, '%Y-%m-%d') AS end_date,
+        s.name AS spot_name
+
       FROM bookings b
       JOIN spots s ON b.spot_id = s.spot_id
+
       WHERE b.booking_status = 'approved'
         AND b.start_date >= CURDATE()
         AND b.start_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+        AND ${accessCondition}
+
       ORDER BY b.start_date ASC
       LIMIT 5
-    `);
+      `,
+      [adminId, adminId]
+    );
 
-    res.json({ stats, spots: spotsRow, recent, pending, upcoming });
+    // ================== RESPONSE ==================
+    res.json({
+      stats,
+      spots: spotsRow,
+      recent,
+      pending,
+      upcoming,
+    });
+
   } catch (err) {
     console.error("Dashboard error:", err);
     res.status(500).json({ message: "Server error" });
@@ -676,21 +749,21 @@ const reserveSpotByAdmin = async (req, res) => {
 
     // ✅ 4. Insert booking
     const [result] = await db.query(
-      `INSERT INTO bookings
-      (user_id, spot_id, booking_status, title, start_date, end_date, session, description, start_time, end_time)
-      VALUES (?, ?, 'approved', ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        adminUserId,
-        spot_id,
-        title || "Admin Reserved",
-        start_date,
-        end_date || null,
-        session,
-        description || "",
-        start_time || null,
-        end_time || null,
-      ]
-    );
+  `INSERT INTO bookings
+  (user_id, spot_id, booking_status, is_recommended, title, start_date, end_date, session, description, start_time, end_time)
+  VALUES (?, ?, 'approved', 1, ?, ?, ?, ?, ?, ?, ?)`,
+  [
+    adminUserId,
+    spot_id,
+    title || "Admin Reserved",
+    start_date,
+    end_date || null,
+    session,
+    description || "",
+    start_time || null,
+    end_time || null,
+  ]
+);
 
     const bookingId = result.insertId;
 
@@ -1052,18 +1125,42 @@ const deleteBlog = async (req, res) => {
 
 const getFeedbacks = async (req, res) => {
   try {
-    const [feedbacks] = await db.query(`
-      SELECT ev.id AS event_id, ev.feedback,
-             bk.title AS event_title, bk.start_date AS event_date,
-             s.name AS spot_name,
-             u.full_name AS user_name
+    const adminId = req.admin.id;
+
+    const [feedbacks] = await db.query(
+      `
+      SELECT 
+        ev.id AS event_id,
+        ev.feedback,
+
+        bk.title AS event_title,
+        bk.start_date AS event_date,
+
+        s.name AS spot_name,
+        u.full_name AS user_name
+
       FROM events ev
       JOIN bookings bk ON ev.booking_id = bk.booking_id
       JOIN spots s ON bk.spot_id = s.spot_id
       JOIN users u ON bk.user_id = u.id
-      WHERE ev.feedback IS NOT NULL AND ev.feedback != ''
+
+      WHERE ev.feedback IS NOT NULL 
+        AND ev.feedback != ''
+        AND (
+          EXISTS (
+            SELECT 1
+            FROM approval ap
+            WHERE ap.booking_id = bk.booking_id
+            AND ap.approver_id = ?
+          )
+          OR JSON_CONTAINS(s.approval_order, CAST(? AS JSON), '$')
+        )
+
       ORDER BY bk.start_date DESC
-    `);
+      `,
+      [adminId, adminId]
+    );
+
     res.json(feedbacks);
   } catch (err) {
     console.error("Get feedbacks error:", err);
