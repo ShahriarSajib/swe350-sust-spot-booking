@@ -738,25 +738,25 @@ const reserveSpotByAdmin = async (req, res) => {
       });
     }
 
-    // ── 1. Get admin details from approver table ──────────────────────────────
+    // ─────────────────────────────────────────────
+    // 1. Get admin from approver table
+    // ─────────────────────────────────────────────
     const [approverRows] = await db.query(
-      `SELECT approver_id, approver_name, approver_email, approver_designation
+      `SELECT approver_name, approver_email, approver_designation
        FROM approver
        WHERE approver_id = ?`,
       [adminId]
     );
 
     if (approverRows.length === 0) {
-      return res.status(404).json({ message: "Admin not found in approver table" });
+      return res.status(404).json({ message: "Admin not found" });
     }
 
     const admin = approverRows[0];
 
-    // ── 2. Get or auto-create the user row for this admin ─────────────────────
-    //
-    // Admins may not have a users row. We look it up by email and create one
-    // if missing so the booking FK is always satisfied — no schema changes needed.
-    //
+    // ─────────────────────────────────────────────
+    // 2. Get or create admin user
+    // ─────────────────────────────────────────────
     let adminUserId;
 
     const [userRows] = await db.query(
@@ -765,80 +765,74 @@ const reserveSpotByAdmin = async (req, res) => {
     );
 
     if (userRows.length > 0) {
-      // Already exists
       adminUserId = userRows[0].id;
     } else {
-      // Auto-create a placeholder user row for this admin
-      const placeholderPassword = Math.random().toString(36).slice(-10); // never used for login
       const [inserted] = await db.query(
         `INSERT INTO users
-           (full_name, email, contact_number, password, department, user_type, email_verified)
-         VALUES (?, ?, ?, ?, ?, 'internal', 1)`,
+        (full_name, email, contact_number, password, department, user_type, email_verified)
+        VALUES (?, ?, ?, ?, ?, 'internal', 1)`,
         [
           admin.approver_name,
           admin.approver_email,
-          "N/A",                         // contact_number — required col, placeholder
-          placeholderPassword,           // password — required col, never used
-          admin.approver_designation || "Administration",
+          "N/A",
+          Math.random().toString(36).slice(2),
+          admin.approver_designation || "Admin",
         ]
       );
+
       adminUserId = inserted.insertId;
-      console.log(`Auto-created users row for admin ${admin.approver_email} → id ${adminUserId}`);
     }
 
-    // ── 3. Find conflicting approved bookings BEFORE cancelling ───────────────
+    // ─────────────────────────────────────────────
+    // 3. Find conflicting bookings (IMPORTANT FIX)
+    // ─────────────────────────────────────────────
     const effectiveEndDate = end_date || start_date;
 
     const [conflicting] = await db.query(
-      `SELECT
+      `SELECT 
          b.booking_id,
-         b.title      AS booking_title,
-         b.start_date,
-         b.end_date,
-         b.session,
-         u.id         AS user_id,
+         b.title AS booking_title,
+         b.user_id,
          u.full_name,
          u.email
        FROM bookings b
        JOIN users u ON b.user_id = u.id
-       WHERE b.spot_id        = ?
+       WHERE b.spot_id = ?
          AND b.booking_status = 'approved'
-         AND b.start_date    <= ?
+         AND b.start_date <= ?
          AND (b.end_date IS NULL OR b.end_date >= ?)`,
       [spot_id, effectiveEndDate, start_date]
     );
 
-    // ── 4. Notify + email every affected user BEFORE cancelling ───────────────
-console.log(`Found ${conflicting.length} conflicting bookings:`, conflicting);
+    // ─────────────────────────────────────────────
+    // 4. Notify affected users (FIXED like rejectBooking)
+    // ─────────────────────────────────────────────
+    for (const cb of conflicting) {
+      try {
+        await notificationService.createNotification({
+          user_id: cb.user_id,
+          booking_id: cb.booking_id,
+          title: "Booking Cancelled",
+          message: `Your booking "${cb.booking_title}" has been cancelled due to an admin reservation.`,
+        });
+      } catch (err) {
+        console.error("Notification failed:", err);
+      }
 
-for (const cb of conflicting) {
-  try {
-    console.log(`Notifying user_id=${cb.user_id} for booking_id=${cb.booking_id}`);
-    await notificationService.createNotification({
-      user_id:    cb.user_id,
-      booking_id: cb.booking_id,
-      title:      "Booking Cancelled",
-      message:    `Your booking "${cb.booking_title}" has been cancelled because an administrator has made a priority reservation for the same period.`,
-    });
-    console.log(`✅ Notification sent for booking ${cb.booking_id}`);
-  } catch (notifErr) {
-    console.error(`❌ Notification failed for booking ${cb.booking_id}:`, notifErr);
-  }
+      try {
+        await sendEmail({
+          to: cb.email,
+          subject: "Booking Cancelled",
+          text: `Dear ${cb.full_name}, your booking "${cb.booking_title}" has been cancelled due to an admin reservation.`,
+        });
+      } catch (err) {
+        console.error("Email failed:", err);
+      }
+    }
 
-  try {
-    console.log(`Emailing ${cb.email}`);
-    await sendEmail({
-      to:      cb.email,
-      subject: "Your booking has been cancelled",
-      text:    `Dear ${cb.full_name}...`,
-    });
-    console.log(`✅ Email sent to ${cb.email}`);
-  } catch (emailErr) {
-    console.error(`❌ Email failed for ${cb.email}:`, emailErr);
-  }
-}
-
-    // ── 5. Cancel the conflicting bookings ────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // 5. Cancel conflicting bookings
+    // ─────────────────────────────────────────────
     if (conflicting.length > 0) {
       const ids = conflicting.map((c) => c.booking_id);
 
@@ -853,37 +847,43 @@ for (const cb of conflicting) {
       );
     }
 
-    // ── 6. Insert the admin's booking ─────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // 6. Insert admin booking
+    // ─────────────────────────────────────────────
     const [result] = await db.query(
       `INSERT INTO bookings
-         (user_id, spot_id, booking_status, is_recommended,
-          title, start_date, end_date, session, description, start_time, end_time)
+       (user_id, spot_id, booking_status, is_recommended,
+        title, start_date, end_date, session, description, start_time, end_time)
        VALUES (?, ?, 'approved', 1, ?, ?, ?, ?, ?, ?, ?)`,
       [
         adminUserId,
         spot_id,
-        title       || "Admin Reserved",
+        title || "Admin Reserved",
         start_date,
-        end_date    || null,
+        end_date || null,
         session,
         description || "",
-        start_time  || null,
-        end_time    || null,
+        start_time || null,
+        end_time || null,
       ]
     );
 
     const bookingId = result.insertId;
 
-    // ── 7. Insert into availability calendar ──────────────────────────────────
+    // ─────────────────────────────────────────────
+    // 7. Calendar entry
+    // ─────────────────────────────────────────────
     await db.query(
       `INSERT INTO availability_calendar (booking_id, spot_id, start_date, end_date)
        VALUES (?, ?, ?, ?)`,
       [bookingId, spot_id, start_date, end_date || null]
     );
 
-    // ── 8. Respond ────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // 8. Response
+    // ─────────────────────────────────────────────
     res.json({
-      message:           "Spot reserved by admin",
+      message: "Spot reserved by admin",
       bookingId,
       cancelledBookings: conflicting.length,
     });
