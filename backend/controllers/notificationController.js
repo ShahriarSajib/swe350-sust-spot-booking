@@ -8,9 +8,9 @@ exports.getMyNotifications = async (req, res) => {
 
     const [rows] = await db.query(
       `SELECT * FROM notifications
-       WHERE user_id = ? OR approver_id = ?
+       WHERE user_id = ? OR approver_id = ? OR recommender_id = ?
        ORDER BY created_at DESC`,
-      [userId, approverId]
+      [userId, approverId, userId]
     );
 
     res.json(rows);

@@ -271,7 +271,7 @@ const dashboard = async (req, res) => {
 const getAllBookings = async (req, res) => {
   try {
     const { status, spot_id, start_date, end_date } = req.query;
-    const adminId = req.admin.id; // logged-in approver
+    const adminId = req.admin.id;
 
     let query = `
       SELECT 
@@ -280,24 +280,29 @@ const getAllBookings = async (req, res) => {
         DATE_FORMAT(b.end_date, '%Y-%m-%d') AS end_date,
         b.session, b.title AS event_title, b.start_time, b.end_time, b.description,
         b.current_approval_point,
-        u.full_name, u.department AS dept, u.contact_number,
+
+        u.full_name, u.department AS dept, u.contact_number, u.user_type,
+
         s.name AS spot_name,
         s.approval_order,
+        s.external_approval_order,
+
         ru.full_name AS recommender_name,
         rec.recommender_designation AS recommender_post,
         ru.department AS recommender_dept,
-        ru.email as recommender_email
+        ru.email AS recommender_email
+
       FROM bookings b
       JOIN users u ON b.user_id = u.id
       JOIN spots s ON b.spot_id = s.spot_id
       LEFT JOIN recommendations rec ON b.booking_id = rec.booking_id
       LEFT JOIN users ru ON rec.recommender_user_id = ru.id
-      WHERE 1=1 AND b.is_recommended = 1
+
+      WHERE b.is_recommended = 1
     `;
 
     const params = [];
 
-    // Optional filters (keep your existing ones)
     if (status && status !== "all") {
       query += " AND b.booking_status = ?";
       params.push(status);
@@ -317,18 +322,27 @@ const getAllBookings = async (req, res) => {
 
     const [rows] = await db.query(query, params);
 
-    // 🔥 FILTER based on approval flow
+    // =========================
+    // FILTER LOGIC (FIXED)
+    // =========================
     const filtered = rows.filter((b) => {
-      if (!b.approval_order) return false;
       if (b.current_approval_point == null) return false;
+
+      // 🔥 choose correct approval flow
+      let rawOrder =
+        b.user_type === "external"
+          ? b.external_approval_order
+          : b.approval_order;
+
+      if (!rawOrder) return false;
 
       let order;
 
       try {
         order =
-          typeof b.approval_order === "string"
-            ? JSON.parse(b.approval_order)
-            : b.approval_order;
+          typeof rawOrder === "string"
+            ? JSON.parse(rawOrder)
+            : rawOrder;
       } catch {
         return false;
       }
@@ -439,13 +453,25 @@ const approveBooking = async (req, res) => {
   try {
     // 🔹 1. Get booking + approval order + user info
     const [rows] = await db.query(
-      `SELECT b.current_approval_point, b.spot_id, b.user_id, b.spot_name,
-              s.approval_order
-       FROM bookings b
-       JOIN spots s ON b.spot_id = s.spot_id
-       WHERE b.booking_id = ?`,
-      [bookingId],
-    );
+  `
+  SELECT 
+    b.current_approval_point,
+    b.spot_id,
+    b.user_id,
+    s.name AS spot_name,
+
+    u.user_type,
+
+    s.approval_order,
+    s.external_approval_order
+
+  FROM bookings b
+  JOIN spots s ON b.spot_id = s.spot_id
+  JOIN users u ON b.user_id = u.id
+  WHERE b.booking_id = ?
+  `,
+  [bookingId]
+);
 
     if (!rows.length) {
       return res.status(404).json({ message: "Booking not found" });
@@ -453,16 +479,24 @@ const approveBooking = async (req, res) => {
 
     const booking = rows[0];
 
-    // 🔹 2. Parse approval order
-    let order;
-    try {
-      order =
-        typeof booking.approval_order === "string"
-          ? JSON.parse(booking.approval_order)
-          : booking.approval_order;
-    } catch {
-      return res.status(400).json({ message: "Invalid approval order" });
-    }
+let rawOrder;
+
+if (booking.user_type === "external") {
+  rawOrder = booking.external_approval_order;
+} else {
+  rawOrder = booking.approval_order;
+}
+
+let order;
+
+try {
+  order =
+    typeof rawOrder === "string"
+      ? JSON.parse(rawOrder)
+      : rawOrder;
+} catch {
+  return res.status(400).json({ message: "Invalid approval order" });
+}
 
     if (!Array.isArray(order) || order.length === 0) {
       return res.status(400).json({ message: "No approval flow set" });
