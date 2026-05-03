@@ -1,5 +1,5 @@
 const { Approver, Spot } = require('../models/approverModel');
-const db = require('../config/db'); // Ensure you have access to the DB for the raw query
+const db = require('../config/db');
 
 const getApprovalDetails = async (req, res) => {
     try {
@@ -9,7 +9,7 @@ const getApprovalDetails = async (req, res) => {
         const spot = await Spot.getById(spot_id);
         if (!spot) return res.status(404).json({ message: "Spot not found" });
 
-        // 2. Helper to fetch approvers from the 'approver' table (via spot order columns)
+        // --- HELPER FUNCTION (Must be defined to be used) ---
         const fetchApproversFromOrder = async (orderSource) => {
             if (!orderSource) return [];
             try {
@@ -19,39 +19,38 @@ const getApprovalDetails = async (req, res) => {
             } catch (e) { return []; }
         };
 
-        // 3. NEW QUERY: Fetch additional recipients from 'approval_copy_recipients' table
+        // 2. Fetch all raw data parts
         const [additionalRecipients] = await db.query(
             'SELECT recipient_email AS approver_email, recipient_designation AS approver_designation FROM approval_copy_recipients WHERE spot_id = ?',
             [spot_id]
         );
 
-        // 4. Fetch the standard lists
-        const [internalList, externalApprovers] = await Promise.all([
-            fetchApproversFromOrder(spot.approval_order),
-            fetchApproversFromOrder(spot.external_approval_order)
-        ]);
+        const officialApprovers = await fetchApproversFromOrder(spot.approval_order);
+        const externalList = await fetchApproversFromOrder(spot.external_approval_order);
 
-        // 5. MERGE & DE-DUPLICATE (Specifically for internal copy)
-        // We combine internalList and additionalRecipients
-        const combinedInternal = [...internalList, ...additionalRecipients];
-        
-        // Use a Map to keep only unique entries based on email
-        const uniqueInternalMap = new Map();
-        combinedInternal.forEach(item => {
+        // 3. Merge: Recipients FIRST, then Official Approvers
+        const rawCombined = [...additionalRecipients, ...officialApprovers];
+
+        // 4. De-duplicate using Map (Key = Email)
+        const uniqueMap = new Map();
+        rawCombined.forEach(item => {
             if (item.approver_email) {
-                uniqueInternalMap.set(item.approver_email.toLowerCase(), item);
+                uniqueMap.set(item.approver_email.toLowerCase(), item);
             }
         });
+
+        // 5. Convert back to array (Insertion order is preserved)
+        const finalInternalList = Array.from(uniqueMap.values());
 
         res.status(200).json({
             success: true,
             rules: spot.rules,
-            internalApprovers: Array.from(uniqueInternalMap.values()), // Unique list
-            externalApprovers: externalApprovers
+            internalApprovers: finalInternalList, 
+            externalApprovers: externalList 
         });
 
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error in getApprovalDetails:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };
