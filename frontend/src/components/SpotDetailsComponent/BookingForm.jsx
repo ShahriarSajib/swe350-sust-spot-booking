@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
 
 export default function BookingForm({ bookingData, setBookingData, personalDetails, bookingType }) {
-const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [recommenderError, setRecommenderError] = useState("");
     const [generalError, setGeneralError] = useState("");
+    const [hasSignature, setHasSignature] = useState(true);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setBookingData(prev => ({
-            ...prev,
+
+        // Update the state
+        const updatedData = {
+            ...bookingData,
             [name]: value
-        }));
+        };
+        setBookingData(updatedData);
+        //  localStorage.setItem("draftBooking", JSON.stringify(updatedData));
+
         if (name === "recommenderEmail") setRecommenderError("");
     };
-
+   
     // 1. Function to clear all fields
     const resetForm = () => {
         setBookingData({
@@ -27,9 +36,7 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
             startTime: "",
             endTime: "",
             eventDescription: "",
-            // Keep the read-only data from props if necessary, 
-            // or reset them if they come from this local state
-            spotName: bookingData.spotName, 
+            spotName: bookingData.spotName,
             date: bookingData.date,
             startDate: bookingData.startDate,
             endDate: bookingData.endDate,
@@ -38,9 +45,43 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
         setShowSuccessModal(false);
     };
 
+    //fetch user profile to check if signature exists
+    useEffect(() => {
+        const userId = localStorage.getItem("userId");
+        const token = localStorage.getItem("token"); // Get your stored token
+
+        // if (!userId || !token) {
+        //     console.error("Missing userId or token");
+        //     setHasSignature(false);
+        //     return;
+        // }
+
+        axios.get(`http://localhost:5000/api/users/profile/${userId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+            .then(res => {
+                console.log("User profile data:", res.data);
+                if (!res.data.signature) {
+                    setHasSignature(false);
+                } else {
+                    setHasSignature(true);
+                }
+            })
+            .catch(err => {
+                console.error("Error checking signature:", err);
+            });
+    }, []);
+
     const handleConfirmClick = () => {
+        if (!hasSignature) {
+            setGeneralError("Signature required. Please upload it in your profile before booking.");
+            return;
+        }
         setGeneralError("");
         setShowConfirmModal(true);
+
     };
 
     const executeBooking = () => {
@@ -68,8 +109,8 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
 
         axios.post("http://localhost:5000/api/bookings/confirm", payload)
             .then(res => {
-                // Trigger Success Modal instead of an alert
                 setShowSuccessModal(true);
+                console.log("Booking successful:", res.data);
             })
             .catch(err => {
                 const errorMsg = err.response?.data?.message || "";
@@ -79,17 +120,13 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
                     setGeneralError(errorMsg || "Booking failed.");
                 }
             });
+        // localStorage.removeItem("draftBooking");
     };
+
+
     return (
         <div className="mt-6 border-t pt-6 relative">
             <h2 className="text-xl font-bold mb-6 text-slate-800">Booking Details</h2>
-
-            {/* Global Success/Error Messages
-            {successMessage && (
-                <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-xl font-bold text-center animate-bounce">
-                    {successMessage}
-                </div>
-            )} */}
             {generalError && (
                 <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-xl font-bold text-center">
                     Error: {generalError}
@@ -206,7 +243,6 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Designation</label>
                                 <input type="text" name="designation" placeholder="e.g. Professor" className="w-full p-3 border border-blue-200 rounded-xl bg-white shadow-sm outline-none" onChange={handleChange} />
                             </div>
-                            {/* Email Input Field inside your Dept/Org Details Block */}
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
                                 <input
@@ -218,7 +254,7 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
                                     onChange={handleChange}
                                 />
 
-                                {/* THIS PART SHOWS THE ERROR MESSAGE IN THE UI */}
+                                {/* error */}
                                 {recommenderError && (
                                     <p className="text-red-600 text-[11px] font-bold mt-2 flex items-center gap-1 animate-pulse">
                                         {recommenderError}
@@ -268,16 +304,41 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
                     </div>
                 </div>
 
+                {/*MODAL 1: SIGNATURE MISSING WARNING*/}
+                {!hasSignature && (
+                    <div className="bg-red-50 border-2 border-red-100 p-6 rounded-2xl flex items-start gap-4 animate-pulse">
+                        <div className="bg-red-500 text-white p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="text-red-800 font-black uppercase text-xs tracking-widest mb-1">Signature Required</h3>
+                            <p className="text-red-600 text-sm font-medium">
+                                Your digital signature is missing. To maintain security, you must
+                                <Link to="/profile" className="underline ml-1 font-bold hover:text-red-800 transition-colors">
+                                    go to your profile
+                                </Link> and upload your signature before you can submit any booking requests.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/*MODIFIED SUBMIT BUTTON*/}
                 <button
                     type="button"
                     onClick={handleConfirmClick}
-                    className="w-full bg-[#0052cc] text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 hover:shadow-xl active:scale-[0.98] transition-all shadow-md mt-4"
+                    disabled={!hasSignature}
+                    className={`w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-md mt-4 active:scale-[0.98] ${hasSignature
+                        ? "bg-[#0052cc] text-white hover:bg-blue-700 hover:shadow-xl"
+                        : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        }`}
                 >
                     Confirm Booking Request
                 </button>
             </form>
 
-            {/* --- MODAL 1: ARE YOU SURE? --- */}
+            {/*MODAL 1: ARE YOU SURE?*/}
             {showConfirmModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl">
@@ -291,7 +352,7 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
                 </div>
             )}
 
-            {/* --- MODAL 2: SUCCESS MESSAGE --- */}
+            {/*MODAL 2: SUCCESS MESSAGE*/}
             {showSuccessModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center border-t-8 border-green-500">
@@ -302,8 +363,8 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
                         </div>
                         <h3 className="text-xl font-bold text-slate-800 mb-2">Success!</h3>
                         <p className="text-slate-500 mb-6 text-sm">Your booking request has been submitted successfully.</p>
-                        <button 
-                            onClick={resetForm} 
+                        <button
+                            onClick={resetForm}
                             className="w-full py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
                         >
                             Okay

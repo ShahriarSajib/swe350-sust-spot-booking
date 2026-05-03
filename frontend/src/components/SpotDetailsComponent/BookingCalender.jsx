@@ -334,7 +334,7 @@ export default function BookingCalendar({
                 session && !showForm && !dateError && !isConflict && (
                     <button
                         onClick={() => setShowForm(true)}
-                        className="mt-6 w-full bg-teal-700 text-white py-3 rounded-xl font-bold hover:bg-teal-800 transition-colors"
+                        className="mt-6 w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
                     >
                         Proceed to Book
                     </button>

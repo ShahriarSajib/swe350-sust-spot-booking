@@ -3,9 +3,11 @@ import { Bell, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import sustLogo from "../../assets/sust.png";
+// import { useNavigate } from "react-router-dom";
 
 const Header = ({ onLogout, onOpenNotif, role }) => {
   const [unreadCount, setUnreadCount] = useState(0);
+  // const navigate = useNavigate();
 
   // 🔹 Fetch unread count
   const fetchUnreadCount = async () => {
@@ -93,6 +95,24 @@ const Header = ({ onLogout, onOpenNotif, role }) => {
 
       {/* Right Section: Actions */}
       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        {/* <button
+          onClick={
+            () => navigate("/hello")
+          }
+          style={{
+            background: "white",
+            color: "#0284c7",
+            border: "none",
+            borderRadius: "10px",
+            padding: "8px 20px",
+            cursor: "pointer",
+            fontWeight: 700,
+            fontSize: "14px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        >
+          hello button
+        </button> */}
         {/* Profile Link (Visible only for users) */}
         {role === "user" && (
           <Link
@@ -114,6 +134,7 @@ const Header = ({ onLogout, onOpenNotif, role }) => {
             <User size={18} />
             <span>Profile</span>
           </Link>
+          
         )}
 
         {/* Notification Bell */}

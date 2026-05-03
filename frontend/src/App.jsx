@@ -229,6 +229,8 @@ import InfoPage from "./pages/InfoPage";
 // New: Add your Admin Dashboard component
 import FieldsAdminDashboard from "./pages/FieldsAdminDashboard";
 
+import Hello from "./pages/hello";
+
 import ScrollToTop from "./ScrollToTop";
 
 function App() {
@@ -275,6 +277,7 @@ function App() {
       {/* 3. Routing Logic */}
       <Routes>
         <Route path="/info/:type" element={<InfoPage />} />
+        <Route path="/hello" element={<Hello />} />
         {!authRole ? (
           <>
             <Route
