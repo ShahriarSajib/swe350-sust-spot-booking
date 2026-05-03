@@ -21,27 +21,27 @@ export default function ApprovalModal({ selectedReq, setIsPreviewOpen, userProfi
 
     // 1. Fetch Dynamic Data from Backend
     // Inside your standard Internal Modal:
-   // Inside your Internal ApprovalModal component
-useEffect(() => {
-    const fetchDetails = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.get(`http://localhost:5000/api/approver/details/${selectedReq.spot_id}`);
-            
-            // FIX: We must specify internalApprovers here
-            setApprovalData({
-                rules: res.data.rules,
-                approvers: res.data.internalApprovers // Use the internal list
-            });
-        } catch (error) {
-            console.error("Error fetching internal approval details:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Inside your Internal ApprovalModal component
+    useEffect(() => {
+        const fetchDetails = async () => {
+            try {
+                setLoading(true);
+                const res = await axios.get(`http://localhost:5000/api/approver/details/${selectedReq.spot_id}`);
 
-    if (selectedReq?.spot_id) fetchDetails();
-}, [selectedReq]);
+                // FIX: We must specify internalApprovers here
+                setApprovalData({
+                    rules: res.data.rules,
+                    approvers: res.data.internalApprovers // Use the internal list
+                });
+            } catch (error) {
+                console.error("Error fetching internal approval details:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (selectedReq?.spot_id) fetchDetails();
+    }, [selectedReq]);
     // Derived Data
     const rulesArray = approvalData.rules ? approvalData.rules.split('.').filter(r => r.trim() !== "") : [];
     const finalApprover = approvalData.approvers.length > 0
@@ -82,6 +82,19 @@ useEffect(() => {
         if (path.startsWith("http")) return path;
         // Otherwise, prepend your backend URL
         return `http://localhost:5000/${path}`;
+    };
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) return "";
+
+        // If it's already a full URL, return it
+        if (imagePath.startsWith("http")) return imagePath;
+
+        // Ensure 'uploads/' is included in the path
+        const cleanPath = imagePath.startsWith("uploads/")
+            ? imagePath
+            : `uploads/${imagePath}`;
+
+        return `http://localhost:5000/${cleanPath}`;
     };
 
     return (
@@ -144,8 +157,13 @@ useEffect(() => {
                                     </div>
                                     <div style={{ height: '64px', border: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         {selectedReq?.recommender?.signature && (
-                                            <img crossOrigin="anonymous" src={getImageUrl(selectedReq.recommender.signature)} alt="sig" style={{ maxHeight: '100%' }} />
-                                        )}
+                                            // For Recommender, we use the original getFullImageUrl function since the signature path might already be complete or might need the uploads/ prefix
+                                            <img
+                                                crossOrigin="anonymous"
+                                                src={getFullImageUrl(selectedReq?.recommender?.signature)}
+                                                alt="sig"
+                                                style={{ maxHeight: '100%' }}
+                                            />)}
                                     </div>
                                 </div>
 
@@ -158,8 +176,12 @@ useEffect(() => {
                                     </div>
                                     <div style={{ height: '64px', border: '1px solid #dbeafe', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         {finalApprover?.approver_signature && (
-                                            <img crossOrigin="anonymous" src={getImageUrl(finalApprover.approver_signature)} alt="sig" style={{ maxHeight: '100%' }} />
-                                        )}
+                                            <img
+                                                crossOrigin="anonymous"
+                                                src={getFullImageUrl(finalApprover?.approver_signature)}
+                                                alt="sig"
+                                                style={{ maxHeight: '100%' }}
+                                            />)}
                                     </div>
                                 </div>
                             </section>

@@ -8,11 +8,18 @@ const ExternalApprovalModal = ({ selectedReq, setIsPreviewOpen }) => {
     const [approvalData, setApprovalData] = useState({ approvers: [] });
     const [loading, setLoading] = useState(true);
 
-    // Helper for images
-    const getImageUrl = (path) => {
-        if (!path) return "";
-        if (path.startsWith("http")) return path;
-        return `http://localhost:5000/${path}`;
+   const getFullImageUrl = (imagePath) => {
+        if (!imagePath) return "";
+
+        // If it's already a full URL, return it
+        if (imagePath.startsWith("http")) return imagePath;
+
+        // Ensure 'uploads/' is included in the path
+        const cleanPath = imagePath.startsWith("uploads/")
+            ? imagePath
+            : `uploads/${imagePath}`;
+
+        return `http://localhost:5000/${cleanPath}`;
     };
 
     useEffect(() => {
@@ -150,7 +157,7 @@ const ExternalApprovalModal = ({ selectedReq, setIsPreviewOpen }) => {
                                     {finalSignatory?.approver_signature && (
                                         <img
                                             crossOrigin="anonymous"
-                                            src={getImageUrl(finalSignatory.approver_signature)}
+                                            src={getFullImageUrl(finalSignatory.approver_signature)}
                                             alt="signature"
                                             style={{ maxHeight: '100%' }}
                                         />
