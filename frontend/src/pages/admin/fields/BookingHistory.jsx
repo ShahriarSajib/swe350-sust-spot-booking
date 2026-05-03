@@ -62,11 +62,12 @@ const BookingHistory = () => {
 
   const filtered = bookings.filter((b) => {
     const d = new Date(b.date);
+    // AFTER
     return (
       (filterStatus === "All" || b.status === filterStatus) &&
       (filterSpot === "All" || b.spotName === filterSpot) &&
-      (!startDate || d >= new Date(startDate)) &&
-      (!endDate || d <= new Date(endDate))
+      (!startDate || b.date >= startDate) &&
+      (!endDate || b.date <= endDate)
     );
   });
 

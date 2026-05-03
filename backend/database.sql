@@ -1,6 +1,5 @@
 CREATE DATABASE IF NOT EXISTS spot_booking_system;
 USE spot_booking_system;
-
 -- USERS
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -36,11 +35,19 @@ CREATE TABLE spots (
     image1 VARCHAR(255),
     image2 VARCHAR(255),
     image3 VARCHAR(255),
-    rules TEXT,
+    spot_rules TEXT,
     capacity INT DEFAULT NULL,
     max_booking INT DEFAULT NULL
 );
-
+ALTER TABLE spots
+ADD COLUMN display_image TEXT;
+ALTER TABLE spots
+CHANGE spot_rules rules TEXT;
+ALTER TABLE spots
+ADD COLUMN approval_order JSON;
+UPDATE spots
+SET approval_order = JSON_ARRAY(6, 7, 8)
+WHERE spot_id = 2;
 -- APPROVAL COPY RECIPIENTS
 CREATE TABLE approval_copy_recipients (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -69,7 +76,10 @@ CREATE TABLE bookings (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (spot_id) REFERENCES spots(spot_id)
 );
-
+ALTER TABLE bookings 
+ADD COLUMN spot_name VARCHAR(255);
+ALTER TABLE bookings
+ADD COLUMN current_approval_point INT DEFAULT 0;
 -- AVAILABILITY CALENDAR
 CREATE TABLE availability_calendar (
     booking_id INT PRIMARY KEY,
@@ -100,7 +110,6 @@ CREATE TABLE approver (
     password VARCHAR(255) NOT NULL DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- APPROVAL
 CREATE TABLE approval (
     booking_id INT NOT NULL,
@@ -131,11 +140,14 @@ CREATE TABLE event_blog (
     tags VARCHAR(150),
     blog_status ENUM('pending','published','rejected') DEFAULT 'pending',
     submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    published_at DATETIME DEFAULT NULL,
+    published_at TIMESTAMP NULL,
     cover_image VARCHAR(255),
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
-
+ALTER TABLE event_blog
+DROP COLUMN tags;
+ALTER TABLE event_blog
+ADD COLUMN author_name VARCHAR(100);
 -- EVENT BLOG CONTENT
 CREATE TABLE event_blog_content (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -149,21 +161,26 @@ CREATE TABLE event_blog_content (
     FOREIGN KEY (blog_id) REFERENCES event_blog(blog_id) ON DELETE CASCADE
 );
 
--- PAYMENT INFO
-CREATE TABLE payment_info (
-    booking_id INT NOT NULL,
-    payment_info VARCHAR(250),
-    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE
-);
-
 -- NOTIFICATION (with modifications applied)
-CREATE TABLE notification (
+CREATE TABLE notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    user_id INT NULL,
+    approver_id INT NULL,
+    recommender_id INT NULL,
+
     booking_id INT NOT NULL,
-    email_subject VARCHAR(150),
-    message TEXT,
-    is_read TINYINT(1) DEFAULT 0,
+
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+
+    is_read BOOLEAN DEFAULT FALSE,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    type VARCHAR(50) DEFAULT 'general',
+
+    -- FOREIGN KEYS
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (approver_id) REFERENCES approver(approver_id) ON DELETE CASCADE,
+    FOREIGN KEY (recommender_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE
 );
