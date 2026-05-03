@@ -176,7 +176,7 @@ export default function EventCard({
 
                         {event.category === "past" && (
                             <>
-                                <button onClick={() => onWriteBlog(event)} className="flex items-center justify-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold w-28">
+                                <button onClick={() => onWriteBlog(event)} className="flex items-center justify-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-md text-[10px] font-bold hover:bg-blue-700 hover:text-white w-28">
                                     <PenLine size={12} /> Write Blog
                                 </button>
                                 <button onClick={() => handleFeedbackClick(event.booking_id)} className="bg-white text-gray-700 border border-gray-200 px-2 py-1.5 rounded-md text-[10px] font-bold hover:bg-gray-800 hover:text-white transition-all w-28">

@@ -127,6 +127,7 @@ function BlogForm({ event, onClose }) {
     if (!event) return <div className="p-10 text-center text-sky-500">Loading event data...</div>;
 
     console.log("booking id for blog:", event.booking_id);
+    console.log("event data in blog form:", event);
 
     return (
         <div className="space-y-6  p-4 bg-white relative">
@@ -248,9 +249,9 @@ function BlogForm({ event, onClose }) {
                     onClick={handlePublish}
                     disabled={isSubmitting} // Prevents clicking while submitting
                 >
-                    {isSubmitting ? "Publishing..." : "Publish Blog"}
+                    {isSubmitting ? "Requesting..." : "Request To Publish Blog"}
                 </button>
-                <button type="button" className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all" onClick={onClose}>
+                <button type="button" className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-red-200 hover:text-red-700 transition-all" onClick={onClose}>
                     Cancel
                 </button>
             </div>

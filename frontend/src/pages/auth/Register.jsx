@@ -5,6 +5,7 @@ import AnimatedSpotShowcase from "../../components/authentication/AnimatedSpotSh
 
 const Register = () => {
   const userType = "internal";
+  const [emailError, setEmailError] = useState("");
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -15,11 +16,20 @@ const Register = () => {
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (name === "email") {
+      setEmailError("");
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.email.endsWith("@sust.edu")) {
+      setEmailError("Please use a valid institutional email (@sust.edu)");
+      return; // Stop the execution
+    }
     try {
       const data = new FormData();
       data.append("fullName", formData.fullName);
@@ -33,17 +43,18 @@ const Register = () => {
         data,
         {
           headers: {
-            "Content-Type": "multipart/form-data", 
+            "Content-Type": "multipart/form-data",
           },
         },
       );
       console.log(res.data);
-      alert("Internal account created successfully!");
+      // alert("Internal account created successfully!");
       console.log(res.data);
     } catch (err) {
-      alert(
-        "Registration failed: " + (err.response?.data?.message || err.message),
-      );
+      // alert(
+      //   "Registration failed: " + (err.response?.data?.message || err.message),
+      // );
+      console.error("Registration failed:", err);
     }
   };
 
@@ -95,11 +106,24 @@ const Register = () => {
               <input
                 type="email"
                 name="email"
-                className="auth-input-styled"
+                // Dynamically add border-red-500 and text-red-500 if there is an error
+                className={`auth-input-styled transition-all ${emailError ? "border-red-500 bg-red-50 focus:border-red-600 text-red-600" : ""
+                  }`}
                 onChange={handleChange}
                 placeholder="example@sust.edu"
+                value={formData.email}
                 required
               />
+
+              {/* Error Message Display */}
+              {emailError && (
+                <p className="text-[11px] text-red-600 font-bold mt-1 ml-2 flex items-center gap-1 animate-shake">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {emailError}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1">
