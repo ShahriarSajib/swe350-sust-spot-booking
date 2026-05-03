@@ -45,9 +45,8 @@ ALTER TABLE spots
 CHANGE spot_rules rules TEXT;
 ALTER TABLE spots
 ADD COLUMN approval_order JSON;
-UPDATE spots
-SET approval_order = JSON_ARRAY(6, 7, 8)
-WHERE spot_id = 2;
+ALTER TABLE spots
+ADD COLUMN external_approval_order JSON NULL;
 -- APPROVAL COPY RECIPIENTS
 CREATE TABLE approval_copy_recipients (
     id INT AUTO_INCREMENT PRIMARY KEY,
