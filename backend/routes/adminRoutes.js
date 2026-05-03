@@ -57,14 +57,15 @@ router.get("/dashboard", dashboard);
 
 // Bookings
 router.get("/bookings/history", getAdminBookingHistory);
-router.get("/bookings", getAllBookings);
-router.get("/bookings/:id", getSingleBooking);
-router.post("/bookings/:id/approve", approveBooking);
-router.post("/bookings/:id/reject", rejectBooking);
 router.post("/bookings/reserve", (req, res, next) => {
   console.log("✅ reserve route HIT");
   next();
 }, reserveSpotByAdmin);
+router.get("/bookings", getAllBookings);
+router.get("/bookings/:id", getSingleBooking);
+router.post("/bookings/:id/approve", approveBooking);
+router.post("/bookings/:id/reject", rejectBooking);
+
 
 // Spots
 router.get("/spots", getSpots);
