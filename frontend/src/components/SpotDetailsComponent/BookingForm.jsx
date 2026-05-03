@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 
 export default function BookingForm({ bookingData, setBookingData, personalDetails, bookingType }) {
@@ -83,13 +83,14 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
         setShowConfirmModal(true);
 
     };
-
+    const { id } = useParams();
     const executeBooking = () => {
         setShowConfirmModal(false);
         setRecommenderError("");
 
         const userId = localStorage.getItem("userId");
-        const spotId = localStorage.getItem("selectedSpotId");
+        const spotId = id;
+        //const spotId = localStorage.getItem("selectedSpotId");
 
         const payload = {
             userId: userId,
