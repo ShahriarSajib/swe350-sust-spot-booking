@@ -2,7 +2,7 @@ import axios from "axios";
 import { Bell, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import sustLogo from "../../assets/sust_logo.png";
+import sustLogo from "../../assets/sust.png";
 
 const Header = ({ onLogout, onOpenNotif, role }) => {
   const [unreadCount, setUnreadCount] = useState(0);
