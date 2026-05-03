@@ -34,7 +34,7 @@ const Spot = {
 
     getSpotDetails: async (id) => {
         const sql = `
-            SELECT spot_id, name, description, location, rules, image1, image2, image3, max_booking
+            SELECT spot_id, name, description, location, rules, image1, image2, image3, max_booking, approval_order, external_approval_order
             FROM spots 
             WHERE spot_id = ?
         `;
