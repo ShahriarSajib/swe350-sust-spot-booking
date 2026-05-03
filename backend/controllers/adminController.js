@@ -299,7 +299,7 @@ const getAdminBookingHistory = async (req, res) => {
   try {
     const adminId = req.admin.id;
 
-    let query = `
+    const query = `
       SELECT 
         b.booking_id,
         b.booking_status,
@@ -322,37 +322,36 @@ const getAdminBookingHistory = async (req, res) => {
 
         ru.full_name AS recommender_name,
         rec.recommender_designation AS recommender_post,
-        ru.department AS recommender_dept,
-
-        ap.approver_id
+        ru.department AS recommender_dept
 
       FROM bookings b
       JOIN users u ON b.user_id = u.id
       JOIN spots s ON b.spot_id = s.spot_id
       LEFT JOIN recommendations rec ON b.booking_id = rec.booking_id
       LEFT JOIN users ru ON rec.recommender_user_id = ru.id
-      LEFT JOIN approval ap ON b.booking_id = ap.booking_id
 
       WHERE b.is_recommended = 1
-      AND(
-
-        ap.approver_id = ?
+      AND (
+        EXISTS (
+          SELECT 1 
+          FROM approval ap 
+          WHERE ap.booking_id = b.booking_id
+          AND ap.approver_id = ?
+        )
         OR JSON_CONTAINS(s.approval_order, CAST(? AS JSON), '$')
       )
+
+      ORDER BY b.timestamp DESC
     `;
 
-    const params = [adminId, adminId];
-
-    query += " ORDER BY b.timestamp DESC";
-
-    const [rows] = await db.query(query, params);
+    const [rows] = await db.query(query, [adminId, adminId]);
     res.json(rows);
+
   } catch (err) {
     console.error("History error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 
 const approveBooking = async (req, res) => {
@@ -954,36 +953,60 @@ const getSingleBlog = async (req, res) => {
 const getBlogs = async (req, res) => {
   try {
     const { status } = req.query;
-    let whereClause = "";
-    const params = [];
+    const adminId = req.admin.id;
+
+    let whereClause = `
+      WHERE (
+        EXISTS (
+          SELECT 1
+          FROM approval ap
+          WHERE ap.booking_id = bk.booking_id
+          AND ap.approver_id = ?
+        )
+        OR JSON_CONTAINS(s.approval_order, CAST(? AS JSON), '$')
+      )
+    `;
+
+    const params = [adminId, adminId];
+
     if (status && status !== "all") {
-      whereClause = "WHERE eb.blog_status = ?";
+      whereClause += " AND eb.blog_status = ?";
       params.push(status);
     }
 
     const [blogs] = await db.query(
-      `SELECT eb.blog_id, eb.blog_title, eb.summary, eb.story_details,
-              eb.blog_status, eb.submitted_at, eb.cover_image,
-              u.full_name AS author,
-              s.name AS spot_name,
-              bk.start_date AS event_date
+      `SELECT 
+        eb.blog_id,
+        eb.blog_title,
+        eb.summary,
+        eb.story_details,
+        eb.blog_status,
+        eb.submitted_at,
+        eb.cover_image,
+
+        u.full_name AS author,
+        s.name AS spot_name,
+        bk.start_date AS event_date
+
        FROM event_blog eb
        JOIN events ev ON eb.event_id = ev.id
        JOIN bookings bk ON ev.booking_id = bk.booking_id
        JOIN users u ON bk.user_id = u.id
        JOIN spots s ON bk.spot_id = s.spot_id
+
        ${whereClause}
+
        ORDER BY eb.submitted_at DESC`,
-      params,
+      params
     );
 
     res.json(blogs);
+
   } catch (err) {
     console.error("Get blogs error:", err);
     res.json([]);
   }
 };
-
 const publishBlog = async (req, res) => {
   try {
     await db.query(
