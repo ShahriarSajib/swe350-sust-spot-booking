@@ -142,7 +142,7 @@ const dashboard = async (req, res) => {
 
     const [recent] = await db.query(`
       SELECT b.booking_id, b.booking_status, b.timestamp,
-             b.title AS event_title, b.start_date,
+             b.title AS event_title, DATE_FORMAT(b.start_date, '%Y-%m-%d') AS start_date,
              u.full_name, s.name AS spot_name
       FROM bookings b
       JOIN users u ON b.user_id = u.id
@@ -153,7 +153,9 @@ const dashboard = async (req, res) => {
 
     const [pending] = await db.query(`
       SELECT
-        b.booking_id, b.title AS event_title, b.start_date, b.end_date,
+        b.booking_id, b.title AS event_title,
+        DATE_FORMAT(b.start_date, '%Y-%m-%d') AS start_date,
+        DATE_FORMAT(b.end_date, '%Y-%m-%d') AS end_date,
         b.session, b.description, b.start_time, b.end_time,
         b.timestamp, b.organizer,
         u.full_name, u.department AS dept, u.email AS user_email,
@@ -172,7 +174,8 @@ const dashboard = async (req, res) => {
     `);
 
     const [upcoming] = await db.query(`
-      SELECT b.booking_id, b.title AS event_title, b.start_date, b.end_date,
+      SELECT b.booking_id, b.title AS event_title, DATE_FORMAT(b.start_date, '%Y-%m-%d') AS start_date,
+             DATE_FORMAT(b.end_date, '%Y-%m-%d') AS end_date,
              s.name AS spot_name
       FROM bookings b
       JOIN spots s ON b.spot_id = s.spot_id
@@ -199,7 +202,9 @@ const getAllBookings = async (req, res) => {
 
     let query = `
       SELECT 
-        b.booking_id, b.booking_status, b.timestamp, b.start_date, b.end_date,
+        b.booking_id, b.booking_status, b.timestamp,
+        DATE_FORMAT(b.start_date, '%Y-%m-%d') AS start_date,
+        DATE_FORMAT(b.end_date, '%Y-%m-%d') AS end_date,
         b.session, b.title AS event_title, b.start_time, b.end_time, b.description,
         b.current_approval_point,
         u.full_name, u.department AS dept, u.contact_number,
@@ -304,8 +309,8 @@ const getAdminBookingHistory = async (req, res) => {
         b.booking_id,
         b.booking_status,
         b.timestamp,
-        b.start_date,
-        b.end_date,
+        DATE_FORMAT(b.start_date, '%Y-%m-%d') AS start_date,
+        DATE_FORMAT(b.end_date, '%Y-%m-%d') AS end_date,
         b.session,
         b.title AS event_title,
         b.start_time,
