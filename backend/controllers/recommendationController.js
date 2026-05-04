@@ -29,7 +29,7 @@ exports.getUserRecommendations = async (req, res) => {
                 title: item.title,
                 category: category,
 
-                // ✅ SAME STRUCTURE AS getUserEvents
+                // SAME STRUCTURE AS getUserEvents
                 recommender: {
                     name: item.recommender_name,
                     designation: item.recommender_designation,
@@ -132,7 +132,7 @@ exports.markAsRecommended = async (req, res) => {
     );
 
     // =========================
-    // 🔔 NOTIFICATIONS
+    // NOTIFICATIONS
     // =========================
 
     await notificationService.createNotification({
@@ -150,7 +150,7 @@ exports.markAsRecommended = async (req, res) => {
     });
 
     // =========================
-    // 📧 EMAILS
+    //  EMAILS
     // =========================
 
     const [[user]] = await db.query(
@@ -180,7 +180,7 @@ exports.markAsRecommended = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Mark Recommendation Error:", err);
+    console.error(" Mark Recommendation Error:", err);
     return res.status(500).json({
       message: "Database error: " + err.message,
     });

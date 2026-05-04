@@ -33,23 +33,18 @@ exports.registerUser = async (data, file) => {
     values.push(file?.filename || null);
   }
 
-  // ✅ Insert user
   const result = await userModel.createUser(fields, values);
   const userId = result[0].insertId;
 
-  // ✅ Generate token
   const token = crypto.randomBytes(32).toString('hex');
 
-  // ✅ Expiry (e.g., 1 hour)
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-  // ✅ Store in tokens table
   await db.query(
     'INSERT INTO tokens (user_id, token, type, expires_at) VALUES (?, ?, ?, ?)',
     [userId, token, 'email_verification', expiresAt]
   );
 
-  // ✅ Send email
   const verificationLink = `http://localhost:5000/api/users/verify/${token}`;
 
   await sendMail({
@@ -98,7 +93,6 @@ exports.loginUser = async (email, password) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error('Invalid password');
 
-  // ✅ generate token
   const token = jwt.sign(
     { id: user.id, user_type: user.user_type },
     process.env.JWT_SECRET,
@@ -168,7 +162,6 @@ exports.forgotPassword = async (email) => {
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-  // remove old tokens
   await db.query(
     "DELETE FROM tokens WHERE user_id = ? AND type = ?",
     [user.id, "password_reset"]
@@ -191,6 +184,7 @@ exports.forgotPassword = async (email) => {
 
   return true;
 };
+
 exports.resetPassword = async (token, newPassword) => {
   if (!newPassword || newPassword.length < 6) {
     throw new Error("Password must be at least 6 characters");

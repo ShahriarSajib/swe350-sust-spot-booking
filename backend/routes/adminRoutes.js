@@ -35,7 +35,7 @@ const {
   //markAllNotificationsRead,
   checkSpotAvailability,
 } = require("../controllers/adminController");
-console.log("✅ adminRoutes loaded");
+console.log("adminRoutes loaded");
 
 // ── PUBLIC (no auth needed) ───────────────────────────────────────────────────
 router.post("/login", loginAdmin);
@@ -58,7 +58,7 @@ router.get("/dashboard", dashboard);
 // Bookings
 router.get("/bookings/history", getAdminBookingHistory);
 router.post("/bookings/reserve", (req, res, next) => {
-  console.log("✅ reserve route HIT");
+  console.log("reserve route HIT");
   next();
 }, reserveSpotByAdmin);
 router.get("/bookings", getAllBookings);

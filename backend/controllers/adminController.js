@@ -20,7 +20,7 @@ const loginAdmin = async (req, res) => {
     const admin = await Admin.findAdminByEmail(email);
     if (!admin) return res.status(404).json({ message: "Admin not found" });
 
-    // ⚠️ Plain text password comparison (NOT SECURE, but your request)
+    //  Plain text password comparison (NOT SECURE, but your request)
     if (password !== admin.password)
       return res.status(400).json({ message: "Invalid password" });
 
@@ -109,7 +109,7 @@ const updateSignature = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const fileName = req.file.filename; // ✅ FIXED
+    const fileName = req.file.filename; 
 
     await Admin.updateSignature(req.admin.id, fileName);
 
@@ -328,7 +328,7 @@ const getAllBookings = async (req, res) => {
     const filtered = rows.filter((b) => {
       if (b.current_approval_point == null) return false;
 
-      // 🔥 choose correct approval flow
+      // choose correct approval flow
       let rawOrder =
         b.user_type === "external"
           ? b.external_approval_order
@@ -534,9 +534,7 @@ try {
     const nextStep = currentStep + 1;
 
     if (nextStep >= order.length) {
-      // =========================================
-      // ✅ FINAL APPROVAL
-      // =========================================
+      //FINAL APPROVAL
       await db.query(
         `UPDATE bookings 
          SET booking_status = 'approved', current_approval_point = ?
@@ -559,7 +557,7 @@ try {
         );
       }
 
-      // 🔔 NOTIFY USER (FINAL APPROVAL)
+      // NOTIFY USER (FINAL APPROVAL)
       await notificationService.createNotification({
         user_id: booking.user_id,
         booking_id: bookingId,
@@ -568,7 +566,7 @@ try {
       });
 
       // =========================
-      // 📧 EMAIL USER (NEW)
+      // EMAIL USER (NEW)
       // =========================
       const [[user]] = await db.query(
         `SELECT email FROM users WHERE id = ?`,
@@ -585,7 +583,7 @@ try {
 
     } else {
       // =========================================
-      // 🔁 NEXT APPROVER
+      // NEXT APPROVER
       // =========================================
       await db.query(
         `UPDATE bookings 
@@ -596,7 +594,7 @@ try {
 
       const nextApproverId = order[nextStep];
 
-      // 🔔 NOTIFY NEXT APPROVER
+      // NOTIFY NEXT APPROVER
       await notificationService.createNotification({
         approver_id: nextApproverId,
         booking_id: bookingId,
@@ -605,7 +603,7 @@ try {
       });
 
       // =========================
-      // 📧 EMAIL NEXT APPROVER (NEW)
+      //  EMAIL NEXT APPROVER (NEW)
       // =========================
       const [[approver]] = await db.query(
         `SELECT approver_email FROM approver WHERE approver_id = ?`,
@@ -679,7 +677,7 @@ const rejectBooking = async (req, res) => {
     }
 
     // ===============================
-    // 🔔 DATABASE NOTIFICATION
+    //DATABASE NOTIFICATION
     // ===============================
     await notificationService.createNotification({
       user_id,
@@ -690,8 +688,7 @@ const rejectBooking = async (req, res) => {
         : `Your booking for ${spot_name} was rejected.`,
     });
 
-    // ===============================
-    // 📧 EMAIL NOTIFICATION
+    // EMAIL NOTIFICATION
     // ===============================
     if (email) {
       await emailService.sendEmail({
@@ -703,7 +700,7 @@ const rejectBooking = async (req, res) => {
       });
     }
 
-    console.log("✅ Rejection notification + email sent");
+    console.log("Rejection notification + email sent");
 
     res.json({ message: "Booking rejected" });
 
@@ -1006,17 +1003,17 @@ const updateSpot = async (req, res) => {
 
     if (req.files?.["image1"]?.[0]) {
       imageUpdates += ", image1 = ?";
-      params.push(req.files["image1"][0].filename); // ✅ FIXED
+      params.push(req.files["image1"][0].filename); 
     }
 
     if (req.files?.["image2"]?.[0]) {
       imageUpdates += ", image2 = ?";
-      params.push(req.files["image2"][0].filename); // ✅ FIXED
+      params.push(req.files["image2"][0].filename); 
     }
 
     if (req.files?.["image3"]?.[0]) {
       imageUpdates += ", image3 = ?";
-      params.push(req.files["image3"][0].filename); // ✅ FIXED
+      params.push(req.files["image3"][0].filename); 
     }
 
     params.push(spotId);

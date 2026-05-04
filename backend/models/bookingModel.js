@@ -11,7 +11,7 @@ const createBooking = async (data) => {
             throw new Error("Recommender email not provided");
         }
 
-        // 🔍 Get recommender ID
+        // Get recommender ID
         const [userRows] = await db.query(
             `SELECT id FROM users WHERE email = ?`,
             [recommenderEmail]
@@ -23,7 +23,7 @@ const createBooking = async (data) => {
 
         const recommenderUserId = userRows[0].id;
 
-        // 📝 Insert booking
+        // Insert booking
         const bookingQuery = `
             INSERT INTO bookings 
             (user_id, spot_id, organizer, start_date, end_date, session, title, description, spot_name, start_time, end_time, is_recommended) 
@@ -47,7 +47,7 @@ const createBooking = async (data) => {
         const [result] = await db.query(bookingQuery, bookingValues);
         const newBookingId = result.insertId;
 
-        // 📝 Insert recommendation
+        // Insert recommendation
         await db.query(`
             INSERT INTO recommendations 
             (booking_id, recommender_user_id, recommender_designation) 
@@ -59,10 +59,10 @@ const createBooking = async (data) => {
         ]);
 
         // ================================
-        // 🔔 NOTIFICATIONS START HERE
+        // NOTIFICATIONS START HERE
         // ================================
 
-        // 1️⃣ Notify USER (booking created)
+        // 1️ Notify USER (booking created)
         await notificationService.createNotification({
             user_id: data.userId,
             booking_id: newBookingId,
@@ -70,7 +70,7 @@ const createBooking = async (data) => {
             message: `Your booking for ${data.spotName} has been submitted successfully and is waiting for recommendation.`
         });
 
-        // 2️⃣ Notify RECOMMENDER
+        // 2️Notify RECOMMENDER
         await notificationService.createNotification({
             recommender_id: recommenderUserId,
             booking_id: newBookingId,
@@ -79,7 +79,7 @@ const createBooking = async (data) => {
         });
 
         // ================================
-        // 📧 EMAILS START HERE (NEW)
+        // EMAILS START HERE (NEW)
         // ================================
 
         // 🔹 Get user email

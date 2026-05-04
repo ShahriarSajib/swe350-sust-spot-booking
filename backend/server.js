@@ -17,7 +17,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const adminNotificationRoutes = require("./routes/adminNotificationRoutes");
 const approverRoutes = require("./routes/approverRoutes");
 
-// DB (now env is already loaded ✅)
+// DB (now env is already loaded)
 require('./config/db');
 
 const app = express();
@@ -63,7 +63,7 @@ app.use((req, res) => {
 // ================= GLOBAL ERROR HANDLER =================
 
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.message);
+  console.error('Error:', err.message);
 
   res.status(500).json({
     message: err.message || 'Server Error'
@@ -75,6 +75,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(` Server running on port ${PORT}`);
 });
 
