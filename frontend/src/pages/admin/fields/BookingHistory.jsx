@@ -79,40 +79,88 @@ const BookingHistory = () => {
     pending: filtered.filter((b) => b.status === "Pending").length,
   };
 
-  const exportPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.setTextColor(0, 82, 204);
-    doc.text("Booking History Report", 14, 20);
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 27);
-    doc.setFontSize(9);
-    doc.setTextColor(50);
-    doc.text(
-      `Filters — Spot: ${filterSpot} | Status: ${filterStatus} | Range: ${startDate || "Any"} to ${endDate || "Any"}`,
-      14,
-      34,
-    );
+const exportPDF = () => {
+  const doc = new jsPDF();
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 14;
 
-    autoTable(doc, {
-      head: [["ID", "Title", "Organizer", "Spot", "Date", "Status"]],
-      body: filtered.map((b) => [
-        b.id,
-        b.title,
-        b.organizer,
-        b.spotName,
-        b.date,
-        b.status,
-      ]),
-      startY: 42,
-      theme: "grid",
-      headStyles: { fillColor: [0, 82, 204], fontSize: 9 },
-      bodyStyles: { fontSize: 8 },
-    });
+  const adminName = localStorage.getItem("adminName") || "Administrator";
+  const adminDesignation =
+    localStorage.getItem("adminDesignation") || "System Administrator";
+  const adminDept = localStorage.getItem("adminDept") || "";
 
-    setPdfUrl(doc.output("bloburl"));
-  };
+  // ── HEADER ─────────────────────────────
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.text(
+    "Shahjalal University of Science & Technology",
+    pageW / 2,
+    18,
+    { align: "center" }
+  );
+
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(80);
+  doc.text("Booking History Report", pageW / 2, 25, {
+    align: "center",
+  });
+
+  doc.setFontSize(9);
+  doc.text(`Generated: ${new Date().toLocaleString()}`, margin, 32);
+
+  // Divider
+  doc.setLineWidth(0.5);
+  doc.line(margin, 36, pageW - margin, 36);
+
+  // ── TABLE ─────────────────────────────
+  autoTable(doc, {
+    head: [["ID", "Title", "Organizer", "Spot", "Date", "Status"]],
+    body: filtered.map((b) => [
+      b.id,
+      b.title,
+      b.organizer,
+      b.spotName,
+      b.date,
+      b.status,
+    ]),
+    startY: 42,
+    theme: "grid",
+    headStyles: { fillColor: [0, 82, 204], fontSize: 9 },
+    bodyStyles: { fontSize: 8 },
+
+    // ── FOOTER ON EVERY PAGE ────────────
+    didDrawPage: (data) => {
+      const footerY = pageH - 12;
+
+      // line
+      doc.setDrawColor(200);
+      doc.line(margin, footerY - 5, pageW - margin, footerY - 5);
+
+      // admin info (left)
+      doc.setFontSize(8);
+      doc.setTextColor(80);
+      doc.text(adminName, margin, footerY);
+
+      const cred = [adminDesignation, adminDept]
+        .filter(Boolean)
+        .join(", ");
+      doc.text(cred, margin, footerY + 4);
+
+      // page number (right)
+      doc.text(
+        `Page ${data.pageNumber}`,
+        pageW - margin,
+        footerY,
+        { align: "right" }
+      );
+    },
+  });
+
+  setPdfUrl(doc.output("bloburl"));
+};
 
   const badgeStyle = (status) => {
     const styles = {
