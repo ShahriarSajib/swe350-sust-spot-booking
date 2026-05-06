@@ -38,13 +38,10 @@ const handleProfileUpdate = async () => {
     try {
         const formData = new FormData();
         
-        // ১. টেক্সট ডাটা (এগুলো পোস্টম্যানের Key অনুযায়ী চেক করুন)
         formData.append("full_name", profile.name);
         formData.append("department", profile.department);
         formData.append("contact_number", profile.contact); 
 
-        // ২. ফাইল ডাটা (সবচেয়ে গুরুত্বপূর্ণ অংশ)
-        // পোস্টম্যানে যে Key (profile_picture/signature) ব্যবহার করেছেন, এখানেও তাই দিবেন
         if (imageFile) {
             formData.append("profile_picture", imageFile); 
             console.log("Adding Profile Picture to FormData...");
@@ -59,7 +56,7 @@ const handleProfileUpdate = async () => {
             formData,
             {
                 headers: { 
-                    "Content-Type": "multipart/form-data" ,// এই হেডারটি মাস্ট
+                    "Content-Type": "multipart/form-data" ,
                     "Authorization": `Bearer ${token}`
                 },
             }
@@ -69,7 +66,7 @@ const handleProfileUpdate = async () => {
             setProfileMessage("Profile updated successfully ✔");
             setSignaturePreview(null);
             
-            // ব্যাকএন্ড থেকে আসা নতুন ফাইলের নাম দিয়ে স্টেট আপডেট করুন
+
             const updatedUser = res.data;
             const baseUrl = "http://localhost:5000/uploads/";
 
@@ -82,7 +79,7 @@ const handleProfileUpdate = async () => {
             setTimeout(() => {
                 setProfileMessage("");
                 setShowEdit(false);
-                setImageFile(null); // ফাইল ক্লিয়ার করুন
+                setImageFile(null); 
                 setSignatureFile(null);
             }, 1500);
         }

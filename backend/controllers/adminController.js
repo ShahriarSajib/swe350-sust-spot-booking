@@ -451,7 +451,7 @@ const approveBooking = async (req, res) => {
   const adminId = req.admin.id;
 
   try {
-    // 🔹 1. Get booking + approval order + user info
+    //  1. Get booking + approval order + user info
     const [rows] = await db.query(
   `
   SELECT 
@@ -504,12 +504,12 @@ try {
 
     const currentStep = booking.current_approval_point;
 
-    // 🔹 3. SECURITY CHECK
+    // 3. SECURITY CHECK
     if (order[currentStep] !== adminId) {
       return res.status(403).json({ message: "Not authorized for this step" });
     }
 
-    // 🔹 4. Save approval record
+    // 4. Save approval record
     const [existing] = await db.query(
       "SELECT booking_id FROM approval WHERE booking_id = ? AND approver_id = ?",
       [bookingId, adminId],
@@ -530,7 +530,7 @@ try {
       );
     }
 
-    // 🔹 5. Move forward
+    // 5. Move forward
     const nextStep = currentStep + 1;
 
     if (nextStep >= order.length) {
@@ -565,9 +565,8 @@ try {
         message: `Your booking for ${booking.spot_name} has been fully approved.`,
       });
 
-      // =========================
       // EMAIL USER (NEW)
-      // =========================
+     
       const [[user]] = await db.query(
         `SELECT email FROM users WHERE id = ?`,
         [booking.user_id]
@@ -582,9 +581,8 @@ try {
       return res.json({ message: "Booking fully approved" });
 
     } else {
-      // =========================================
+  
       // NEXT APPROVER
-      // =========================================
       await db.query(
         `UPDATE bookings 
          SET current_approval_point = ?
@@ -602,9 +600,8 @@ try {
         message: `A booking request for ${booking.spot_name} requires your approval.`,
       });
 
-      // =========================
       //  EMAIL NEXT APPROVER (NEW)
-      // =========================
+    
       const [[approver]] = await db.query(
         `SELECT approver_email FROM approver WHERE approver_id = ?`,
         [nextApproverId]
@@ -625,13 +622,14 @@ try {
   }
 };
 const emailService = require("../services/emailService");
+
 const rejectBooking = async (req, res) => {
   try {
     const { reason } = req.body;
     const bookingId = req.params.id;
     const adminId = req.admin.id;
 
-    // 🔹 1. Get booking + user email BEFORE updating
+    //  1. Get booking + user email BEFORE updating
     const [bookingRows] = await db.query(
       `SELECT b.user_id, b.spot_name, u.email 
        FROM bookings b
@@ -646,7 +644,7 @@ const rejectBooking = async (req, res) => {
 
     const { user_id, spot_name, email } = bookingRows[0];
 
-    // 🔹 2. Update booking status
+    //  2. Update booking status
     await db.query(
       `UPDATE bookings 
        SET booking_status = 'rejected' 
@@ -654,7 +652,7 @@ const rejectBooking = async (req, res) => {
       [bookingId]
     );
 
-    // 🔹 3. Save approval log
+    //  3. Save approval log
     const [existing] = await db.query(
       "SELECT booking_id FROM approval WHERE booking_id = ?",
       [bookingId]
@@ -676,9 +674,7 @@ const rejectBooking = async (req, res) => {
       );
     }
 
-    // ===============================
     //DATABASE NOTIFICATION
-    // ===============================
     await notificationService.createNotification({
       user_id,
       booking_id: bookingId,
@@ -689,7 +685,6 @@ const rejectBooking = async (req, res) => {
     });
 
     // EMAIL NOTIFICATION
-    // ===============================
     if (email) {
       await emailService.sendEmail({
         to: email,
@@ -735,9 +730,7 @@ const reserveSpotByAdmin = async (req, res) => {
       });
     }
 
-    // ─────────────────────────────────────────────
     // 1. Get admin from approver table
-    // ─────────────────────────────────────────────
     const [approverRows] = await db.query(
       `SELECT approver_name, approver_email, approver_designation
        FROM approver
@@ -751,9 +744,7 @@ const reserveSpotByAdmin = async (req, res) => {
 
     const admin = approverRows[0];
 
-    // ─────────────────────────────────────────────
     // 2. Get or create admin user
-    // ─────────────────────────────────────────────
     let adminUserId;
 
     const [userRows] = await db.query(
@@ -780,9 +771,7 @@ const reserveSpotByAdmin = async (req, res) => {
       adminUserId = inserted.insertId;
     }
 
-    // ─────────────────────────────────────────────
     // 3. Find conflicting bookings (IMPORTANT FIX)
-    // ─────────────────────────────────────────────
     const effectiveEndDate = end_date || start_date;
 
     const [conflicting] = await db.query(
@@ -801,9 +790,7 @@ const reserveSpotByAdmin = async (req, res) => {
       [spot_id, effectiveEndDate, start_date]
     );
 
-    // ─────────────────────────────────────────────
     // 4. Notify affected users (FIXED like rejectBooking)
-    // ─────────────────────────────────────────────
     for (const cb of conflicting) {
       try {
         await notificationService.createNotification({
@@ -827,9 +814,7 @@ const reserveSpotByAdmin = async (req, res) => {
       }
     }
 
-    // ─────────────────────────────────────────────
     // 5. Cancel conflicting bookings
-    // ─────────────────────────────────────────────
     if (conflicting.length > 0) {
       const ids = conflicting.map((c) => c.booking_id);
 
@@ -844,9 +829,7 @@ const reserveSpotByAdmin = async (req, res) => {
       );
     }
 
-    // ─────────────────────────────────────────────
     // 6. Insert admin booking
-    // ─────────────────────────────────────────────
     const [result] = await db.query(
       `INSERT INTO bookings
        (user_id, spot_id, booking_status, is_recommended,
@@ -867,18 +850,14 @@ const reserveSpotByAdmin = async (req, res) => {
 
     const bookingId = result.insertId;
 
-    // ─────────────────────────────────────────────
     // 7. Calendar entry
-    // ─────────────────────────────────────────────
     await db.query(
       `INSERT INTO availability_calendar (booking_id, spot_id, start_date, end_date)
        VALUES (?, ?, ?, ?)`,
       [bookingId, spot_id, start_date, end_date || null]
     );
 
-    // ─────────────────────────────────────────────
     // 8. Response
-    // ─────────────────────────────────────────────
     res.json({
       message: "Spot reserved by admin",
       bookingId,
@@ -890,7 +869,7 @@ const reserveSpotByAdmin = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-// ── SPOT MANAGEMENT ───────────────────────────────────────────────────────────
+//SPOT MANAGEMENT 
 
 const getSpots = async (req, res) => {
   try {
@@ -1048,7 +1027,7 @@ const deleteSpot = async (req, res) => {
   }
 };
 
-// ── SPOT RECIPIENTS ───────────────────────────────────────────────────────────
+// SPOT RECIPIENTS
 
 const getSpotRecipients = async (req, res) => {
   try {
@@ -1092,7 +1071,7 @@ const updateSpotRecipients = async (req, res) => {
   }
 };
 
-// ── BLOG MODERATION ───────────────────────────────────────────────────────────
+//BLOG MODERATIO
 
 const getSingleBlog = async (req, res) => {
   try {
@@ -1227,7 +1206,7 @@ const deleteBlog = async (req, res) => {
   }
 };
 
-// ── FEEDBACKS ─────────────────────────────────────────────────────────────────
+// FEEDBACKS
 
 const getFeedbacks = async (req, res) => {
   try {
@@ -1274,7 +1253,7 @@ const getFeedbacks = async (req, res) => {
   }
 };
 
-// ── REPORTS ───────────────────────────────────────────────────────────────────
+// REPORTS 
 
 const getReport = async (req, res) => {
   try {

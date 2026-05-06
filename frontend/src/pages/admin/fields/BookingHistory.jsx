@@ -80,6 +80,9 @@ const BookingHistory = () => {
   };
 
 const exportPDF = () => {
+
+
+  
   const doc = new jsPDF();
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -90,7 +93,7 @@ const exportPDF = () => {
     localStorage.getItem("adminDesignation") || "System Administrator";
   const adminDept = localStorage.getItem("adminDept") || "";
 
-  // ── HEADER ─────────────────────────────
+  //  HEADER 
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0, 0, 0);
@@ -115,7 +118,7 @@ const exportPDF = () => {
   doc.setLineWidth(0.5);
   doc.line(margin, 36, pageW - margin, 36);
 
-  // ── TABLE ─────────────────────────────
+  // TABLE
   autoTable(doc, {
     head: [["ID", "Title", "Organizer", "Spot", "Date", "Status"]],
     body: filtered.map((b) => [
@@ -131,7 +134,7 @@ const exportPDF = () => {
     headStyles: { fillColor: [0, 82, 204], fontSize: 9 },
     bodyStyles: { fontSize: 8 },
 
-    // ── FOOTER ON EVERY PAGE ────────────
+    //FOOTER ON EVERY PAGE 
     didDrawPage: (data) => {
       const footerY = pageH - 12;
 
