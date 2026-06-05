@@ -11,9 +11,9 @@ A full‑stack web application for **booking on‑campus spots** at **Shahjalal 
 
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
-- [System Architecture & Workflow](#-system-architecture--workflow)
+- [System Architecture & Role-Based Workflows](#-system-architecture-role-based-workflows)
 - [Project Structure](#-project-structure)
-- [Frontend Pages & Screenshots](#-frontend-pages--screenshots)
+- [Frontend Pages](#-frontend-pages)
 - [Backend API Reference](#-backend-api-reference)
 - [Database Schema](#-database-schema)
 - [Getting Started](#-getting-started)
@@ -572,7 +572,7 @@ Distributed under the ISC License.
 
 - **Mohaiminul Nirob** — [GitHub](https://github.com/mohaiminulnirob)
 - **Sadia Nusrat Munny** — [GitHub](https://github.com/sadianusratmunny51)
-- **Shahriar Sajib** — [GitHub](https://github.com/ShahriarSajib)
+- **Md.Sajib Hossen** — [GitHub](https://github.com/ShahriarSajib)
 
 ---
 
