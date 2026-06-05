@@ -96,39 +96,116 @@ A full‑stack web application for **booking on‑campus spots** at **Shahjalal 
 
 ---
 
-## 🔄 System Architecture & Workflow
+## 🔄 System Architecture & Role-Based Workflows
+
+### 🧑‍🎓 Internal User Workflow
 
 ```
-User ──► Registration ──► Email Verification ──► Login (JWT)
-  │
-  ├──► Browse Spots ──► Check Availability Calendar
-  │
-  ├──► Create Booking ──► Recommendation Request
-  │                            │
-  │                   Faculty Recommends
-  │                            │
-  │                   Enter Approval Pipeline
-  │                     (multi‑step, configurable)
-  │                            │
-  │                   Approver 1 ──► Approver 2 ──► … ──► Approved ✅
-  │                            │
-  │                   Rejected ❌ (with reason)
-  │
-  ├──► Event Dashboard ──► Feedback
-  │
-  └──► Blog Publishing ──► Admin Moderation ──► Published
+Internal User ──► Register (@sust.edu) ──► Email Verification ──► Login (JWT)
+       │
+       ├──► Browse Spots (all 5 venues available)
+       │
+       ├──► Check Availability Calendar ──► Select Date & Session
+       │                                        (Day / Night / Full Day)
+       │
+       ├──► Submit Booking ──► Recommendation Request sent to Faculty
+       │                                    │
+       │                            Faculty Recommends ✅
+       │                                    │
+       │                        ┌─── Approval Pipeline ───┐
+       │                        │   (multi‑step, sequential) │
+       │                        │  Approver 1 ──► Approver 2 │
+       │                        │  ──► … ──► Approved ✅     │
+       │                        └─────────────────────────────┘
+       │                                    │
+       │                              Event Confirmed
+       │                                    │
+       ├──► Event Dashboard ──► View Upcoming / Pending / Past Events
+       │         │
+       │         ├──► Submit Feedback
+       │         └──► Publish Blog ──► Admin Moderation ──► Published
+       │
+       └──► Manage Profile ──► Update Photo, Signature, Password
 ```
 
-### Booking Lifecycle
+### 🧑‍💼 External User Workflow
 
-1. **User** registers (internal/external) and verifies email
-2. **User** browses spots and checks the availability calendar for a desired date/session
-3. **User** submits a booking — it enters `pending` status
-4. **Recommendation** — A designated recommender (faculty) marks the booking as recommended
-5. **Approval Chain** — Each approver in the configured sequence reviews & approves/rejects
-6. **Confirmed** — Once all approvers approve, the booking becomes an `approved` event
-7. **Event** — The event appears in the user's dashboard under "Upcoming"
-8. **Post‑event** — User can submit feedback and publish a blog with stories & photos
+```
+External User ──► Register (with ID upload) ──► Email Verification ──► Login (JWT)
+       │
+       ├──► Browse Spots (only Central Auditorium available)
+       │
+       ├──► Check Availability Calendar ──► Select Date & Session
+       │
+       ├──► Submit Booking ──► Recommendation Request sent to Faculty
+       │                                    │
+       │                            Faculty Recommends ✅
+       │                                    │
+       │                        ┌─── External Approval Pipeline ──┐
+       │                        │  (external_approval_order JSON) │
+       │                        │  Approver 1 ──► Approver 2 …   │
+       │                        │  ──► Approved ✅                │
+       │                        └─────────────────────────────────┘
+       │                                    │
+       │                              Event Confirmed
+       │
+       ├──► Event Dashboard ──► View Events
+       │
+       └──► Manage Profile ──► Update Photo, Signature
+```
+
+### 🔐 Admin Workflow
+
+```
+Admin (Approver) ──► Login (dedicated admin portal)
+       │
+       ├──► Dashboard Overview
+       │     ├──► View Stats (Total / Pending / Approved / Rejected)
+       │     └──► View Upcoming Events
+       │
+       ├──► Spot Management
+       │     ├──► Create / Edit / Delete Spots
+       │     ├──► Upload Spot Images & Rules
+       │     └──► Configure Approval Copy Recipients
+       │
+       ├──► Booking Approvals
+       │     ├──► View Recommended Bookings
+       │     ├──► Approve (forward to next approver or finalize)
+       │     └──► Reject with Remarks
+       │
+       ├──► Admin Reservation
+       │     └──► Reserve Spot on behalf of user (auto‑cancel conflicts)
+       │
+       ├──► Blog Moderation
+       │     ├──► Review Submitted Blogs
+       │     ├──► Publish ✅ or Reject ❌
+       │     └──► Delete Inappropriate Content
+       │
+       ├──► Booking History
+       │     └──► Search / Filter / Sort archived bookings
+       │
+       ├──► Reports
+       │     └──► Download booking report for a date range
+       │
+       └──► Profile Management
+             ├──► Update Name, Designation, Email
+             ├──► Upload Signature
+             └──► Change Password
+```
+
+### 📋 Cross‑Role Booking Lifecycle Summary
+
+| Step | Description | Roles Involved |
+|---|---|---|
+| 1 | User registers & verifies email | Internal / External |
+| 2 | User browses spots & checks availability | Internal / External |
+| 3 | User submits booking → `pending` status | Internal / External |
+| 4 | Faculty marks as recommended | Recommender |
+| 5 | Admin approves through sequential chain | Approver(s) |
+| 6 | Booking finalized → `approved` event | System |
+| 7 | Event appears in user dashboard | Internal / External |
+| 8 | User submits feedback & publishes blog | Internal / External |
+| 9 | Admin moderates & publishes blog | Admin |
 
 ---
 
@@ -210,7 +287,7 @@ swe350-sust-spot-booking/
 
 ---
 
-## 🖼 Frontend Pages & Screenshots
+## 🖼 Frontend Pages
 
 | Page | Route | Description |
 |---|---|---|
@@ -494,7 +571,7 @@ Distributed under the ISC License.
 ## 👥 Contributors
 
 - **Mohaiminul Nirob** — [GitHub](https://github.com/mohaiminulnirob)
-- **Sadia Nusrat Munny** — [GitHub]((https://github.com/sadianusratmunny51))
+- **Sadia Nusrat Munny** — [GitHub](https://github.com/sadianusratmunny51)
 - **Shahriar Sajib** — [GitHub](https://github.com/ShahriarSajib)
 
 ---
