@@ -14,36 +14,13 @@ const AdminHeader = ({ unreadCount, onBellClick }) => {
   };
 
   return (
-    <header
-      style={{
-        background: "var(--header-bg)",
-        height: 64,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 28px",
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-        boxShadow: "0 2px 12px rgba(14,165,233,0.3)",
-      }}
-    >
+    <header className="bg-[var(--header-bg)] h-16 flex items-center justify-between px-7 sticky top-0 z-50 shadow-[0_2px_12px_rgba(14,165,233,0.3)]">
       {/* Brand */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none" }}>
-        <div
-          style={{
-            width: "38px",
-            height: "38px",
-            borderRadius: "10px",
-            background: "rgba(255,255,255,0.2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <img src={sustLogo} alt="SUST" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
+      <div className="flex items-center gap-3 no-underline">
+        <div className="w-[38px] h-[38px] rounded-[10px] bg-white/20 flex items-center justify-center">
+          <img src={sustLogo} alt="SUST" className="w-8 h-8 object-contain" />
         </div>
-        <span style={{ color: "white", fontWeight: 700, fontSize: "18px", letterSpacing: "-0.01em" }}>
+        <span className="text-white font-bold text-lg tracking-[-0.01em]">
           SUST Spot Booking
         </span>
       </div>
@@ -53,37 +30,12 @@ const AdminHeader = ({ unreadCount, onBellClick }) => {
         {/* Notification Bell */}
         <button
           onClick={onBellClick}
-          style={{
-            position: "relative",
-            background: "rgba(255,255,255,0.15)",
-            border: "none",
-            borderRadius: 10,
-            padding: "8px 16px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            color: "white",
-            fontWeight: 700,
-            fontSize: 14,
-            transition: "background 0.2s",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
-          onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}
+          className="relative bg-white/15 border-none rounded-[10px] px-4 py-2 cursor-pointer flex items-center gap-2 text-white font-bold text-sm transition-colors duration-200 hover:bg-white/25"
         >
           <Bell size={16} />
           <span>Notifications</span>
           {unreadCount > 0 && (
-            <span
-              style={{
-                position: "absolute", top: 4, right: 4,
-                background: "#ef4444", color: "white",
-                borderRadius: "50%", width: 18, height: 18,
-                fontSize: 10, fontWeight: 800,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "JetBrains Mono",
-              }}
-            >
+            <span className="absolute top-1 right-1 bg-[#ef4444] text-white rounded-full w-[18px] h-[18px] text-[10px] font-extrabold flex items-center justify-center font-mono">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -92,20 +44,7 @@ const AdminHeader = ({ unreadCount, onBellClick }) => {
         {/* Logout */}
         <button
           onClick={handleLogout}
-          style={{
-            background: "white",
-            color: "#0284c7",
-            border: "none",
-            borderRadius: 10,
-            padding: "8px 20px",
-            cursor: "pointer",
-            fontWeight: 700,
-            fontSize: 14,
-            transition: "all 0.2s",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-1px)")}
-          onMouseLeave={e => (e.currentTarget.style.transform = "translateY(0)")}
+          className="bg-white text-[#0284c7] border-none rounded-[10px] px-5 py-2 cursor-pointer font-bold text-sm transition-all duration-200 shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:-translate-y-0.5"
         >
           Logout
         </button>

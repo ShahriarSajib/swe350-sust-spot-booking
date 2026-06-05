@@ -36,48 +36,42 @@ const normaliseCard = (b) => ({
 // ─── Pill / Badge ────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
   const cfg = {
-    published: { bg: "rgba(34,197,94,0.12)", color: "#16a34a", border: "rgba(34,197,94,0.25)" },
-    pending:   { bg: "rgba(234,179,8,0.12)",  color: "#b45309", border: "rgba(234,179,8,0.25)" },
-    rejected:  { bg: "rgba(239,68,68,0.12)",  color: "#dc2626", border: "rgba(239,68,68,0.25)" },
+    published: "bg-emerald-500/12 text-emerald-600 border-emerald-500/25",
+    pending:   "bg-amber-500/12 text-amber-700 border-amber-500/25",
+    rejected:  "bg-red-500/12 text-red-600 border-red-500/25",
   };
   const s = cfg[status] || cfg.pending;
   return (
-    <span style={{
-      fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
-      padding: "3px 10px", borderRadius: 20,
-      background: s.bg, color: s.color, border: `1px solid ${s.border}`,
-    }}>{status}</span>
+    <span className={`text-[10px] font-bold uppercase tracking-[0.08em] px-2.5 py-1 rounded-[20px] border ${s}`}>
+      {status}
+    </span>
   );
 };
 
 // ─── Section heading inside modal ───────────────────────────────────────────
 const ModalSection = ({ icon, label, children }) => (
-  <div style={{ marginBottom: 28 }}>
-    <div style={{
-      display: "flex", alignItems: "center", gap: 7, marginBottom: 14,
-      paddingBottom: 8, borderBottom: "1px solid var(--border)",
-    }}>
-      <span style={{ color: "var(--accent)", opacity: 0.8 }}>{icon}</span>
-      <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text3)" }}>{label}</span>
+  <div className="mb-7">
+    <div className="flex items-center gap-1.5 mb-3.5 pb-2 border-b border-[var(--border)]">
+      <span className="text-[var(--accent)] opacity-80">{icon}</span>
+      <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text3)]">{label}</span>
     </div>
     {children}
   </div>
 );
 
 // ─── Meta chip ───────────────────────────────────────────────────────────────
-const MetaChip = ({ icon, label, value, accent }) => (
-  <div style={{
-    display: "flex", alignItems: "center", gap: 8, padding: "9px 14px",
-    borderRadius: 10, background: "var(--surface)", border: "1px solid var(--border)",
-    flex: "1 1 160px",
-  }}>
-    <span style={{ color: accent || "var(--text3)", flexShrink: 0 }}>{icon}</span>
-    <div>
-      <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text3)", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{value || "—"}</div>
+const MetaChip = ({ icon, label, value, accent }) => {
+  const accentColorStyle = accent ? { color: accent } : {};
+  return (
+    <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] flex-1 min-w-[160px]">
+      <span style={accentColorStyle} className={!accent ? "text-[var(--text3)] shrink-0" : "shrink-0"}>{icon}</span>
+      <div>
+        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--text3)] mb-0.5">{label}</div>
+        <div className="text-sm font-semibold text-[var(--text)]">{value || "—"}</div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 const BlogModeration = () => {
@@ -203,17 +197,12 @@ const BlogModeration = () => {
             <h1 className="section-title">Blog Moderation</h1>
             <p className="section-subtitle">Review posts and manage community content</p>
           </div>
-          <div className="flex gap-2" style={{ background: "var(--surface)", padding: "4px", borderRadius: 12, border: "1px solid var(--border)" }}>
+          <div className="flex gap-2 bg-[var(--surface)] p-1 rounded-[12px] border border-[var(--border)]">
             {[
               { key: "blogs",     icon: <FileText size={13} />,     label: "Blogs" },
               { key: "feedbacks", icon: <MessageSquare size={13} />, label: "Feedbacks" },
             ].map(({ key, icon, label }) => (
-              <button key={key} onClick={() => setActiveTab(key)} style={{
-                padding: "8px 18px", borderRadius: 9, fontSize: 12, fontWeight: 600,
-                cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6,
-                background: activeTab === key ? "var(--accent)" : "transparent",
-                color: activeTab === key ? "white" : "var(--text2)", border: "none",
-              }}>
+              <button key={key} onClick={() => setActiveTab(key)} className={`px-[18px] py-2 rounded-[9px] text-[12px] font-semibold cursor-pointer transition-all duration-200 flex items-center gap-1.5 border-none ${activeTab === key ? "bg-[var(--accent)] text-white" : "bg-transparent text-[var(--text2)]"}`}>
                 {icon} {label}
               </button>
             ))}
@@ -225,13 +214,7 @@ const BlogModeration = () => {
       {activeTab === "blogs" && (
         <div className="flex gap-2 mb-6">
           {["pending", "published"].map((s) => (
-            <button key={s} onClick={() => setBlogStatus(s)} style={{
-              padding: "7px 18px", borderRadius: 20, fontSize: 11, fontWeight: 700,
-              cursor: "pointer", textTransform: "capitalize", letterSpacing: "0.05em",
-              background: blogStatus === s ? (s === "pending" ? "rgba(234,179,8,0.15)" : "rgba(34,197,94,0.15)") : "var(--surface)",
-              color: blogStatus === s ? (s === "pending" ? "var(--yellow)" : "var(--green)") : "var(--text3)",
-              border: `1px solid ${blogStatus === s ? (s === "pending" ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.3)") : "var(--border)"}`,
-            }}>
+            <button key={s} onClick={() => setBlogStatus(s)} className={`px-[18px] py-[7px] rounded-[20px] text-[11px] font-bold cursor-pointer capitalize tracking-[0.05em] border ${blogStatus === s ? (s === "pending" ? "bg-amber-500/15 text-[var(--yellow)] border-amber-500/30" : "bg-green-500/15 text-[var(--green)] border-green-500/30") : "bg-[var(--surface)] border-[var(--border)] text-[var(--text3)]"}`}>
               {s === "pending" ? "Pending" : "Published"} ({s === "pending" ? pendingBlogs.length : publishedBlogs.length})
             </button>
           ))}
@@ -240,80 +223,68 @@ const BlogModeration = () => {
 
       {/* Blog grid */}
       {loading && activeTab === "blogs" ? (
-        <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text3)" }}>Loading blogs...</div>
+        <div className="text-center py-[60px] text-[var(--text3)]">Loading blogs...</div>
       ) : activeTab === "blogs" ? (
         currentBlogs.length === 0 ? (
-          <div className="glass" style={{ borderRadius: 20, padding: 60, textAlign: "center" }}>
-            <FileText size={40} color="var(--text3)" style={{ margin: "0 auto 12px", opacity: 0.4 }} />
-            <div style={{ color: "var(--text3)", fontSize: 14 }}>No {blogStatus} blogs</div>
+          <div className="glass rounded-[20px] p-[60px] text-center">
+            <FileText size={40} color="var(--text3)" className="mx-auto mb-3 opacity-40" />
+            <div className="text-[var(--text3)] text-sm">No {blogStatus} blogs</div>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 20 }}>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
             {currentBlogs.map((blog) => (
-              <div key={blog.id} className="glass"
-                style={{ borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column", transition: "all 0.2s" }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border2)")}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}>
+              <div key={blog.id} className="glass rounded-[20px] overflow-hidden flex flex-col transition-all duration-200 border border-[var(--border)] hover:border-[var(--border2)]">
 
-                <div style={{ height: 180, background: "var(--bg3)", overflow: "hidden", flexShrink: 0, position: "relative" }}>
+                <div className="h-[180px] bg-[var(--bg3)] overflow-hidden shrink-0 relative">
                   {blog.image
-                    ? <img src={blog.image} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={blog.title} />
-                    : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FileText size={36} color="var(--text3)" style={{ opacity: 0.25 }} />
+                    ? <img src={blog.image} className="w-full h-full object-cover" alt={blog.title} />
+                    : <div className="w-full h-full flex items-center justify-center">
+                        <FileText size={36} color="var(--text3)" className="opacity-25" />
                       </div>}
                   {blog.status && (
-                    <span style={{
-                      position: "absolute", top: 10, right: 10,
-                      fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em",
-                      padding: "3px 9px", borderRadius: 20, color: "white",
-                      background: blog.status === "published" ? "rgba(34,197,94,0.85)" : "rgba(234,179,8,0.85)",
-                    }}>{blog.status}</span>
+                    <span className={`absolute top-2.5 right-2.5 text-[10px] font-bold uppercase tracking-[0.07em] px-2 py-0.5 rounded-[20px] text-white ${blog.status === "published" ? "bg-green-500/85" : "bg-yellow-500/85"}`}>{blog.status}</span>
                   )}
                 </div>
 
-                <div style={{ padding: "18px 20px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", lineHeight: 1.4, marginBottom: 8 }}>{blog.title}</div>
+                <div className="pt-4.5 px-5 pb-5 flex flex-col flex-1">
+                  <div className="font-bold text-[15px] text-[var(--text)] leading-snug mb-2">{blog.title}</div>
 
-                  <div style={{ fontSize: 11, color: "var(--text3)", display: "flex", flexWrap: "wrap", gap: "3px 12px", marginBottom: 10 }}>
-                    <span>By <span style={{ color: "var(--accent2)", fontWeight: 600 }}>{blog.author}</span></span>
-                    {blog.spot      && <span>At <span style={{ color: "var(--accent2)", fontWeight: 600 }}>{blog.spot}</span></span>}
-                    {blog.eventdate && <span style={{ fontFamily: "JetBrains Mono" }}>{blog.eventdate}</span>}
+                  <div className="text-[11px] text-[var(--text3)] flex flex-wrap gap-x-3 gap-y-[3px] mb-2.5">
+                    <span>By <span className="text-[var(--accent2)] font-semibold">{blog.author}</span></span>
+                    {blog.spot      && <span>At <span className="text-[var(--accent2)] font-semibold">{blog.spot}</span></span>}
+                    {blog.eventdate && <span className="font-mono">{blog.eventdate}</span>}
                     {blog.date      && <span>Submitted {blog.date}</span>}
                   </div>
 
                   {blog.tags?.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>
+                    <div className="flex flex-wrap gap-1.5 mb-2.5">
                       {blog.tags.map((tag) => (
-                        <span key={tag} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 20, background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text3)" }}>{tag}</span>
+                        <span key={tag} className="text-[10px] px-2 py-0.5 rounded-[20px] bg-[var(--surface)] border border-[var(--border)] text-[var(--text3)]">{tag}</span>
                       ))}
                     </div>
                   )}
 
                   {blog.summary && (
-                    <p style={{ fontSize: 12, color: "var(--text3)", lineHeight: 1.65, margin: "0 0 14px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    <p className="text-[12px] text-[var(--text3)] leading-relaxed mb-3.5 line-clamp-3">
                       {blog.summary}
                     </p>
                   )}
 
-                  <div style={{ marginTop: "auto", borderTop: "1px solid var(--border)", paddingTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button onClick={() => openBlogDetail(blog)} style={{
-                      padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-                      display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
-                      background: "var(--accent)", border: "none", color: "white",
-                    }}>
+                  <div className="mt-auto border-t border-[var(--border)] pt-3.5 flex gap-2 flex-wrap">
+                    <button onClick={() => openBlogDetail(blog)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer bg-[var(--accent)] border-none text-white">
                       <Eye size={12} /> View
                     </button>
                     {blogStatus === "pending" ? (
                       <>
-                        <button onClick={() => handlePublish(blog.id)} style={{ padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "var(--green)" }}>
+                        <button onClick={() => handlePublish(blog.id)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer bg-green-500/10 border border-green-500/20 text-[var(--green)]">
                           <CheckCircle size={12} /> Publish
                         </button>
-                        <button onClick={() => handleReject(blog.id)} style={{ padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)" }}>
+                        <button onClick={() => handleReject(blog.id)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer bg-red-500/10 border border-red-500/20 text-[var(--red)]">
                           <XCircle size={12} /> Reject
                         </button>
                       </>
                     ) : (
-                      <button onClick={() => handleDelete(blog.id)} style={{ padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, cursor: "pointer", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)" }}>
+                      <button onClick={() => handleDelete(blog.id)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer bg-red-500/10 border border-red-500/20 text-[var(--red)]">
                         <Trash2 size={12} /> Delete
                       </button>
                     )}
@@ -324,29 +295,29 @@ const BlogModeration = () => {
           </div>
         )
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
           {feedbacks.map((fb) => (
-            <div key={fb.id} className="glass" style={{ borderRadius: 16, padding: 20, borderLeft: "3px solid var(--accent)" }}>
+            <div key={fb.id} className="glass rounded-2xl p-5 border-l-3 border-l-[var(--accent)]">
               <div className="flex items-center gap-3 mb-4">
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(79,110,247,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontWeight: 800, fontSize: 14, color: "var(--accent2)" }}>{fb.user.charAt(0)}</span>
+                <div className="w-9 h-9 rounded-full bg-[#4f6ef7]/15 flex items-center justify-center">
+                  <span className="font-extrabold text-sm text-[var(--accent2)]">{fb.user.charAt(0)}</span>
                 </div>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)" }}>{fb.user}</div>
-                  <div style={{ fontSize: 11, color: "var(--text3)", fontFamily: "JetBrains Mono" }}>{fb.date}</div>
+                  <div className="font-semibold text-[13px] text-[var(--text)]">{fb.user}</div>
+                  <div className="text-[11px] text-[var(--text3)] font-mono">{fb.date}</div>
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 12, display: "flex", flexDirection: "column", gap: 3 }}>
-                {fb.title && <span>Event: <span style={{ color: "var(--accent2)" }}>{fb.title}</span></span>}
-                {fb.spot  && <span>Spot: <span style={{ color: "var(--accent2)" }}>{fb.spot}</span></span>}
+              <div className="text-[11px] text-[var(--text3)] mb-3 flex flex-col gap-1">
+                {fb.title && <span>Event: <span className="text-[var(--accent2)]">{fb.title}</span></span>}
+                {fb.spot  && <span>Spot: <span className="text-[var(--accent2)]">{fb.spot}</span></span>}
               </div>
-              <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6, fontStyle: "italic" }}>"{fb.message}"</div>
+              <div className="text-[13px] text-[var(--text2)] leading-relaxed italic">"{fb.message}"</div>
             </div>
           ))}
           {feedbacks.length === 0 && (
-            <div className="glass" style={{ gridColumn: "1/-1", borderRadius: 20, padding: 60, textAlign: "center" }}>
-              <MessageSquare size={40} color="var(--text3)" style={{ margin: "0 auto 12px", opacity: 0.3 }} />
-              <div style={{ color: "var(--text3)" }}>No feedbacks yet</div>
+            <div className="glass col-span-full rounded-[20px] p-[60px] text-center">
+              <MessageSquare size={40} color="var(--text3)" className="mx-auto mb-3 opacity-30" />
+              <div className="text-[var(--text3)]">No feedbacks yet</div>
             </div>
           )}
         </div>
@@ -375,47 +346,48 @@ const BlogModeration = () => {
           }}>
 
             {/* ── Cover image (hero) ── */}
-            <div style={{ height: 260, overflow: "hidden", flexShrink: 0, position: "relative", background: "var(--bg3)" }}>
+            <div className="h-[260px] overflow-hidden shrink-0 relative bg-[var(--bg3)]">
               {selectedBlog.image
-                ? <img src={selectedBlog.image} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={selectedBlog.title} />
-                : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <FileText size={48} color="var(--text3)" style={{ opacity: 0.2 }} />
+                ? <img src={selectedBlog.image} className="w-full h-full object-cover" alt={selectedBlog.title} />
+                : <div className="w-full h-full flex items-center justify-center">
+                    <FileText size={48} color="var(--text3)" className="opacity-2
+                    " />
                   </div>
               }
               {/* Gradient overlay for legibility */}
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 55%)" }} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent/55" />
 
               {/* Loading indicator over cover */}
               {detailLoading && (
-                <div style={{ position: "absolute", top: 14, left: 14, background: "rgba(0,0,0,0.55)", borderRadius: 20, padding: "5px 12px", fontSize: 11, color: "white" }}>
+                <div className="absolute top-3.5 left-3.5 bg-black/55 rounded-[20px] px-3 py-1.5 text-[11px] text-white">
                   Loading full details…
                 </div>
               )}
 
               {/* Status + close in top-right */}
-              <div style={{ position: "absolute", top: 14, right: 14, display: "flex", gap: 8, alignItems: "center" }}>
+              <div className="absolute top-3.5 right-3.5 flex gap-2 items-center">
                 <StatusBadge status={selectedBlog.status} />
                 <button
                   onClick={() => setSelectedBlog(null)}
-                  style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
+                  className="w-8 h-8 rounded-full bg-black/45 border-none cursor-pointer flex items-center justify-center text-white">
                   <X size={15} />
                 </button>
               </div>
 
               {/* Title overlaid on cover */}
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 28px 20px" }}>
-                <h2 style={{ margin: 0, fontWeight: 800, fontSize: 22, color: "white", lineHeight: 1.3, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
+              <div className="absolute bottom-0 left-0 right-0 px-7 pb-5">
+                <h2 className="m-0 font-extrabold text-2xl text-white leading-snug [text-shadow:0_1px_6px_rgba(0,0,0,0.4)]">
                   {selectedBlog.title}
                 </h2>
               </div>
             </div>
 
             {/* ── Scrollable body ── */}
-            <div style={{ overflowY: "auto", flex: 1 }}>
-              <div style={{ padding: "24px 28px 32px" }}>
+            <div className="overflow-y-auto flex-1">
+              <div className="pt-6 px-7 pb-8">
 
                 {/* ── Meta chips ── */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 24 }}>
+                <div className="flex flex-wrap gap-2.5 mb-6">
                   <MetaChip icon={<User size={14} />}     label="Author"     value={selectedBlog.author}    accent="var(--accent2)" />
                   <MetaChip icon={<MapPin size={14} />}   label="Spot"       value={selectedBlog.spot}      accent="#10b981" />
                   <MetaChip icon={<Calendar size={14} />} label="Event Date" value={selectedBlog.eventdate} accent="#f59e0b" />
@@ -441,19 +413,9 @@ const BlogModeration = () => {
 
                 {/* ── Internal nav tabs ── */}
                 {modalTabs.length > 1 && (
-                  <div style={{
-                    display: "flex", gap: 4, marginBottom: 24,
-                    background: "var(--surface)", borderRadius: 12, padding: 4,
-                    border: "1px solid var(--border)",
-                  }}>
+                  <div className="flex gap-1 mb-6 bg-[var(--surface)] rounded-[12px] p-1 border border-[var(--border)]">
                     {modalTabs.map(({ key, label, icon }) => (
-                      <button key={key} onClick={() => setActiveSection(key)} style={{
-                        flex: 1, padding: "8px 12px", borderRadius: 9, fontSize: 12, fontWeight: 600,
-                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                        border: "none", transition: "all 0.18s",
-                        background: activeSection === key ? "var(--accent)" : "transparent",
-                        color: activeSection === key ? "white" : "var(--text3)",
-                      }}>
+                      <button key={key} onClick={() => setActiveSection(key)} className={`flex-1 py-2 px-3 rounded-[9px] text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5 border-none transition-all duration-200 ${activeSection === key ? "bg-[var(--accent)] text-white" : "bg-transparent text-[var(--text3)]"}`}>
                         {icon} {label}
                       </button>
                     ))}
@@ -466,28 +428,25 @@ const BlogModeration = () => {
                     {/* Summary */}
                     {selectedBlog.summary ? (
                       <ModalSection icon={<AlignLeft size={13} />} label="Summary">
-                        <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, margin: 0 }}>
+                        <p className="text-[14px] text-[var(--text2)] leading-relaxed m-0">
                           {selectedBlog.summary}
                         </p>
                       </ModalSection>
                     ) : (
-                      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 24 }}>No summary provided.</div>
+                      <div className="text-[var(--text3)] text-[13px] mb-6">No summary provided.</div>
                     )}
 
                     {/* Quick stats row */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 24 }}>
+                    <div className="grid grid-cols-2 gap-3 mb-6">
                       {[
                         { label: "Schedule items", value: scheduleItems.length, icon: <Clock size={16} /> },
                         { label: "Photos",         value: photoItems.length,    icon: <ImageIcon size={16} /> },
                        // { label: "Tags",           value: selectedBlog.tags?.length || 0, icon: <Tag size={16} /> },
                       ].map(({ label, value, icon }) => (
-                        <div key={label} style={{
-                          background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12,
-                          padding: "14px 16px", display: "flex", flexDirection: "column", gap: 6,
-                        }}>
-                          <div style={{ color: "var(--text3)" }}>{icon}</div>
-                          <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text)" }}>{value}</div>
-                          <div style={{ fontSize: 11, color: "var(--text3)", fontWeight: 600 }}>{label}</div>
+                        <div key={label} className="bg-[var(--surface)] border border-[var(--border)] rounded-[12px] px-4 py-3.5 flex flex-col gap-1.5">
+                          <div className="text-[var(--text3)]">{icon}</div>
+                          <div className="text-2xl font-extrabold text-[var(--text)]">{value}</div>
+                          <div className="text-[11px] text-[var(--text3)] font-semibold">{label}</div>
                         </div>
                       ))}
                     </div>
@@ -495,13 +454,13 @@ const BlogModeration = () => {
                     {/* Inline preview of story (first 300 chars) if exists */}
                     {selectedBlog.story && (
                       <ModalSection icon={<BookOpen size={13} />} label="Story Preview">
-                        <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.8, margin: "0 0 10px", whiteSpace: "pre-wrap" }}>
+                        <p className="text-[13px] text-[var(--text2)] leading-relaxed mb-2.5 whitespace-pre-wrap">
                           {selectedBlog.story.slice(0, 300)}{selectedBlog.story.length > 300 ? "…" : ""}
                         </p>
                         {selectedBlog.story.length > 300 && (
                           <button
                             onClick={() => setActiveSection("story")}
-                            style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: "var(--accent2)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                            className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--accent2)] bg-transparent border-none cursor-pointer p-0">
                             Read full story <ChevronRight size={13} />
                           </button>
                         )}
@@ -511,18 +470,18 @@ const BlogModeration = () => {
                     {/* Inline photo preview strip */}
                     {photoItems.length > 0 && (
                       <ModalSection icon={<ImageIcon size={13} />} label="Photo Preview">
-                        <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
+                        <div className="flex gap-2.5 overflow-x-auto pb-1">
                           {photoItems.slice(0, 5).map((item, i) =>
                              item.imagePath ? (
-                              <div key={i} style={{ flexShrink: 0, width: 110, borderRadius: 10, overflow: "hidden", aspectRatio: "4/3", background: "var(--bg3)" }}>
-                                <img src={item.imagePath} alt={item.imageCaption || `Photo ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                              <div key={i} className="shrink-0 w-[110px] rounded-[10px] overflow-hidden aspect-[4/3] bg-[var(--bg3)]">
+                                <img src={item.imagePath} alt={item.imageCaption || `Photo ${i + 1}`} className="w-full h-full object-cover block" />
                               </div>
                             ) : null
                           )}
                           {photoItems.length > 5 && (
                             <button
                               onClick={() => setActiveSection("photos")}
-                              style={{ flexShrink: 0, width: 110, borderRadius: 10, background: "var(--surface)", border: "1px solid var(--border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6, aspectRatio: "4/3", color: "var(--text3)", fontSize: 12, fontWeight: 600 }}>
+                              className="shrink-0 w-[110px] rounded-[10px] bg-[var(--surface)] border border-[var(--border)] cursor-pointer flex items-center justify-center flex-col gap-1.5 aspect-[4/3] text-[var(--text3)] text-[12px] font-semibold">
                               <ImageIcon size={18} />
                               +{photoItems.length - 5} more
                             </button>
@@ -537,35 +496,35 @@ const BlogModeration = () => {
                 {activeSection === "schedule" && (
                   <ModalSection icon={<Clock size={13} />} label="Event Schedule">
                     {scheduleItems.length === 0 ? (
-                      <div style={{ color: "var(--text3)", fontSize: 13 }}>No schedule items.</div>
+                      <div className="text-[var(--text3)] text-[13px]">No schedule items.</div>
                     ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                      <div className="flex flex-col gap-0">
                         {scheduleItems.map((item, i) => (
-                          <div key={i} style={{ display: "flex", gap: 0, position: "relative" }}>
+                          <div key={i} className="flex gap-0 relative">
                             {/* Time column */}
-                            <div style={{ width: 72, flexShrink: 0, paddingTop: 2, paddingRight: 14, textAlign: "right" }}>
+                            <div className="w-[72px] shrink-0 pt-0.5 pr-3.5 text-right">
                               {item.time && (
-                                <span style={{ fontSize: 11, fontFamily: "JetBrains Mono", color: "var(--accent2)", fontWeight: 700 }}>
+                                <span className="text-[11px] font-mono text-[var(--accent2)] font-bold">
                                   {item.time}
                                 </span>
                               )}
                             </div>
 
                             {/* Timeline line + dot */}
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginRight: 16, flexShrink: 0 }}>
-                              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--accent)", marginTop: 4, flexShrink: 0, zIndex: 1 }} />
+                            <div className="flex flex-col items-center mr-4 shrink-0">
+                              <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent)] mt-1 shrink-0 z-[1]" />
                               {i < scheduleItems.length - 1 && (
-                                <div style={{ width: 2, flex: 1, background: "var(--border2)", minHeight: 28, marginTop: 2 }} />
+                                <div className="w-[2px] flex-1 bg-[var(--border2)] min-h-[28px] mt-0.5" />
                               )}
                             </div>
 
                             {/* Content */}
-                            <div style={{ flex: 1, paddingBottom: i < scheduleItems.length - 1 ? 20 : 0 }}>
+                            <div className={`flex-1 ${i < scheduleItems.length - 1 ? "pb-5" : "pb-0"}`}>
                               {item.activityTitle && (
-                                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text)", marginBottom: 4 }}>{item.activityTitle}</div>
+                                <div className="font-bold text-sm text-[var(--text)] mb-1">{item.activityTitle}</div>
                               )}
                               {item.activityDescription && (
-                                <div style={{ fontSize: 12, color: "var(--text3)", lineHeight: 1.65 }}>{item.activityDescription}</div>
+                                <div className="text-[12px] text-[var(--text3)] leading-relaxed">{item.activityDescription}</div>
                               )}
                             </div>
                           </div>
@@ -579,11 +538,11 @@ const BlogModeration = () => {
                 {activeSection === "story" && (
                   <ModalSection icon={<BookOpen size={13} />} label="Full Story">
                     {selectedBlog.story ? (
-                      <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.9, margin: 0, whiteSpace: "pre-wrap" }}>
+                      <p className="text-sm text-[var(--text2)] leading-loose m-0 whitespace-pre-wrap">
                         {selectedBlog.story}
                       </p>
                     ) : (
-                      <div style={{ color: "var(--text3)", fontSize: 13 }}>No story details provided.</div>
+                      <div className="text-[var(--text3)] text-[13px]">No story details provided.</div>
                     )}
                   </ModalSection>
                 )}
@@ -592,21 +551,21 @@ const BlogModeration = () => {
                 {activeSection === "photos" && (
                   <ModalSection icon={<ImageIcon size={13} />} label={`Photos (${photoItems.length})`}>
                     {photoItems.length === 0 ? (
-                      <div style={{ color: "var(--text3)", fontSize: 13 }}>No photos.</div>
+                      <div className="text-[var(--text3)] text-[13px]">No photos.</div>
                     ) : (
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
+                      <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
                         {photoItems.map((item, i) =>
                           item.imagePath ? (
                             <div key={i}>
-                              <div style={{ borderRadius: 12, overflow: "hidden", aspectRatio: "4/3", background: "var(--bg3)", border: "1px solid var(--border)" }}>
+                              <div className="rounded-xl overflow-hidden aspect-[4/3] bg-[var(--bg3)] border border-[var(--border)]">
                                 <img
                                   src={item.imagePath}
                                   alt={item.imageCaption || `Photo ${i + 1}`}
-                                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                                  className="w-full h-full object-cover block"
                                 />
                               </div>
                               {item.imageCaption && (
-                                <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 6, textAlign: "center", fontStyle: "italic" }}>
+                                <div className="text-[11px] text-[var(--text3)] mt-1.5 text-center italic">
                                   {item.imageCaption}
                                 </div>
                               )}
@@ -622,43 +581,25 @@ const BlogModeration = () => {
             </div>
 
             {/* ── Footer action bar ── */}
-            <div style={{
-              padding: "16px 28px 20px",
-              borderTop: "1px solid var(--border)",
-              display: "flex", gap: 10, background: "var(--bg2)",
-              flexShrink: 0,
-            }}>
+            <div className="pt-4 px-7 pb-5 border-t border-[var(--border)] flex gap-2.5 bg-[var(--bg2)] shrink-0">
               {!isPublished && selectedBlog.status !== "rejected" && (
-                <button onClick={() => handlePublish(selectedBlog.id)} style={{
-                  flex: 1, padding: "12px", borderRadius: 12, fontWeight: 700, fontSize: 13,
-                  background: "var(--green)", border: "none", color: "white", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                }}>
+                <button onClick={() => handlePublish(selectedBlog.id)} className="flex-1 p-3 rounded-xl font-bold text-[13px] bg-[var(--green)] border-none text-white cursor-pointer flex items-center justify-center gap-1.5">
                   <CheckCircle size={15} /> Publish
                 </button>
               )}
               {selectedBlog.status === "pending" && (
-                <button onClick={() => handleReject(selectedBlog.id)} style={{
-                  flex: 1, padding: "12px", borderRadius: 12, fontWeight: 700, fontSize: 13,
-                  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "var(--red)", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                }}>
+                <button onClick={() => handleReject(selectedBlog.id)} className="flex-1 p-3 rounded-xl font-bold text-[13px] bg-red-500/10 border border-red-500/25 text-[var(--red)] cursor-pointer flex items-center justify-center gap-1.5">
                   <XCircle size={15} /> Reject
                 </button>
               )}
               {isPublished && (
-                <button onClick={() => handleDelete(selectedBlog.id)} style={{
-                  flex: 1, padding: "12px", borderRadius: 12, fontWeight: 700, fontSize: 13,
-                  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "var(--red)", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                }}>
+                <button onClick={() => handleDelete(selectedBlog.id)} className="flex-1 p-3 rounded-xl font-bold text-[13px] bg-red-500/10 border border-red-500/25 text-[var(--red)] cursor-pointer flex items-center justify-center gap-1.5">
                   <Trash2 size={15} /> Delete
                 </button>
               )}
               <button
                 onClick={() => setSelectedBlog(null)}
-                className="btn-ghost"
-                style={{ flex: 1, padding: "12px", borderRadius: 12, fontWeight: 700, fontSize: 13 }}>
+                className="btn-ghost flex-1 p-3 rounded-xl font-bold text-[13px]">
                 Close
               </button>
             </div>
@@ -666,7 +607,7 @@ const BlogModeration = () => {
           </div>
         </div>,
         document.body
-      )}
+      )},
     </div>
   );
 };

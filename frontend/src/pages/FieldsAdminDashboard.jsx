@@ -89,14 +89,7 @@ export default function FieldsAdminDashboard() {
     }
   };
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg)",
-        color: "var(--text)",
-        fontFamily: "'Sora', sans-serif",
-      }}
-    >
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
       {/* ── TOP HEADER ── */}
       <AdminHeader
         unreadCount={unreadCount}
@@ -104,28 +97,10 @@ export default function FieldsAdminDashboard() {
       />
 
       {/* ── BODY ── */}
-      <div style={{ display: "flex", height: "calc(100vh - 64px)" }}>
+      <div className="flex h-[calc(100vh-64px)]">
         {/* ── SIDEBAR ── */}
-        <aside
-          style={{
-            width: 220,
-            background: "var(--bg2)",
-            borderRight: "1px solid var(--border)",
-            flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            boxShadow: "2px 0 8px rgba(0,0,0,0.04)",
-          }}
-        >
-          <nav
-            style={{
-              flex: 1,
-              padding: "16px 12px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-            }}
-          >
+        <aside className="w-[220px] bg-[var(--bg2)] border-r border-[var(--border)] shrink-0 flex flex-col shadow-[2px_0_8px_rgba(0,0,0,0.04)]">
+          <nav className="flex-1 py-4 px-3 flex flex-col gap-1">
             {navItems.map(({ id, icon: Icon, label }) => (
               <button
                 key={id}
@@ -140,7 +115,7 @@ export default function FieldsAdminDashboard() {
         </aside>
 
         {/* ── MAIN CONTENT ── */}
-        <main style={{ flex: 1, overflowY: "auto", background: "var(--bg)" }}>
+        <main className="flex-1 overflow-y-auto bg-[var(--bg)]">
           <div className="p-8 fade-in" key={activeSection}>
             {activeSection === "overview" && (
               <DashboardOverview setActiveSection={setActiveSection} />
