@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { adminApi } from "./adminApi";
 import Toast from "./Toast";
 
@@ -403,16 +404,17 @@ const BookingApprovals = () => {
       )}
 
       {/* Detail Modal */}
-      {selectedReq && !rejectOpen && (
+      {selectedReq && !rejectOpen && createPortal(
         <div
           className="modal-overlay"
           onClick={(e) =>
             e.target === e.currentTarget &&
             (setSelectedReq(null), setPreviewOpen(false))
           }
+          style={{ zIndex: 9999 }}
         >
           {!previewOpen ? (
-            <div className="modal-box" style={{ maxWidth: 600 }}>
+            <div className="modal-box" style={{ maxWidth: 600, maxHeight: "90vh", overflowY: "auto" }}>
               <div className="flex items-center justify-between mb-6">
                 <h3
                   style={{
@@ -853,17 +855,19 @@ const BookingApprovals = () => {
               </div>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Reject Modal */}
-      {rejectOpen && (
+      {rejectOpen && createPortal(
         <div
           className="modal-overlay"
           onClick={(e) =>
             e.target === e.currentTarget &&
             (setRejectOpen(false), setSelectedReq(null))
           }
+          style={{ zIndex: 9999 }}
         >
           <div className="modal-box">
             <div className="flex items-center gap-3 mb-6">
@@ -945,7 +949,8 @@ const BookingApprovals = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

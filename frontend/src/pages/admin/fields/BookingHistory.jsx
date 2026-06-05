@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Download, Eye, Loader2, RotateCcw, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { adminApi } from "./adminApi";
 import Toast from "./Toast";
 
@@ -571,16 +572,17 @@ const exportPDF = () => {
       </div>
 
       {/* Detail Modal */}
-      {selectedBooking && (
+      {selectedBooking && createPortal(
         <div
           className="modal-overlay"
           onClick={(e) =>
             e.target === e.currentTarget &&
             (setSelectedBooking(null), setPreviewOpen(false))
           }
+          style={{ zIndex: 9999 }}
         >
           {!previewOpen ? (
-            <div className="modal-box" style={{ maxWidth: 600 }}>
+            <div className="modal-box" style={{ maxWidth: 600, maxHeight: "90vh", overflowY: "auto" }}>
               <div className="flex items-center justify-between mb-6">
                 <h3
                   style={{
@@ -1184,12 +1186,13 @@ const exportPDF = () => {
               </div>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* PDF Modal */}
-      {pdfUrl && (
-        <div className="modal-overlay">
+      {pdfUrl && createPortal(
+        <div className="modal-overlay" style={{ zIndex: 9999 }}>
           <div
             style={{
               background: "var(--bg2)",
@@ -1292,7 +1295,8 @@ const exportPDF = () => {
               </a>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   FileText, Eye, X, CheckCircle, XCircle, Trash2, MessageSquare,
   Clock, Image as ImageIcon, AlignLeft, Tag, User, MapPin,
@@ -354,11 +355,11 @@ const BlogModeration = () => {
       {/* ═══════════════════════════════════════════════════════════════
           DETAIL MODAL — fully rich view
       ═══════════════════════════════════════════════════════════════ */}
-      {selectedBlog && (
+      {selectedBlog && createPortal(
         <div
           className="modal-overlay"
           onClick={(e) => e.target === e.currentTarget && setSelectedBlog(null)}
-          style={{ zIndex: 1000 }}
+          style={{ zIndex: 9999 }}
         >
           <div style={{
             background: "var(--bg2)",
@@ -512,7 +513,7 @@ const BlogModeration = () => {
                       <ModalSection icon={<ImageIcon size={13} />} label="Photo Preview">
                         <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
                           {photoItems.slice(0, 5).map((item, i) =>
-                            item.imagePath ? (
+                             item.imagePath ? (
                               <div key={i} style={{ flexShrink: 0, width: 110, borderRadius: 10, overflow: "hidden", aspectRatio: "4/3", background: "var(--bg3)" }}>
                                 <img src={item.imagePath} alt={item.imageCaption || `Photo ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                               </div>
@@ -663,7 +664,8 @@ const BlogModeration = () => {
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
