@@ -9,17 +9,21 @@ const db = mysql.createPool({
 
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 // Test connection
 (async () => {
   try {
     const connection = await db.getConnection();
-    console.log("Database connected successfully");
+    console.log("TiDB connected successfully");
     connection.release();
   } catch (err) {
-    console.error("Database connection failed:", err.message);
+    console.error("TiDB connection failed:", err.message);
   }
 })();
 
