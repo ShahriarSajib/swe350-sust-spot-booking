@@ -41,6 +41,11 @@ const Login = ({ onLogin }) => {
 
       onLogin(loginType);
     } catch (err) {
+      // Network errors (CORS, server offline, Render sleeping) have no err.response
+      if (!err.response) {
+        setError({ field: "general", message: "Cannot connect to server. Please wait a moment and try again." });
+        return;
+      }
       const serverMsg = err.response?.data?.message?.toLowerCase() || "";
       
       // Logic to determine which field to highlight
@@ -48,8 +53,10 @@ const Login = ({ onLogin }) => {
         setError({ field: "email", message: "Email address not registered." });
       } else if (serverMsg.includes("password")) {
         setError({ field: "password", message: "Invalid password. Please try again." });
+      } else if (serverMsg.includes("verify") || serverMsg.includes("verified")) {
+        setError({ field: "general", message: "Please verify your email before logging in." });
       } else {
-        setError({ field: "general", message: serverMsg || "Login failed" });
+        setError({ field: "general", message: serverMsg || "Login failed. Please try again." });
       }
     }
   };
@@ -141,6 +148,11 @@ const Login = ({ onLogin }) => {
               </div>
 
               <div className="pt-2">
+                {error.field === "general" && (
+                  <p className="mb-3 text-center text-red-500 text-xs font-bold bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                    {error.message}
+                  </p>
+                )}
                 <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl hover:bg-blue-600 transition-all active:scale-[0.98]">
                   {loginType === "user" ? "Login" : "Login as Admin"}
                 </button>
