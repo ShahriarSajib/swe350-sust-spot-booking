@@ -8,8 +8,10 @@ import {
 import { adminApi } from "./adminApi";
 import Toast from "./Toast";
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const imgUrl = (path) =>
-  path ? `http://localhost:5000/uploads/${path}` : null;
+  path ? `${API_BASE}/uploads/${path}` : null;
 
 const parseTags = (raw) =>
   raw ? raw.split(",").map((t) => t.trim()).filter(Boolean) : [];

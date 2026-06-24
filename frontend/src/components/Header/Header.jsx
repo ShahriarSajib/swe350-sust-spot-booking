@@ -3,7 +3,7 @@ import { Bell, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import sustLogo from "../../assets/sust.png";
-// import { useNavigate } from "react-router-dom";
+import API_BASE from "../../config";
 
 const Header = ({ onLogout, onOpenNotif, role }) => {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -15,7 +15,7 @@ const Header = ({ onLogout, onOpenNotif, role }) => {
       const token = localStorage.getItem("token"); // adjust if needed
 
       const res = await axios.get(
-        "http://localhost:5000/api/notifications/unread-count",
+        `${API_BASE}/api/notifications/unread-count`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

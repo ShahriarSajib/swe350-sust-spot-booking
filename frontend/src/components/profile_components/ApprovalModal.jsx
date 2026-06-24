@@ -3,6 +3,7 @@ import { X, Download, Loader2 } from "lucide-react";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import axios from 'axios';
+import API_BASE from "../../config";
 
 const PdfRow = ({ label, value }) => (
     <div style={{ display: 'flex', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px', marginBottom: '8px' }}>
@@ -26,7 +27,7 @@ export default function ApprovalModal({ selectedReq, setIsPreviewOpen, userProfi
         const fetchDetails = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get(`http://localhost:5000/api/approver/details/${selectedReq.spot_id}`);
+                const res = await axios.get(`${API_BASE}/api/approver/details/${selectedReq.spot_id}`);
 
                 // FIX: We must specify internalApprovers here
                 setApprovalData({
@@ -81,7 +82,7 @@ export default function ApprovalModal({ selectedReq, setIsPreviewOpen, userProfi
         // If the path already contains http, return it as is
         if (path.startsWith("http")) return path;
         // Otherwise, prepend your backend URL
-        return `http://localhost:5000/${path}`;
+        return `${API_BASE}/${path}`;
     };
     const getFullImageUrl = (imagePath) => {
         if (!imagePath) return "";
@@ -94,7 +95,7 @@ export default function ApprovalModal({ selectedReq, setIsPreviewOpen, userProfi
             ? imagePath
             : `uploads/${imagePath}`;
 
-        return `http://localhost:5000/${cleanPath}`;
+        return `${API_BASE}/${cleanPath}`;
     };
 
     return (

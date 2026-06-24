@@ -1,4 +1,4 @@
-require('dotenv').config({ path: './backend/.env' });  
+require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
@@ -24,9 +24,14 @@ const app = express();
 
 // ================= MIDDLEWARE =================
 
-// CORS (use env later)
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));

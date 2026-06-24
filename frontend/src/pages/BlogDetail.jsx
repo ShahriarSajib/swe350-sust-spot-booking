@@ -1,5 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import API_BASE from "../config";
 
 const BlogDetail = () => {
     const { id } = useParams();
@@ -34,7 +35,7 @@ const BlogDetail = () => {
                 {/* HERO IMAGE */}
                 <div className="w-full h-[300px] md:h-[500px] rounded-[40px] overflow-hidden mb-12 shadow-2xl border border-slate-200">
                     <img
-                        src={blog.cover_image ? `http://localhost:5000/uploads/${blog.cover_image}` : '/default-image.jpg'} // Path from your local array
+                        src={blog.cover_image ? `${API_BASE}/uploads/${blog.cover_image}` : '/default-image.jpg'} // Path from your local array
                         className="w-full h-full object-cover"
                         alt={blog.blog_title || blog.eventName}
                     />
@@ -100,7 +101,7 @@ const BlogDetail = () => {
                                 <div key={idx} className="group">
                                     <div className="h-72 rounded-[32px] overflow-hidden shadow-lg mb-4 bg-slate-100 border border-slate-200">
                                         <img
-                                            src={img.image_path ? `http://localhost:5000/uploads/${img.image_path}` : '/default-image.jpg'} // Path from your local array
+                                            src={img.image_path ? `${API_BASE}/uploads/${img.image_path}` : '/default-image.jpg'} // Path from your local array
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                             alt={img.image_caption}
                                         />

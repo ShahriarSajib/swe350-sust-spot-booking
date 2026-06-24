@@ -2,8 +2,8 @@ import { isSameDay, parseISO } from "date-fns";
 import { useEffect, useState } from "react";
 import "react-day-picker/dist/style.css";
 import { useLocation } from "react-router-dom";
-// import { useEffect } from "react";
 import { useParams } from "react-router-dom";
+import API_BASE from "../config";
 
 import BookingCalendar from "../components/SpotDetailsComponent/BookingCalender";
 import GalleryModal from "../components/SpotDetailsComponent/GalleryModal";
@@ -23,7 +23,7 @@ export default function SpotDetails() {
   useEffect(() => {
     const fetchSpot = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/spots/${id}`);
+        const res = await fetch(`${API_BASE}/api/spots/${id}`);
         const data = await res.json();
 
         const spotData = Array.isArray(data) ? data[0] : data;
@@ -63,7 +63,7 @@ export default function SpotDetails() {
 
       try {
         const response = await fetch(
-          `http://localhost:5000/api/availability/${id}`,
+          `${API_BASE}/api/availability/${id}`,
         );
         const data = await response.json();
 

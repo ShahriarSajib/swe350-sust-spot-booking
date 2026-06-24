@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API_BASE from "../config";
 
 // import applicantSignature from "../assets/applicant_sig.png";
 // import recommenderSignature from "../assets/recommender_sig.png";
@@ -70,7 +71,7 @@ export default function ProfilePage() {
 
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/recommendations/user/${userId}`,
+          `${API_BASE}/api/recommendations/user/${userId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -89,7 +90,7 @@ export default function ProfilePage() {
 
     try {
       await axios.put(
-        `http://localhost:5000/api/recommendations/mark/${bookingId}`,
+        `${API_BASE}/api/recommendations/mark/${bookingId}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -148,7 +149,7 @@ export default function ProfilePage() {
           return;
         }
         const res = await axios.get(
-          `http://localhost:5000/api/users/profile/${userId}`,
+          `${API_BASE}/api/users/profile/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -162,10 +163,10 @@ export default function ProfilePage() {
           department: user.department || "",
           contact: user.contact_number || "",
           image: user.profile_picture
-            ? `http://localhost:5,000/uploads/${user.profile_picture}`
+            ? `${API_BASE}/uploads/${user.profile_picture}`
             : "",
           signature: user.signature
-            ? `http://localhost:5000/uploads/${user.signature}`
+            ? `${API_BASE}/uploads/${user.signature}`
             : "",
         });
       } catch (err) {
@@ -186,7 +187,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem("token");
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/bookings/user-events/${userId}`,
+          `${API_BASE}/api/bookings/user-events/${userId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },

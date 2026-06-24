@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+import API_BASE from '../../config';
 
 const FeaturedEventsSection = () => {
     const navigate = useNavigate();
@@ -10,7 +11,7 @@ const FeaturedEventsSection = () => {
         const fetchFeatured = async () => {
             try {
                 // Fetching from your existing API
-                const response = await fetch('http://localhost:5000/api/blog/all');
+                const response = await fetch(`${API_BASE}/api/blog/all`);
                 const data = await response.json();
 
                 // Take only the first 4 blogs for the "Featured" section
@@ -55,7 +56,7 @@ const FeaturedEventsSection = () => {
                             {/* Image Section */}
                             <div className="relative h-48 overflow-hidden">
                                 <img
-                                    src={`http://localhost:5000/uploads/${event.cover_image}`}
+                                    src={`${API_BASE}/uploads/${event.cover_image}`}
                                     alt={event.blog_title}
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 />

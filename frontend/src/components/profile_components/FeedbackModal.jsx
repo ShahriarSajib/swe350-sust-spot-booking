@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Send } from 'lucide-react';
 import axios from 'axios';
+import API_BASE from "../../config";
 
 export default function FeedbackModal({ bookingId, onClose }) {
 
@@ -16,7 +17,7 @@ export default function FeedbackModal({ bookingId, onClose }) {
         setStatusMsg(''); // Reset message
 
         try {
-            const res = await axios.post('http://localhost:5000/api/events/feedback', {
+            const res = await axios.post(`${API_BASE}/api/events/feedback`, {
                 booking_id: bookingId,
                 feedback: feedback
             });

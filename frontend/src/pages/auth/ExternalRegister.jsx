@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import AnimatedSpotShowcase from "../../components/authentication/AnimatedSpotShowcase";
+import API_BASE from "../../config";
 
 const ExternalRegister = () => {
   const userType = "external";
@@ -54,7 +55,7 @@ const ExternalRegister = () => {
       data.append("userType", userType);
       data.append("idFile", formData.idFile);
 
-      await axios.post("http://localhost:5000/api/users/external", data, {
+      await axios.post(`${API_BASE}/api/users/external`, data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

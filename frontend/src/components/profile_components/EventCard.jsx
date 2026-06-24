@@ -3,6 +3,7 @@ import React from "react";
 import { useState } from "react";
 import FeedbackModal from "./FeedbackModal";
 import axios from "axios";
+import API_BASE from "../../config";
 
 export default function EventCard({
     event,
@@ -38,7 +39,7 @@ export default function EventCard({
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             const res = await axios.patch(
-                `http://localhost:5000/api/bookings/cancel/${event.booking_id}`
+                `${API_BASE}/api/bookings/cancel/${event.booking_id}`
             );
 
             if (res.data.success) {

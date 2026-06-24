@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import axios from "axios";
 import { useEffect } from "react";
+import API_BASE from "../../config";
 
 const AnimeSection = () => {
     const navigate = useNavigate();
@@ -28,7 +29,7 @@ const AnimeSection = () => {
         const fetchSpotId = async () => {
             try {
                 // Use encodeURIComponent for names with spaces
-                const response = await axios.get(`http://localhost:5000/api/spots/details/${encodeURIComponent(selectedSpot)}`);
+                const response = await axios.get(`${API_BASE}/api/spots/details/${encodeURIComponent(selectedSpot)}`);
                 if (response.data.success) {
                     setSpotData({
                         id: response.data.data.id,

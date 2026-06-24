@@ -20,8 +20,8 @@ exports.registerUser = async (data, file) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const fields = ['full_name', 'user_type', 'email', 'contact_number', 'password'];
-  const values = [fullName, userType, email, contactNumber, hashedPassword];
+  const fields = ['full_name', 'user_type', 'email', 'contact_number', 'password', 'email_verified'];
+  const values = [fullName, userType, email, contactNumber, hashedPassword, true];
 
   if (userType === 'internal') {
     fields.push('department');
@@ -45,7 +45,8 @@ exports.registerUser = async (data, file) => {
     [userId, token, 'email_verification', expiresAt]
   );
 
-  const verificationLink = `http://localhost:5000/api/users/verify/${token}`;
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+  const verificationLink = `${baseUrl}/api/users/verify/${token}`;
 
   await sendMail({
     to: email,
@@ -169,7 +170,8 @@ exports.forgotPassword = async (email) => {
 
   await tokenModel.createToken(user.id, token, "password_reset", expiresAt);
 
-  const resetLink = `http://localhost:5173/reset-password/${token}`;
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const resetLink = `${clientUrl}/reset-password/${token}`;
 
   await sendMail({
     to: email,

@@ -10,6 +10,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { adminApi } from "./adminApi";
 import Toast from "./Toast";
+import API_BASE from "../../../config";
 
 const SpotManagement = () => {
   const [spots, setSpots] = useState([]);
@@ -34,7 +35,7 @@ const SpotManagement = () => {
 
   const mainRef = useRef(null);
   const galleryRefs = [useRef(null), useRef(null)];
-  const API_URL = "http://localhost:5000";
+  const API_URL = API_BASE;
 
   const fetchSpots = useCallback(async () => {
     setLoading(true);

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE from '../../config';
 
 const UpcomingEventsSection = () => {
     const [events, setEvents] = useState([]);
@@ -16,7 +17,7 @@ const UpcomingEventsSection = () => {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const res = await axios.get("http://localhost:5000/api/events/upcoming");
+                const res = await axios.get(`${API_BASE}/api/events/upcoming`);
                 setEvents(res.data);
             } catch (err) {
                 console.error("Error fetching events:", err);

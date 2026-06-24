@@ -2,6 +2,7 @@ import axios from "axios";
 import { Calendar, ChevronRight, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API_BASE from "../config";
 
 const UserNotifications = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const UserNotifications = ({ isOpen, onClose }) => {
 
     const fetchNotifications = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/notifications", {
+        const res = await axios.get(`${API_BASE}/api/notifications`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -37,7 +38,7 @@ const UserNotifications = ({ isOpen, onClose }) => {
   const markAsRead = async (id) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/notifications/${id}/read`,
+        `${API_BASE}/api/notifications/${id}/read`,
         {},
         {
           headers: {
@@ -58,7 +59,7 @@ const UserNotifications = ({ isOpen, onClose }) => {
   const markAllAsRead = async () => {
     try {
       await axios.put(
-        "http://localhost:5000/api/notifications/read-all",
+        `${API_BASE}/api/notifications/read-all`,
         {},
         {
           headers: {

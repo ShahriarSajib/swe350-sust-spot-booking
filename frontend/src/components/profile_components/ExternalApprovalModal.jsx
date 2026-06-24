@@ -3,6 +3,7 @@ import { X, Download, Loader2 } from "lucide-react";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import axios from 'axios';
+import API_BASE from "../../config";
 
 const ExternalApprovalModal = ({ selectedReq, setIsPreviewOpen }) => {
     const [approvalData, setApprovalData] = useState({ approvers: [] });
@@ -19,14 +20,14 @@ const ExternalApprovalModal = ({ selectedReq, setIsPreviewOpen }) => {
             ? imagePath
             : `uploads/${imagePath}`;
 
-        return `http://localhost:5000/${cleanPath}`;
+        return `${API_BASE}/${cleanPath}`;
     };
 
     useEffect(() => {
         const fetchDetails = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get(`http://localhost:5000/api/approver/details/${selectedReq.spot_id}`);
+                const res = await axios.get(`${API_BASE}/api/approver/details/${selectedReq.spot_id}`);
 
                 // We set the state with the specific list we need for THIS modal
                 setApprovalData({

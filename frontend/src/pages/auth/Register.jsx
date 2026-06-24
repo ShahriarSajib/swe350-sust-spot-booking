@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import AnimatedSpotShowcase from "../../components/authentication/AnimatedSpotShowcase";
+import API_BASE from "../../config";
 
 const Register = () => {
   const userType = "internal";
@@ -26,7 +27,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.email.endsWith("@sust.edu")) {
+    if (!formData.email.endsWith(".sust.edu")) {
       setEmailError("Please use a valid institutional email (@sust.edu)");
       return; // Stop the execution
     }
@@ -39,7 +40,7 @@ const Register = () => {
       data.append("password", formData.password);
       data.append("userType", userType);
       const res = await axios.post(
-        "http://localhost:5000/api/users/internal",
+        `${API_BASE}/api/users/internal`,
         data,
         {
           headers: {
@@ -47,13 +48,10 @@ const Register = () => {
           },
         },
       );
-      console.log(res.data);
-      // alert("Internal account created successfully!");
-      console.log(res.data);
+      alert(res.data.message || "Account created successfully! You can now log in.");
+      window.location.href = "/login";
     } catch (err) {
-      // alert(
-      //   "Registration failed: " + (err.response?.data?.message || err.message),
-      // );
+      alert("Registration failed: " + (err.response?.data?.message || err.message));
       console.error("Registration failed:", err);
     }
   };

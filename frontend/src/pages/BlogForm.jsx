@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Plus, X, Upload, Image as ImageIcon } from "lucide-react";
+import API_BASE from "../config";
 
 function BlogForm({ event, onClose }) {
     const [formData, setFormData] = useState({
@@ -103,7 +104,7 @@ function BlogForm({ event, onClose }) {
 
         // 6. Send to Backend
         try {
-            const response = await fetch('http://localhost:5000/api/blog/create', {
+            const response = await fetch(`${API_BASE}/api/blog/create`, {
                 method: 'POST',
                 body: payload,
             });

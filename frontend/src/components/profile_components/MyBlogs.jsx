@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Calendar as CalendarIcon, Plus } from "lucide-react";
+import API_BASE from "../../config";
 
 export default function MyBlogs({navigate }) {
     const [blogs, setBlogs] = useState([]);
@@ -12,7 +13,7 @@ export default function MyBlogs({navigate }) {
             if (!userId) return;
             try {
                 // Fetching from your new backend API
-                const response = await fetch(`http://localhost:5000/api/blog/user/${userId}`);
+                const response = await fetch(`${API_BASE}/api/blog/user/${userId}`);
                 const data = await response.json();
                 setBlogs(data);
             } catch (error) {
@@ -60,7 +61,7 @@ export default function MyBlogs({navigate }) {
                             {/* Blog Image */}
                             <div className="relative h-48 overflow-hidden bg-slate-100">
                                 <img
-                                    src={`http://localhost:5000/uploads/${blog.cover_image}`}
+                                    src={`${API_BASE}/uploads/${blog.cover_image}`}
                                     alt={blog.blog_title}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 />

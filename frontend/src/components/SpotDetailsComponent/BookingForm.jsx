@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import API_BASE from "../../config";
 
 
 export default function BookingForm({ bookingData, setBookingData, personalDetails, bookingType }) {
@@ -56,7 +57,7 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
         //     return;
         // }
 
-        axios.get(`http://localhost:5000/api/users/profile/${userId}`, {
+        axios.get(`${API_BASE}/api/users/profile/${userId}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -108,7 +109,7 @@ export default function BookingForm({ bookingData, setBookingData, personalDetai
             recommenderDesignation: bookingData.designation
         };
 
-        axios.post("http://localhost:5000/api/bookings/confirm", payload)
+        axios.post(`${API_BASE}/api/bookings/confirm`, payload)
             .then(res => {
                 setShowSuccessModal(true);
                 console.log("Booking successful:", res.data);

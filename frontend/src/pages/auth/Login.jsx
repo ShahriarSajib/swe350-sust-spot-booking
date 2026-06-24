@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import AnimatedSpotShowcase from "../../components/authentication/AnimatedSpotShowcase";
+import API_BASE from "../../config";
 
 const Login = ({ onLogin }) => {
   const [loginType, setLoginType] = useState("user");
@@ -19,8 +20,8 @@ const Login = ({ onLogin }) => {
     try {
       const url =
         loginType === "admin"
-          ? "http://localhost:5000/api/admin/login"
-          : "http://localhost:5000/api/users/login";
+          ? `${API_BASE}/api/admin/login`
+          : `${API_BASE}/api/users/login`;
 
       const res = await axios.post(url, { email, password });
 
@@ -58,7 +59,7 @@ const Login = ({ onLogin }) => {
     setError({ field: "", message: "" });
 
     try {
-      await axios.post("http://localhost:5000/api/users/forgot-password", { email });
+      await axios.post(`${API_BASE}/api/users/forgot-password`, { email });
       alert("Reset link sent to your email!");
       setIsForgotMode(false);
     } catch (err) {

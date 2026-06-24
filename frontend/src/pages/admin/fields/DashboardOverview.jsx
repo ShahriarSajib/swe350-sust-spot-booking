@@ -330,7 +330,7 @@ const DashboardOverview = ({ setActiveSection }) => {
                     src={
                       adminData.approver_signature.startsWith("blob")
                         ? adminData.approver_signature
-                        : `http://localhost:5000/uploads/${adminData.approver_signature}`
+                        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/uploads/${adminData.approver_signature}`
                     }
                     alt="Signature"
                     style={{

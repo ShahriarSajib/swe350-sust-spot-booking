@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import API_BASE from "../../config";
 
 export const useProfileUpdate = (profile, setProfile, setSignaturePreview, setShowEdit) => {
     // Ei duto state-ei original binary file thake, ja FormData-te jabe
@@ -52,7 +53,7 @@ const handleProfileUpdate = async () => {
         }
 
         const res = await axios.put(
-            `http://localhost:5000/api/users/profile/${userId}`,
+            `${API_BASE}/api/users/profile/${userId}`,
             formData,
             {
                 headers: { 
@@ -68,7 +69,7 @@ const handleProfileUpdate = async () => {
             
 
             const updatedUser = res.data;
-            const baseUrl = "http://localhost:5000/uploads/";
+            const baseUrl = `${API_BASE}/uploads/`;
 
             setProfile({
                 ...profile,

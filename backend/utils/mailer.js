@@ -11,10 +11,15 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendMail = async (options) => {
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    ...options
-  });
+  try {
+    await transporter.sendMail({
+      from: `"SUST Spot Booking" <${process.env.SMTP_USER}>`,
+      ...options
+    });
+    console.log('Email sent successfully');
+  } catch (err) {
+    console.error('Email sending failed (non-blocking):', err.message);
+  }
 };
 
 module.exports = { sendMail };

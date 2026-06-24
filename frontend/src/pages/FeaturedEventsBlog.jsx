@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import API_BASE from "../config";
 
 const FeaturedEventsBlog = () => {
     const navigate = useNavigate();
@@ -15,7 +16,7 @@ const FeaturedEventsBlog = () => {
         const fetchBlogs = async () => {
             try {
                 // Adjust URL if your port is different
-                const response = await fetch('http://localhost:5000/api/blog/all');
+                const response = await fetch(`${API_BASE}/api/blog/all`);
                 const data = await response.json();
                 setBlogs(data);
             } catch (error) {
@@ -93,7 +94,7 @@ const FeaturedEventsBlog = () => {
                                 <div className="h-64 overflow-hidden relative">
                                     {/* Using cover_image from backend. Update URL path to your uploads folder */}
                                     <img
-                                        src={`http://localhost:5000/uploads/${post.cover_image}`}
+                                        src={`${API_BASE}/uploads/${post.cover_image}`}
                                         alt={post.blog_title}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                     />

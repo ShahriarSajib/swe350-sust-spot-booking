@@ -1,6 +1,7 @@
 import axios from "axios";
+import API_BASE from "../../../config";
 
-export const BASE_URL = "http://localhost:5000/api/admin";
+export const BASE_URL = `${API_BASE}/api/admin`;
 
 export const adminApi = () => {
   const token = localStorage.getItem("adminToken");
