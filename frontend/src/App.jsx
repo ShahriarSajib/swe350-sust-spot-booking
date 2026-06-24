@@ -233,8 +233,22 @@ import Hello from "./pages/hello";
 
 import ScrollToTop from "./ScrollToTop";
 
+// Restore auth role from localStorage on page refresh.
+// Login.jsx saves: adminToken (for admin) or token + userId (for user).
+// We check those same keys here to decide the role on startup.
+function getInitialRole() {
+  const adminToken = localStorage.getItem("adminToken");
+  if (adminToken) return "admin";
+  const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
+  if (token && userId) return "user";
+  return null;
+}
+
 function App() {
-  const [authRole, setAuthRole] = useState(null);
+  // Pass getInitialRole as a lazy initializer so it only runs once on mount.
+  // This means page refresh restores the session instead of going to /login.
+  const [authRole, setAuthRole] = useState(getInitialRole);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // URL-based notification logic
