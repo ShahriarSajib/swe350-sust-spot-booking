@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import API_BASE from '../../config';
+import { getImageUrl } from '../../utils/imageHelper';
 
 const FeaturedEventsSection = () => {
     const navigate = useNavigate();
@@ -56,7 +57,7 @@ const FeaturedEventsSection = () => {
                             {/* Image Section */}
                             <div className="relative h-48 overflow-hidden">
                                 <img
-                                    src={`${API_BASE}/uploads/${event.cover_image}`}
+                                    src={getImageUrl(event.cover_image)}
                                     alt={event.blog_title}
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 />

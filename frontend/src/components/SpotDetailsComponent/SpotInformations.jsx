@@ -1,12 +1,12 @@
 import { BookOpen, Image as ImageIcon, MapPin } from "lucide-react";
-import API_BASE from "../../config";
+import { getImageUrl } from "../../utils/imageHelper";
 
 export default function SpotHeader({ spot, setShowGallery }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-fit">
       <div className="relative">
         <img
-          src={`${API_BASE}/uploads/${spot.image1}`}
+          src={getImageUrl(spot.image1)}
           alt={spot.name}
           className="w-full h-80 object-cover"
         />

@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import API_BASE from "../../config";
+import { getImageUrl } from "../../utils/imageHelper";
 
 export default function GalleryModal({ spot, onClose }) {
   const images = [spot.image1, spot.image2, spot.image3].filter((img) => img);
@@ -20,7 +20,7 @@ export default function GalleryModal({ spot, onClose }) {
             images.map((img, i) => (
               <img
                 key={i}
-                src={`${API_BASE}/uploads/${img}`}
+                src={getImageUrl(img)}
                 className="rounded-2xl w-full h-64 object-cover hover:scale-[1.02] transition-transform duration-300"
                 alt={`Gallery ${i}`}
               />

@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import { adminApi } from "./adminApi";
 import ReserveSpotPanel from "./ReserveSpotPanel";
 import Toast from "./Toast";
+import { getImageUrl } from "../../../utils/imageHelper";
 
 const DashboardOverview = ({ setActiveSection }) => {
   const [adminData, setAdminData] = useState({
@@ -330,7 +331,7 @@ const DashboardOverview = ({ setActiveSection }) => {
                     src={
                       adminData.approver_signature.startsWith("blob")
                         ? adminData.approver_signature
-                        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/uploads/${adminData.approver_signature}`
+                        : getImageUrl(adminData.approver_signature)
                     }
                     alt="Signature"
                     style={{

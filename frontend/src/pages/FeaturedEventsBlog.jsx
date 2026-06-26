@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE from "../config";
+import { getImageUrl } from "../utils/imageHelper";
 
 const FeaturedEventsBlog = () => {
     const navigate = useNavigate();
@@ -94,7 +95,7 @@ const FeaturedEventsBlog = () => {
                                 <div className="h-64 overflow-hidden relative">
                                     {/* Using cover_image from backend. Update URL path to your uploads folder */}
                                     <img
-                                        src={`${API_BASE}/uploads/${post.cover_image}`}
+                                        src={getImageUrl(post.cover_image)}
                                         alt={post.blog_title}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                     />

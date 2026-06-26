@@ -4,13 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE from "../config";
-
-// import applicantSignature from "../assets/applicant_sig.png";
-// import recommenderSignature from "../assets/recommender_sig.png";
-// import approverSignature from "../assets/approver_sig.png";
-
-// import innovation from "../assets/innovation.png";
-
+import { getImageUrl } from "../utils/imageHelper";
 import ApprovalModal from "../components/profile_components/ApprovalModal";
 import ExternalApprovalModal from "../components/profile_components/ExternalApprovalModal";
 import EventCard from "../components/profile_components/EventCard";
@@ -162,12 +156,8 @@ export default function ProfilePage() {
           email: user.email || "",
           department: user.department || "",
           contact: user.contact_number || "",
-          image: user.profile_picture
-            ? `${API_BASE}/uploads/${user.profile_picture}`
-            : "",
-          signature: user.signature
-            ? `${API_BASE}/uploads/${user.signature}`
-            : "",
+          image: getImageUrl(user.profile_picture),
+          signature: getImageUrl(user.signature),
         });
       } catch (err) {
         console.error("Error fetching profile:", err);

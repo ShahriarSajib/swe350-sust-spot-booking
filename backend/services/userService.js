@@ -30,7 +30,7 @@ exports.registerUser = async (data, file) => {
 
   if (userType === 'external') {
     fields.push('profile_picture');
-    values.push(file?.filename || null);
+    values.push(file?.path || null);
   }
 
   const result = await userModel.createUser(fields, values);
@@ -126,15 +126,15 @@ exports.updateUserProfile = async (id, body, files) => {
 
   if (!user) throw new Error('User not found');
 
-  const profile_picture = files?.profile_picture?.[0]?.filename;
-  const signature = files?.signature?.[0]?.filename;
+  const profile_picture = files?.profile_picture?.[0]?.path;
+  const signature = files?.signature?.[0]?.path;
 
   if (profile_picture && user.profile_picture) {
-    deleteFile(`uploads/${user.profile_picture}`);
+    deleteFile(user.profile_picture);
   }
 
   if (signature && user.signature) {
-    deleteFile(`uploads/${user.signature}`);
+    deleteFile(user.signature);
   }
 
   const updateData = {};

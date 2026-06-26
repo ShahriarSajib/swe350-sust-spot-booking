@@ -109,13 +109,13 @@ const updateSignature = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const fileName = req.file.filename; 
+    const fileUrl = req.file.path; 
 
-    await Admin.updateSignature(req.admin.id, fileName);
+    await Admin.updateSignature(req.admin.id, fileUrl);
 
     res.json({
       message: "Signature updated",
-      filename: fileName,
+      filename: fileUrl,
     });
   } catch (err) {
     console.error("Update signature error:", err);
@@ -928,9 +928,9 @@ const createSpot = async (req, res) => {
     if (!name)
       return res.status(400).json({ message: "Spot name is required" });
 
-    const image1 = req.files?.["image1"]?.[0]?.filename || null;
-    const image2 = req.files?.["image2"]?.[0]?.filename || null;
-    const image3 = req.files?.["image3"]?.[0]?.filename || null;
+    const image1 = req.files?.["image1"]?.[0]?.path || null;
+    const image2 = req.files?.["image2"]?.[0]?.path || null;
+    const image3 = req.files?.["image3"]?.[0]?.path || null;
 
     const [result] = await db.query(
       `INSERT INTO spots (name, description, location, image1, image2, image3, rules, capacity, max_booking)
@@ -982,17 +982,17 @@ const updateSpot = async (req, res) => {
 
     if (req.files?.["image1"]?.[0]) {
       imageUpdates += ", image1 = ?";
-      params.push(req.files["image1"][0].filename); 
+      params.push(req.files["image1"][0].path); 
     }
 
     if (req.files?.["image2"]?.[0]) {
       imageUpdates += ", image2 = ?";
-      params.push(req.files["image2"][0].filename); 
+      params.push(req.files["image2"][0].path); 
     }
 
     if (req.files?.["image3"]?.[0]) {
       imageUpdates += ", image3 = ?";
-      params.push(req.files["image3"][0].filename); 
+      params.push(req.files["image3"][0].path); 
     }
 
     params.push(spotId);

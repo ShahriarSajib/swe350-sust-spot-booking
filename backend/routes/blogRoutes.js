@@ -1,32 +1,13 @@
 const express = require('express');
 const router = express.Router(); 
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { storage } = require('../config/cloudinary');
 const blogController = require('../controllers/blogController');
 
-// 1. Path Setup
-const uploadDir = path.resolve(__dirname, '../uploads');
-
-// 2. Ensure folder exists
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// 3. Multer Configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir); 
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
-
+// Multer Configuration
 const upload = multer({ storage: storage });
 
-// 4. Routes
-// Now that 'router' is defined above, this will work perfectly!
+// Routes
 router.post('/create', upload.fields([
     { name: 'coverImage', maxCount: 1 },
     { name: 'galleryImages', maxCount: 4 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Calendar as CalendarIcon, Plus } from "lucide-react";
 import API_BASE from "../../config";
+import { getImageUrl } from "../../utils/imageHelper";
 
 export default function MyBlogs({navigate }) {
     const [blogs, setBlogs] = useState([]);
@@ -61,7 +62,7 @@ export default function MyBlogs({navigate }) {
                             {/* Blog Image */}
                             <div className="relative h-48 overflow-hidden bg-slate-100">
                                 <img
-                                    src={`${API_BASE}/uploads/${blog.cover_image}`}
+                                    src={getImageUrl(blog.cover_image)}
                                     alt={blog.blog_title}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 />

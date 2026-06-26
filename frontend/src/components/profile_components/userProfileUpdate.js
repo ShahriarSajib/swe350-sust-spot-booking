@@ -69,12 +69,12 @@ const handleProfileUpdate = async () => {
             
 
             const updatedUser = res.data;
-            const baseUrl = `${API_BASE}/uploads/`;
+            const { getImageUrl } = require("../../utils/imageHelper");
 
             setProfile({
                 ...profile,
-                image: updatedUser.profile_picture ? `${baseUrl}${updatedUser.profile_picture}` : profile.image,
-                signature: updatedUser.signature ? `${baseUrl}${updatedUser.signature}` : profile.signature
+                image: updatedUser.profile_picture ? getImageUrl(updatedUser.profile_picture) : profile.image,
+                signature: updatedUser.signature ? getImageUrl(updatedUser.signature) : profile.signature
             });
 
             setTimeout(() => {

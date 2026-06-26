@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { adminApi } from "./adminApi";
 import Toast from "./Toast";
 import API_BASE from "../../../config";
+import { getImageUrl } from "../../../utils/imageHelper";
 
 const SpotManagement = () => {
   const [spots, setSpots] = useState([]);
@@ -76,11 +77,11 @@ const SpotManagement = () => {
       rules: activeSpot.rules || "",
     });
     setMainImage(
-      activeSpot.image1 ? `${API_URL}/uploads/${activeSpot.image1}` : null,
+      activeSpot.image1 ? getImageUrl(activeSpot.image1) : null,
     );
     setGallery([
-      activeSpot.image2 ? `${API_URL}/uploads/${activeSpot.image2}` : null,
-      activeSpot.image3 ? `${API_URL}/uploads/${activeSpot.image3}` : null,
+      activeSpot.image2 ? getImageUrl(activeSpot.image2) : null,
+      activeSpot.image3 ? getImageUrl(activeSpot.image3) : null,
     ]);
     adminApi()
       .get(`/spots/${activeSpot.spot_id}/recipients`)

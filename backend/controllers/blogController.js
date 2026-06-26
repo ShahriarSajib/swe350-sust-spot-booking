@@ -9,7 +9,7 @@ const createEventBlog = (req, res) => {
         summary: req.body.summary,
         content: req.body.content,
         authorName: req.body.author_name || 'Admin',
-        coverImage: req.files['coverImage'] ? req.files['coverImage'][0].filename : null
+        coverImage: req.files['coverImage'] ? req.files['coverImage'][0].path : null
     };
 
 
@@ -36,7 +36,7 @@ const createEventBlog = (req, res) => {
         contentItems.push({
             type: 'image',
             time: null, title: null, description: null,
-            imagePath: file.filename,
+            imagePath: file.path,
             imageCaption: captions[index] || ''
         });
     });
