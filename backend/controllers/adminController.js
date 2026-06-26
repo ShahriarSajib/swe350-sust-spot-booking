@@ -880,7 +880,8 @@ const getSpots = async (req, res) => {
     );
 
     const filtered = rows.filter((spot) => {
-      if (!spot.approval_order) return false;
+      // Include spots with no approval_order (legacy/unassigned spots visible to all admins)
+      if (!spot.approval_order) return true;
 
       let order;
 
@@ -908,6 +909,7 @@ const getSpots = async (req, res) => {
   }
 };
 
+
 const getSingleSpot = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM spots WHERE spot_id = ?", [
@@ -928,13 +930,19 @@ const createSpot = async (req, res) => {
     if (!name)
       return res.status(400).json({ message: "Spot name is required" });
 
+    const adminId = req.admin.id;
+
     const image1 = req.files?.["image1"]?.[0]?.path || null;
     const image2 = req.files?.["image2"]?.[0]?.path || null;
     const image3 = req.files?.["image3"]?.[0]?.path || null;
 
+    // Automatically add the creating admin to the approval_order
+    // so the spot appears in their management view immediately
+    const defaultApprovalOrder = JSON.stringify([adminId]);
+
     const [result] = await db.query(
-      `INSERT INTO spots (name, description, location, image1, image2, image3, rules, capacity, max_booking)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO spots (name, description, location, image1, image2, image3, rules, capacity, max_booking, approval_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         description || null,
@@ -945,6 +953,7 @@ const createSpot = async (req, res) => {
         rules || null,
         capacity || null,
         max_booking || null,
+        defaultApprovalOrder,
       ],
     );
 

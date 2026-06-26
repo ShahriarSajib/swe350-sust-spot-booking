@@ -2,7 +2,7 @@
 
 A full‑stack web application for **booking on‑campus spots** at **Shahjalal University of Science and Technology (SUST)**. The platform streamlines venue reservations, multi‑step approvals, event management, blog publishing, and real‑time notifications — serving both **internal** (students, faculty) and **external** users.
 
-> **Live Demo:** [Coming Soon](#)  
+> **Live Demo:** [sust-spot-booking.vercel.app](https://sust-spot-booking.vercel.app/)  
 > **GitHub Repository:** [github.com/mohaiminulnirob/swe350-sust-spot-booking](https://github.com/mohaiminulnirob/swe350-sust-spot-booking)
 
 ---
